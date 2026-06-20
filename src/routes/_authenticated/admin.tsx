@@ -335,6 +335,29 @@ function SubmissionRow({ s, onUpdate }: { s: any; onUpdate: (p: any) => Promise<
         <Button size="sm" variant="outline" onClick={reset} className="rounded-full">
           Reset
         </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={async () => {
+            const reason = window.prompt(
+              `Ban @${s.profiles?.username}? This disqualifies their entries and permanently blocks the username from being reused. Reason:`,
+              "Inappropriate content",
+            );
+            if (!reason) return;
+            const { error } = await supabase.rpc("admin_ban_user" as any, {
+              p_user_id: s.user_id,
+              p_reason: reason,
+            });
+            if (error) toast.error(error.message);
+            else {
+              toast.success(`Banned @${s.profiles?.username}`);
+              await onUpdate({ status: "disqualified", is_active_entry: false, __local: true });
+            }
+          }}
+          className="rounded-full border-koth-red text-koth-red hover:bg-koth-red hover:text-koth-white"
+        >
+          Ban user
+        </Button>
       </div>
     </div>
   );

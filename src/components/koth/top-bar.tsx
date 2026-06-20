@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
+import { LogoMark } from "@/components/koth/logo-mark";
 
 export function TopBar() {
   const { user, isAdmin } = useAuth();
@@ -39,10 +40,8 @@ export function TopBar() {
   return (
     <header className="sticky top-0 z-20 border-b border-border bg-koth-black/95 backdrop-blur">
       <div className="mx-auto flex max-w-md items-center justify-between px-4 py-3">
-        <Link to="/home" className="flex items-center gap-2">
-          <span className="koth-stripe inline-flex h-8 w-8 items-center justify-center rounded-lg bg-koth-red">
-            <span className="mono-stat text-sm font-bold text-koth-white">K</span>
-          </span>
+        <Link to="/home" className="flex items-center gap-2" aria-label="KOTH home">
+          <LogoMark size={32} className="shrink-0" />
           <span className="label-broadcast text-koth-white tracking-[0.12em]">KOTH</span>
         </Link>
         <div className="flex items-center gap-1.5">
