@@ -257,7 +257,7 @@ function TopThreePreview({
         )
         .eq("challenge_id", challengeId)
         .eq("is_active_entry", true)
-        .neq("status", "disqualified");
+        .eq("status", "verified");
       if (!rows) return [];
       return rows
         .map((r) => ({
