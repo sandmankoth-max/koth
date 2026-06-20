@@ -87,6 +87,7 @@ function Record() {
         .select("id")
         .single();
       if (insErr) throw insErr;
+      if (!submission) throw new Error("Submission failed");
       await deletePreviousSubmissions({
         data: { challengeId: challenge.id, keepSubmissionId: submission.id },
       });
