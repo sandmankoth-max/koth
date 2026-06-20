@@ -67,6 +67,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", uid),
     ]);
+    if (p && (p as any).banned) {
+      await supabase.auth.signOut();
+      setProfile(null);
+      setIsAdmin(false);
+      throw new Error("This account has been banned.");
+    }
     setProfile((p as Profile) ?? null);
     setIsAdmin(Boolean(roles?.some((r) => r.role === "admin")));
   }, []);
