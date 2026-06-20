@@ -78,14 +78,16 @@ function UserProfile() {
       const q = supabase
         .from("submissions")
         .select(
-          "id, video_path, self_reported_value, admin_verified_value, submitted_at, challenges(id, title, unit_type, unit_label)",
+          "id, video_path, self_reported_value, admin_verified_value, submitted_at, visibility, is_active_entry, challenges(id, title, unit_type, unit_label)",
         )
         .eq("user_id", profileId!)
-        .eq("is_active_entry", true)
         .neq("status", "disqualified")
         .order("submitted_at", { ascending: false });
       const { data } = canSeeAll ? await q : await q.limit(1);
-      return (data ?? []).filter((s: any) => s.challenges);
+      return (data ?? []).filter(
+        (s: any) =>
+          s.challenges && (s.visibility === "friends_only" || s.is_active_entry),
+      );
     },
   });
 
