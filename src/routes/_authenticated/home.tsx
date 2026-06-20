@@ -56,7 +56,8 @@ function Home() {
         .select("*")
         .eq("challenge_id", challengeQ.data!.id)
         .eq("user_id", user!.id)
-        .eq("is_active_entry", true)
+        .order("submitted_at", { ascending: false })
+        .limit(1)
         .maybeSingle();
       return data;
     },
