@@ -212,7 +212,7 @@ function Home() {
               variant="outline"
               size="sm"
               disabled={deletingEntry}
-              onClick={deleteMyEntry}
+              onClick={() => setDeleteOpen(true)}
               className="tap-44 rounded-full border-koth-red text-koth-red hover:bg-koth-red hover:text-koth-white"
             >
               <Trash2 className="mr-1.5 h-4 w-4" aria-hidden />
@@ -221,6 +221,27 @@ function Home() {
           </div>
         </section>
       )}
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete your entry?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This removes your video from the leaderboard. You can re-record any time before the challenge ends.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingEntry}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deletingEntry}
+              onClick={(e) => { e.preventDefault(); deleteMyEntry(); }}
+              className="bg-koth-red text-koth-white hover:bg-koth-red/90"
+            >
+              {deletingEntry ? "Deleting…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Top 3 preview */}
       <TopThreePreview challengeId={c.id} unitType={c.unit_type} unitLabel={c.unit_label} />
