@@ -178,7 +178,7 @@ function Home() {
       {/* Your rank */}
       <section className="rounded-3xl border border-border bg-card p-5">
         {myEntryQ.data ? (
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="label-broadcast text-muted-foreground">Your rank</p>
               <div className="mt-1 flex items-baseline gap-2">
@@ -198,7 +198,7 @@ function Home() {
                 {myEntryQ.data.status === "disqualified" && "Disqualified"}
               </p>
             </div>
-            <div className="flex shrink-0 flex-col gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0 sm:flex-col">
               <Link
                 to="/record"
                 className="tap-44 inline-flex items-center justify-center gap-1.5 rounded-full bg-koth-red px-4 py-2 text-sm font-bold text-koth-white"
