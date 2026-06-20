@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
+import { isProfane } from "@/lib/profanity";
 
 type Kind = "video" | "challenge";
 
@@ -459,6 +460,10 @@ function Composer({
   async function send() {
     const text = body.trim();
     if (!text || !user) return;
+    if (isProfane(text)) {
+      toast.error("Your comment contains language we don't allow.");
+      return;
+    }
     setPosting(true);
     try {
       // Re-extract @mentions present in final body and intersect with the

@@ -57,6 +57,11 @@ function Profile() {
   async function saveBio() {
     if (!user) return;
     const trimmed = bioDraft.trim();
+    const { isProfane } = await import("@/lib/profanity");
+    if (isProfane(trimmed)) {
+      toast.error("Your bio contains language we don't allow.");
+      return;
+    }
     const { error } = await supabase
       .from("profiles")
       .update({ bio: trimmed.length ? trimmed : null })
