@@ -286,7 +286,12 @@ function TopThreePreview({
             return (
               <li key={r.id} className="flex items-center gap-3">
                 <RankBadge rank={i + 1} size="md" />
-                <Avatar name={p?.display_name ?? p?.username ?? "?"} avatarPath={p?.avatar_url} size={36} />
+                <ProfileAvatar
+                  username={p?.username}
+                  name={p?.display_name ?? p?.username ?? "?"}
+                  avatarPath={p?.avatar_url}
+                  size={36}
+                />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-foreground">{p?.display_name}</p>
                   <p className="truncate text-xs text-muted-foreground">@{p?.username}</p>
