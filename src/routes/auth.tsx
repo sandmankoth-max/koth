@@ -35,8 +35,22 @@ function AuthPage() {
   const [sd, setSd] = useState("");
   const [sdob, setSdob] = useState("");
   const [consent, setConsent] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const isSignup = mode === "signup";
+
+  function onPickAvatar(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (f.size > 5 * 1024 * 1024) {
+      toast.error("Image must be under 5MB");
+      return;
+    }
+    setAvatarFile(f);
+    setAvatarPreview(URL.createObjectURL(f));
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -49,6 +63,7 @@ function AuthPage() {
           display_name: sd || su,
           date_of_birth: sdob,
           age_consent: consent,
+          avatar_file: avatarFile,
         });
         toast.success("Welcome to KOTH");
       } else {
