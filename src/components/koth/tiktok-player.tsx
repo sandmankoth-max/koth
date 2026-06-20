@@ -325,7 +325,7 @@ function PlayerStage({
           label="like"
         />
         <RailButton
-          onClick={() => toast.message("Comments coming soon", { description: "Phase B." })}
+          onClick={() => setCommentsOpen(true)}
           icon={<MessageCircle className="h-7 w-7" />}
           count={commentCountQ.data ?? 0}
           label="comments"
@@ -336,7 +336,24 @@ function PlayerStage({
           count={0}
           label="share"
         />
+        {isOwner && (
+          <RailButton
+            onClick={handleDelete}
+            icon={<Trash2 className="h-6 w-6" />}
+            count={0}
+            label="delete"
+          />
+        )}
       </div>
+
+      <CommentDrawer
+        kind="video"
+        targetId={item.id}
+        ownerId={item.user.id}
+        open={commentsOpen}
+        onOpenChange={setCommentsOpen}
+      />
+
 
       {/* Up/down navigation */}
       {canPrev && (
