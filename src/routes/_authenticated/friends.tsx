@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { formatValue, getVideoSignedUrl } from "@/lib/koth-utils";
 import { CommentDrawer } from "@/components/koth/comment-drawer";
 import { RankBadge } from "@/components/koth/rank-badge";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/friends")({
   head: () => ({ meta: [{ title: "Friends — KOTH" }] }),
