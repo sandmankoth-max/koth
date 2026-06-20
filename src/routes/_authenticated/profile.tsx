@@ -1,13 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Avatar } from "@/components/koth/avatar";
 import { RankBadge } from "@/components/koth/rank-badge";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, LogOut, Camera, FileText, ShieldCheck } from "lucide-react";
+import { ChevronRight, LogOut, Camera, FileText, ShieldCheck, Play } from "lucide-react";
 import { toast } from "sonner";
+import { formatValue, getVideoSignedUrl } from "@/lib/koth-utils";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({ meta: [{ title: "Profile — KOTH" }] }),
