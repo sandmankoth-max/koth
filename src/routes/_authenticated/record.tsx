@@ -1,7 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { deletePreviousSubmissionsForChallenge } from "@/lib/submissions.functions";
 import { CameraRecorder, type CapturedVideo } from "@/components/koth/camera-recorder";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +20,7 @@ type Stage = "intro" | "camera" | "preview" | "report" | "confirm" | "uploading"
 
 function Record() {
   const navigate = useNavigate();
+  const deletePreviousSubmissions = useServerFn(deletePreviousSubmissionsForChallenge);
   const { user } = useAuth();
   const [stage, setStage] = useState<Stage>("intro");
   const [captured, setCaptured] = useState<CapturedVideo | null>(null);
@@ -73,35 +76,18 @@ function Record() {
         .upload(path, captured.blob, { contentType: captured.mimeType, upsert: false });
       if (upErr) throw upErr;
 
-      // Find prior submissions for this challenge by this user so we can fully
-      // replace them: delete their video files from storage and the rows themselves.
-      const { data: prior } = await supabase
+      const { data: submission, error: insErr } = await supabase
         .from("submissions")
-        .select("id, video_path")
-        .eq("user_id", user.id)
-        .eq("challenge_id", challenge.id);
-
-      const { error: insErr } = await supabase.from("submissions").insert({
-        user_id: user.id,
-        challenge_id: challenge.id,
-        video_path: path,
-        self_reported_value: Number(reportedValue),
-      });
+        .insert({
+          user_id: user.id,
+          challenge_id: challenge.id,
+          video_path: path,
+          self_reported_value: Number(reportedValue),
+        })
+        .select("id")
+        .single();
       if (insErr) throw insErr;
-
-      if (prior && prior.length > 0) {
-        const paths = prior.map((p) => p.video_path).filter(Boolean);
-        if (paths.length > 0) {
-          await supabase.storage.from("koth-videos").remove(paths);
-        }
-        await supabase
-          .from("submissions")
-          .delete()
-          .in(
-            "id",
-            prior.map((p) => p.id),
-          );
-      }
+      await deletePreviousSubmissions({ data: { challengeId: challenge.id, keepSubmissionId: submission.id } });
 
       toast.success("Submission locked in. Good luck.");
       navigate({ to: "/home" });
