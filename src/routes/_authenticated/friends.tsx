@@ -224,8 +224,7 @@ function AutoPlayVideo({ path }: { path: string }) {
       muted
       loop
       playsInline
-      controls
-      className="aspect-[9/16] w-full bg-black"
+      className="pointer-events-none aspect-[9/16] w-full bg-black object-cover"
     />
   );
 }
