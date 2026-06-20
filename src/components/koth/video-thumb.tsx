@@ -28,7 +28,7 @@ export function VideoThumb({ videoPath, onClick, className, autoplayOnView, badg
     if (!el) return;
     const io = new IntersectionObserver(
       (entries) => entries.forEach((e) => setVisible(e.isIntersecting)),
-      { threshold: 0.2 },
+      { threshold: 0.01, rootMargin: "400px 0px" },
     );
     io.observe(el);
     return () => io.disconnect();
