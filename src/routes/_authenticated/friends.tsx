@@ -514,7 +514,7 @@ function FeedVideo({ row, c, scrollRoot }: { row: any; c: any; scrollRoot: React
           icon={
             <MessageCircle
               strokeWidth={2.5}
-              className="h-8 w-8 fill-white text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.6)]"
+              className="h-8 w-8 text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.6)]"
             />
           }
           count={commentCountQ.data ?? 0}
