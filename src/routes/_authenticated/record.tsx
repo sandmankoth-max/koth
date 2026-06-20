@@ -320,6 +320,14 @@ function Record() {
               Change
             </button>
           </div>
+          {visibility === "public" && (
+            <div className="rounded-2xl border border-koth-red/40 bg-koth-red/5 p-3 text-xs text-foreground">
+              <p className="label-broadcast text-koth-red">Heads up — resubmit</p>
+              <p className="mt-1">
+                Submitting this will <span className="font-bold">delete your previous attempt</span> for this challenge (even if it was already verified or suspended). The new attempt appears on the leaderboard once an admin verifies it.
+              </p>
+            </div>
+          )}
           <p className="text-xs text-muted-foreground">
             {visibility === "friends_only"
               ? "Saved to your profile and friends feed. Doesn't replace earlier attempts."
