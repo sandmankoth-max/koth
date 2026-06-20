@@ -188,7 +188,7 @@ function Record() {
               Back
             </Button>
             <Button
-              onClick={() => setStage("confirm")}
+              onClick={() => setStage("visibility")}
               disabled={!reportedValue || Number(reportedValue) < 0}
               className="tap-44 h-12 rounded-full bg-koth-red text-koth-white hover:bg-koth-red/90"
             >
@@ -197,6 +197,72 @@ function Record() {
           </div>
         </div>
       )}
+
+      {stage === "visibility" && (
+        <div className="space-y-4">
+          <div>
+            <p className="label-broadcast text-muted-foreground">Where does this go?</p>
+            <h2 className="mt-1 text-lg font-bold text-foreground">Pick your audience</h2>
+          </div>
+
+          <button
+            onClick={() => {
+              const seen = JSON.parse(localStorage.getItem(SEEN_VIS_KEY) ?? "{}");
+              if (!seen.public) setExplainOpen("public");
+              else {
+                setVisibility("public");
+                setStage("confirm");
+              }
+            }}
+            className="tap-44 koth-stripe w-full rounded-3xl bg-koth-red p-5 text-left text-koth-white"
+          >
+            <p className="label-broadcast text-koth-white/70">Recommended</p>
+            <p className="mt-1 text-lg font-bold">Enter Prize Pool</p>
+            <p className="mt-1 text-xs text-koth-white/80">
+              Public. Eligible for prize money and the public podium.
+            </p>
+          </button>
+
+          <button
+            onClick={() => {
+              const seen = JSON.parse(localStorage.getItem(SEEN_VIS_KEY) ?? "{}");
+              if (!seen.friends_only) setExplainOpen("friends_only");
+              else {
+                setVisibility("friends_only");
+                setStage("confirm");
+              }
+            }}
+            className="tap-44 w-full rounded-3xl border-2 border-border bg-card p-5 text-left text-foreground"
+          >
+            <p className="label-broadcast text-muted-foreground">Lower-stakes</p>
+            <p className="mt-1 text-lg font-bold">Friends Feed Only</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Only your friends see it. Not eligible for the prize pool.
+            </p>
+          </button>
+
+          <Button
+            variant="outline"
+            onClick={() => setStage("report")}
+            className="tap-44 h-12 w-full rounded-full"
+          >
+            Back
+          </Button>
+        </div>
+      )}
+
+      <VisibilityExplainer
+        kind={explainOpen}
+        onClose={() => setExplainOpen(null)}
+        onConfirm={(v) => {
+          const seen = JSON.parse(localStorage.getItem(SEEN_VIS_KEY) ?? "{}");
+          seen[v] = true;
+          localStorage.setItem(SEEN_VIS_KEY, JSON.stringify(seen));
+          setVisibility(v);
+          setExplainOpen(null);
+          setStage("confirm");
+        }}
+      />
 
       {stage === "confirm" && captured && (
         <div className="space-y-4">
