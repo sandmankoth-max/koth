@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
+import { LogoMark } from "@/components/koth/logo-mark";
 
 export function TopBar() {
   const { user, isAdmin } = useAuth();
