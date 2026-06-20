@@ -488,15 +488,25 @@ function FeedVideo({ row, c, scrollRoot }: { row: any; c: any; scrollRoot: React
         >
           @{p?.username}
         </Link>
-        <p className="mt-1 text-xs text-white/80">
+        <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-white/80">
           <span className="rounded-full bg-koth-red px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
             {c.title}
           </span>
-          <span className="ml-2 mono-stat font-bold">
+          <span className="mono-stat font-bold">
             {formatValue(val, c.unit_type, c.unit_label)}
           </span>
+          {row.status === "verified" && (
+            <span className="rounded-full bg-koth-pr-bg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-koth-pr-text">
+              Verified
+            </span>
+          )}
+          {row.status === "disqualified" && (
+            <span className="rounded-full bg-koth-red/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+              Suspended
+            </span>
+          )}
           {row.visibility === "friends_only" && (
-            <span className="ml-2 rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+            <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
               Friends
             </span>
           )}
