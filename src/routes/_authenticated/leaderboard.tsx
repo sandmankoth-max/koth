@@ -157,10 +157,10 @@ function Leaderboard() {
               const p = r.profiles;
               const idx = rows.findIndex((x: any) => x.id === r.id);
               return (
-                <button
+              <button
                   key={r.id}
                   onClick={() => openVideoAt(idx)}
-                  className={`tap-44 ${orderCls} ${heightCls} relative flex flex-col items-center justify-end rounded-2xl border p-2 text-center shadow-lg ${tile}`}
+                  className={`tap-44 ${orderCls} ${heightCls} relative flex flex-col items-center justify-end overflow-hidden rounded-2xl border p-2 text-center shadow-lg ${tile}`}
                 >
                   {isFirst && (
                     <Crown
@@ -173,10 +173,10 @@ function Leaderboard() {
                     avatarPath={p?.avatar_url}
                     size={isFirst ? 48 : 40}
                   />
-                  <p className="mt-1 line-clamp-1 text-[11px] font-semibold opacity-90">
+                  <p className="mt-1 w-full truncate text-[11px] font-semibold opacity-90">
                     @{p?.username}
                   </p>
-                  <p className="mono-stat text-sm font-bold leading-tight">
+                  <p className="mono-stat w-full truncate text-sm font-bold leading-tight">
                     {formatValue(r.val, c.unit_type, c.unit_label)}
                   </p>
                   <span className="mt-1 inline-flex items-center gap-0.5 rounded-full bg-black/30 px-1.5 py-0.5 text-[9px] font-bold">
