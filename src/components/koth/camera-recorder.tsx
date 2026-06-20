@@ -123,6 +123,12 @@ export function CameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
     setRecording(false);
   }, []);
 
+  // Auto-stop when reaching the per-challenge cap.
+  useEffect(() => {
+    if (!recording || !maxSeconds) return;
+    if (elapsed >= maxSeconds * 1000) finish();
+  }, [recording, elapsed, maxSeconds, finish]);
+
   const seconds = Math.floor(elapsed / 1000);
   const mm = String(Math.floor(seconds / 60)).padStart(2, "0");
   const ss = String(seconds % 60).padStart(2, "0");
