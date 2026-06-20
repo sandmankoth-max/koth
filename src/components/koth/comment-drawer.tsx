@@ -439,7 +439,7 @@ function Composer({
         author_id: user.id,
         body: text,
         parent_id: replyTo?.id ?? null,
-        tagged_user_ids: tagged_user_ids.length ? tagged_user_ids : null,
+        tagged_user_ids,
       };
       if (kind === "video") row.submission_id = targetId;
       else row.challenge_id = targetId;
