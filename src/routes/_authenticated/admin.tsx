@@ -604,7 +604,8 @@ function EditChallenge() {
         prize_first: Number(form.prize_first),
         prize_second: Number(form.prize_second),
         prize_third: Number(form.prize_third),
-      })
+        max_video_seconds: form.max_video_seconds === "" ? null : Number(form.max_video_seconds),
+      } as any)
       .eq("id", sel);
     setBusy(false);
     if (error) toast.error(error.message);
