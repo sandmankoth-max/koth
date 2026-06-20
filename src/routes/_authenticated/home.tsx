@@ -15,7 +15,6 @@ import { WelcomeDialog } from "@/components/koth/welcome-dialog";
 import { LiveActivity } from "@/components/koth/live-activity";
 import { PositionCard } from "@/components/koth/position-card";
 import { ChallengeChat } from "@/components/koth/challenge-chat";
-import { ProfileAvatar } from "@/components/koth/profile-avatar";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/home")({
