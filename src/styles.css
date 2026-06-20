@@ -170,4 +170,19 @@
 
   /* Native-tap-target sized button surface. */
   .tap-44 { min-height: 44px; min-width: 44px; }
+
+  /* Inputs on dark KOTH surfaces (auth, modal sheets). */
+  .koth-input {
+    background-color: oklch(1 0 0 / 0.06) !important;
+    color: var(--color-koth-white) !important;
+    border-color: oklch(1 0 0 / 0.18) !important;
+    height: 48px;
+    border-radius: 0.875rem;
+  }
+  .koth-input::placeholder { color: oklch(1 0 0 / 0.4); }
+  .koth-input:focus-visible {
+    outline: none;
+    border-color: var(--color-koth-red) !important;
+    box-shadow: 0 0 0 3px oklch(0.58 0.21 27 / 0.25);
+  }
 }
