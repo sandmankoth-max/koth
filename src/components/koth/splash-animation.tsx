@@ -2,12 +2,12 @@ import { CrownPath } from "./logo-mark";
 
 /**
  * Splash hero animation:
- *   1. Stick figure runs in and stops to the LEFT of the hill (not on it).
+ *   1. Stick figure runs in and stops to the LEFT of the hill.
  *   2. Crouches a few times to charge up — white energy rings pulse out.
- *   3. BLASTOFF — ground-impact starburst, figure rockets up to the apex.
+ *   3. BLASTOFF — ground-impact burst, figure rockets up to the apex.
  *   4. Reaches into the sky; a crown drops from above into his hand.
  *   5. SLAMS the crown onto the peak with an impact flash.
- *   6. Blasts off diagonally into space with a comet trail. Crown stays. Loops.
+ *   6. Figure disappears. Crown stays. Loops.
  */
 export function SplashAnimation() {
   return (
@@ -37,33 +37,19 @@ export function SplashAnimation() {
           <Starburst small />
         </g>
 
-        {/* Comet trail behind the figure during the final blastoff */}
-        <g className="koth-trail">
-          <polygon
-            points="0,0 -8,4 -80,40 -90,38 -82,32"
-            fill="url(#trailGrad)"
-            opacity="0.9"
-          />
-        </g>
-
         {/* Crown — falls from the sky, slams onto apex, stays */}
         <g className="koth-crown">
           <CrownPath />
         </g>
 
-        {/* Stick figure: outer = position, middle = squash/rotate, inner = pose swap */}
+        {/* Stick figure: outer = position, middle = squash, inner = pose swap */}
         <g className="koth-figure">
-          <g className="koth-blast-rotate">
-            <g className="koth-crouch">
-              <g className="koth-arms-down">
-                <StickFigure />
-              </g>
-              <g className="koth-arms-up">
-                <StickFigure armsUp />
-              </g>
-              <g className="koth-arms-fly">
-                <StickFigure flying />
-              </g>
+          <g className="koth-crouch">
+            <g className="koth-arms-down">
+              <StickFigure />
+            </g>
+            <g className="koth-arms-up">
+              <StickFigure armsUp />
             </g>
           </g>
         </g>
@@ -89,19 +75,8 @@ export function SplashAnimation() {
           44%  { transform: translate(60px, 240px); }              /* finish charging */
           52%  { transform: translate(200px, 90px); animation-timing-function: cubic-bezier(.2,.9,.3,1); } /* land on apex */
           66%  { transform: translate(200px, 90px); }              /* hold for slam */
-          76%  { transform: translate(300px, 60px); }              /* lift off */
-          90%, 100% { transform: translate(520px, -120px); }       /* blast into space */
-        }
-
-        /* ===== Blastoff rotation — turns figure into superhero flight pose ===== */
-        .koth-blast-rotate {
-          transform-origin: 0 0;
-          animation: koth-blast-rotate 8s ease-in-out infinite;
-        }
-        @keyframes koth-blast-rotate {
-          0%, 74%   { transform: rotate(0deg); }
-          78%       { transform: rotate(-55deg); }
-          82%, 100% { transform: rotate(-55deg); }
+          70%  { transform: translate(200px, 90px) scale(0); }     /* disappear */
+          100% { transform: translate(200px, 90px) scale(0); }
         }
 
         /* ===== Crouch squash ===== */
@@ -118,27 +93,20 @@ export function SplashAnimation() {
           38%       { transform: scaleY(0.5) scaleX(1.3); }
           44%       { transform: scaleY(0.5) scaleX(1.3); }
           46%       { transform: scaleY(1.35) scaleX(0.8); }       /* blastoff stretch */
-          52%, 74%  { transform: scaleY(1) scaleX(1); }
-          78%       { transform: scaleY(1.15) scaleX(0.85); }       /* flight stretch */
-          82%, 100% { transform: scaleY(1.15) scaleX(0.85); }
+          52%, 66%  { transform: scaleY(1) scaleX(1); }
+          70%, 100% { transform: scaleY(0) scaleX(0); }            /* shrink to nothing */
         }
 
-        /* ===== Pose swaps: normal → arms-up → flying superhero ===== */
+        /* ===== Pose swaps: normal → arms-up ===== */
         .koth-arms-down { opacity: 1; animation: koth-arms-down 8s steps(1, end) infinite; }
         .koth-arms-up   { opacity: 0; animation: koth-arms-up   8s steps(1, end) infinite; }
-        .koth-arms-fly  { opacity: 0; animation: koth-arms-fly  8s steps(1, end) infinite; }
         @keyframes koth-arms-down {
           0%, 51% { opacity: 1; }
           52%, 100% { opacity: 0; }
         }
         @keyframes koth-arms-up {
           0%, 51% { opacity: 0; }
-          52%, 74% { opacity: 1; }
-          75%, 100% { opacity: 0; }
-        }
-        @keyframes koth-arms-fly {
-          0%, 74% { opacity: 0; }
-          75%, 100% { opacity: 1; }
+          52%, 100% { opacity: 1; }
         }
 
         /* ===== Charge rings at (60,240) ===== */
@@ -181,19 +149,6 @@ export function SplashAnimation() {
           100%      { opacity: 0; transform: translate(200px, 78px) scale(0.3); }
         }
 
-        /* ===== Comet trail (only during final blastoff) ===== */
-        .koth-trail {
-          opacity: 0;
-          transform: translate(-60px, 240px);
-          animation: koth-trail 8s ease-in infinite;
-        }
-        @keyframes koth-trail {
-          0%, 67%   { opacity: 0; transform: translate(200px, 90px); }
-          70%       { opacity: 1; transform: translate(220px, 84px); }
-          80%       { opacity: 0.9; transform: translate(320px, 50px); }
-          90%, 100% { opacity: 0; transform: translate(520px, -120px); }
-        }
-
         /* ===== Crown — descends from sky, slams, rests ===== */
         .koth-crown {
           opacity: 0;
@@ -212,19 +167,13 @@ export function SplashAnimation() {
   );
 }
 
-function StickFigure({ armsUp = false, flying = false }: { armsUp?: boolean; flying?: boolean }) {
+function StickFigure({ armsUp = false }: { armsUp?: boolean }) {
   const stroke = "#FFFFFF";
   return (
     <g fill="none" stroke={stroke} strokeWidth="2.5" strokeLinecap="round">
       <circle cx="0" cy="-36" r="5.5" fill={stroke} stroke="none" />
       <line x1="0" y1="-30" x2="0" y2="-14" />
-      {flying ? (
-        <>
-          {/* arms forward like Superman */}
-          <line x1="0" y1="-28" x2="14" y2="-34" />
-          <line x1="0" y1="-28" x2="14" y2="-22" />
-        </>
-      ) : armsUp ? (
+      {armsUp ? (
         <>
           <line x1="0" y1="-30" x2="-7" y2="-46" />
           <line x1="0" y1="-30" x2="7" y2="-46" />
@@ -235,18 +184,10 @@ function StickFigure({ armsUp = false, flying = false }: { armsUp?: boolean; fly
           <line x1="0" y1="-25" x2="10" y2="-17" />
         </>
       )}
-      {flying ? (
-        <>
-          {/* legs straight back */}
-          <line x1="0" y1="-14" x2="-10" y2="-10" />
-          <line x1="0" y1="-14" x2="-10" y2="-4" />
-        </>
-      ) : (
-        <>
-          <line x1="0" y1="-14" x2="-7" y2="-1" />
-          <line x1="0" y1="-14" x2="7" y2="-1" />
-        </>
-      )}
+      <>
+        <line x1="0" y1="-14" x2="-7" y2="-1" />
+        <line x1="0" y1="-14" x2="7" y2="-1" />
+      </>
     </g>
   );
 }
