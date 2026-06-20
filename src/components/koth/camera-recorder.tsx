@@ -1,16 +1,12 @@
 /**
- * Camera capture module — isolated so the underlying engine can be swapped
- * for `@capacitor/camera` / `@capacitor-community/media-capture` later without
- * changing any caller.
- *
- * Contract:
- *   - `recordVideo(): Promise<CapturedVideo>` returns a Blob + a local preview URL.
- *   - The host UI never reads `navigator.mediaDevices` directly; it only uses
- *     this component and the `CapturedVideo` shape it returns.
+ * Camera capture module.
+ * - Reverse button = flip front/back camera (does NOT mirror).
+ * - Flash button = lightning. Back: torch via track constraint when supported.
+ *   Front: full-screen bright white ring overlay (Snap/TikTok "front flash").
+ * - Shutter = Snapchat-style clear circle. While recording, inner square fill.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { RefreshCcw, X, Circle, Square } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { RefreshCcw, X, Zap, ZapOff } from "lucide-react";
 
 export type CapturedVideo = {
   blob: Blob;
@@ -22,7 +18,6 @@ export type CapturedVideo = {
 type Props = {
   onCancel: () => void;
   onCapture: (v: CapturedVideo) => void;
-  /** Hard cap; recorder auto-stops at this many seconds when set. */
   maxSeconds?: number | null;
 };
 
@@ -37,6 +32,8 @@ export function CameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
   const [recording, setRecording] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [elapsed, setElapsed] = useState(0);
+  const [flashOn, setFlashOn] = useState(false);
+  const [hasTorch, setHasTorch] = useState(false);
 
   const stop = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -46,6 +43,7 @@ export function CameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
   useEffect(() => {
     let active = true;
     setError(null);
+    setHasTorch(false);
     (async () => {
       try {
         stop();
@@ -53,32 +51,33 @@ export function CameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
           video: { facingMode: facing, width: { ideal: 1080 }, height: { ideal: 1920 } },
           audio: true,
         });
-        if (!active) {
-          stream.getTracks().forEach((t) => t.stop());
-          return;
-        }
+        if (!active) { stream.getTracks().forEach((t) => t.stop()); return; }
         streamRef.current = stream;
+        const track = stream.getVideoTracks()[0];
+        const caps: any = track?.getCapabilities?.() ?? {};
+        setHasTorch(!!caps.torch);
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           await videoRef.current.play().catch(() => {});
         }
       } catch (e) {
-        setError(
-          e instanceof Error
-            ? e.message
-            : "Camera access was blocked. Allow camera and microphone, then try again.",
-        );
+        setError(e instanceof Error ? e.message : "Camera access blocked. Allow camera + mic and try again.");
       }
     })();
-    return () => {
-      active = false;
-      stop();
-    };
+    return () => { active = false; stop(); };
   }, [facing, stop]);
+
+  // Apply torch only when flash is on AND we're on the back cam.
+  useEffect(() => {
+    const track = streamRef.current?.getVideoTracks()[0];
+    if (!track) return;
+    const wantTorch = flashOn && facing === "environment" && hasTorch;
+    track.applyConstraints({ advanced: [{ torch: wantTorch } as any] } as any).catch(() => {});
+  }, [flashOn, facing, hasTorch, recording]);
 
   useEffect(() => {
     if (!recording) return;
-    const id = setInterval(() => setElapsed(Date.now() - startTsRef.current), 250);
+    const id = setInterval(() => setElapsed(Date.now() - startTsRef.current), 200);
     return () => clearInterval(id);
   }, [recording]);
 
@@ -90,21 +89,18 @@ export function CameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
       "video/webm;codecs=vp8,opus",
       "video/webm",
     ];
-    const mimeType =
-      mimeCandidates.find((m) => typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(m)) ??
-      "";
+    const mimeType = mimeCandidates.find((m) =>
+      typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(m)
+    ) ?? "";
     const recorder = new MediaRecorder(streamRef.current, mimeType ? { mimeType } : undefined);
     chunksRef.current = [];
-    recorder.ondataavailable = (e) => {
-      if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
-    };
+    recorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunksRef.current.push(e.data); };
     recorder.onstop = () => {
       const type = recorder.mimeType || "video/webm";
       const blob = new Blob(chunksRef.current, { type });
-      const previewUrl = URL.createObjectURL(blob);
       onCapture({
         blob,
-        previewUrl,
+        previewUrl: URL.createObjectURL(blob),
         mimeType: type,
         durationMs: Date.now() - startTsRef.current,
       });
@@ -117,13 +113,10 @@ export function CameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
   }, [onCapture]);
 
   const finish = useCallback(() => {
-    if (recorderRef.current && recorderRef.current.state !== "inactive") {
-      recorderRef.current.stop();
-    }
+    if (recorderRef.current && recorderRef.current.state !== "inactive") recorderRef.current.stop();
     setRecording(false);
   }, []);
 
-  // Auto-stop when reaching the per-challenge cap.
   useEffect(() => {
     if (!recording || !maxSeconds) return;
     if (elapsed >= maxSeconds * 1000) finish();
@@ -133,9 +126,11 @@ export function CameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
   const mm = String(Math.floor(seconds / 60)).padStart(2, "0");
   const ss = String(seconds % 60).padStart(2, "0");
 
+  const frontFlashOn = flashOn && facing === "user";
+
   return (
     <div className="fixed inset-0 z-50 bg-black text-koth-white">
-      {/* Full-bleed camera preview */}
+      {/* Preview */}
       <div className="absolute inset-0">
         {error ? (
           <div className="flex h-full w-full items-center justify-center px-6 text-center">
@@ -145,24 +140,26 @@ export function CameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
             </div>
           </div>
         ) : (
-          <video
-            ref={videoRef}
-            playsInline
-            muted
-            autoPlay
-            className="h-full w-full object-cover"
-            style={facing === "user" ? { transform: "scaleX(-1)" } : undefined}
-          />
+          <video ref={videoRef} playsInline muted autoPlay className="h-full w-full object-cover" />
         )}
       </div>
+
+      {/* Front "flash" — bright white ring overlay (Snap/TikTok behavior) */}
+      {frontFlashOn && (
+        <>
+          <div aria-hidden className="pointer-events-none absolute inset-0 z-[5] bg-white/85" />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 z-[6]"
+            style={{ boxShadow: "inset 0 0 160px 60px rgba(255,255,255,0.95)" }}
+          />
+        </>
+      )}
 
       {/* Top overlay */}
       <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-4 py-3">
         <button
-          onClick={() => {
-            stop();
-            onCancel();
-          }}
+          onClick={() => { stop(); onCancel(); }}
           className="tap-44 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur"
           aria-label="Close camera"
         >
@@ -178,48 +175,47 @@ export function CameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
             Max {Math.floor(maxSeconds/60)}:{String(maxSeconds%60).padStart(2,"0")}
           </span>
         ) : <span />}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setFlashOn((v) => !v)}
+            className={`tap-44 inline-flex h-10 w-10 items-center justify-center rounded-full backdrop-blur ${flashOn ? "bg-koth-white text-koth-black" : "bg-black/40 text-koth-white"}`}
+            aria-label={flashOn ? "Turn flash off" : "Turn flash on"}
+            aria-pressed={flashOn}
+          >
+            {flashOn ? <Zap className="h-5 w-5" fill="currentColor" /> : <ZapOff className="h-5 w-5" />}
+          </button>
+          <button
+            onClick={() => setFacing((f) => (f === "user" ? "environment" : "user"))}
+            className="tap-44 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur disabled:opacity-50"
+            aria-label="Switch camera"
+            disabled={recording}
+          >
+            <RefreshCcw className="h-6 w-6" aria-hidden />
+          </button>
+        </div>
+      </div>
+
+      {/* Snapchat-style shutter */}
+      <div className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-8 px-6 pb-10 pt-6">
         <button
-          onClick={() => setFacing((f) => (f === "user" ? "environment" : "user"))}
-          className="tap-44 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur disabled:opacity-50"
-          aria-label="Switch camera"
-          disabled={recording}
+          onClick={recording ? finish : start}
+          disabled={!!error}
+          aria-label={recording ? "Stop recording" : "Start recording"}
+          className="tap-44 relative inline-flex h-20 w-20 items-center justify-center rounded-full border-[5px] border-koth-white bg-transparent active:scale-95 transition-transform"
         >
-          <RefreshCcw className="h-6 w-6" aria-hidden />
+          {recording ? (
+            <span className="block h-7 w-7 rounded-md bg-koth-red" />
+          ) : (
+            <span className="block h-14 w-14 rounded-full bg-koth-white/0" />
+          )}
         </button>
       </div>
 
-      {/* Front-facing "ring light" when recording on front cam */}
-      {recording && facing === "user" && (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 z-[5]"
-          style={{
-            boxShadow: "inset 0 0 120px 40px rgba(255,255,255,0.35)",
-          }}
-        />
+      {facing === "environment" && flashOn && !hasTorch && !recording && (
+        <p className="absolute inset-x-0 bottom-32 z-10 text-center text-[11px] text-koth-white/70">
+          Torch not supported on this device — flash will be ignored.
+        </p>
       )}
-
-      {/* Bottom shutter */}
-      <div className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-8 px-6 pb-10 pt-6">
-        {!recording ? (
-          <Button
-            onClick={start}
-            disabled={!!error}
-            aria-label="Start recording"
-            className="tap-44 h-20 w-20 rounded-full border-4 border-koth-white bg-koth-red p-0 hover:bg-koth-red"
-          >
-            <Circle className="h-6 w-6 fill-koth-white text-koth-white" aria-hidden />
-          </Button>
-        ) : (
-          <Button
-            onClick={finish}
-            aria-label="Stop recording"
-            className="tap-44 h-20 w-20 rounded-full border-4 border-koth-white bg-koth-red p-0 hover:bg-koth-red"
-          >
-            <Square className="h-7 w-7 fill-koth-white text-koth-white" aria-hidden />
-          </Button>
-        )}
-      </div>
     </div>
   );
 }
