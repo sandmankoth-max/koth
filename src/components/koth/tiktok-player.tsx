@@ -285,13 +285,14 @@ function PlayerStage({
         )}
       </button>
 
-      {/* Scrubber */}
-      <div className="absolute inset-x-3 bottom-[88px] z-20">
+      {/* Scrubber — pinned to bottom edge */}
+      <div className="absolute inset-x-3 bottom-1 z-30">
         <VideoScrubber videoRef={videoRef} />
       </div>
 
+
       {/* Bottom-left info */}
-      <div className="absolute bottom-4 left-4 right-20 z-20 text-white">
+      <div className="absolute bottom-7 left-4 right-20 z-20 text-white">
         <Link
           to="/u/$username"
           params={{ username: item.user.username }}

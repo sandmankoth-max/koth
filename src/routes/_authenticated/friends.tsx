@@ -479,13 +479,13 @@ function FeedVideo({ row, c, scrollRoot }: { row: any; c: any; scrollRoot: React
         )}
       </button>
 
-      {/* Scrubber */}
-      <div className="absolute inset-x-3 bottom-[88px] z-20">
+      {/* Scrubber — pinned to bottom edge, above bottom-nav */}
+      <div className="absolute inset-x-3 bottom-1 z-30">
         <VideoScrubber videoRef={videoRef} />
       </div>
 
       {/* Bottom-left info */}
-      <div className="absolute bottom-4 left-4 right-20 z-20 text-white">
+      <div className="absolute bottom-7 left-4 right-20 z-20 text-white">
         <Link
           to="/u/$username"
           params={{ username: p?.username ?? "user" }}
@@ -511,13 +511,18 @@ function FeedVideo({ row, c, scrollRoot }: { row: any; c: any; scrollRoot: React
               Suspended
             </span>
           )}
-          {row.visibility === "friends_only" && (
+          {row.visibility === "friends_only" ? (
             <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
               Friends
             </span>
-          )}
+          ) : row.status !== "verified" && row.status !== "disqualified" ? (
+            <span className="rounded-full bg-koth-red/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+              Attempt
+            </span>
+          ) : null}
         </p>
       </div>
+
 
       {/* Right action rail */}
       <div className="absolute right-2 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center gap-5 text-white">

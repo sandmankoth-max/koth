@@ -56,34 +56,35 @@
 
 :root {
   --radius: 1rem;
+  color-scheme: dark;
 
-  /* Brand hex → oklch */
-  --koth-black: oklch(0.13 0 0);            /* #0D0D0D */
-  --koth-white: oklch(1 0 0);                /* #FFFFFF */
-  --koth-red: oklch(0.58 0.21 27);           /* #E8262B */
-  --koth-steel: oklch(0.42 0.012 264);       /* #4A4F58 */
-  --koth-pr-bg: oklch(0.96 0.04 90);         /* #FFF3D6 */
-  --koth-pr-text: oklch(0.45 0.13 56);       /* #8A4B00 */
-  --koth-silver: oklch(0.79 0.005 270);      /* #B8BCC2 */
-  --koth-bronze: oklch(0.55 0.08 55);        /* #A66A3D */
+  --koth-black: oklch(0.13 0 0);
+  --koth-white: oklch(1 0 0);
+  --koth-red: oklch(0.58 0.21 27);
+  --koth-steel: oklch(0.42 0.012 264);
+  --koth-pr-bg: oklch(0.96 0.04 90);
+  --koth-pr-text: oklch(0.45 0.13 56);
+  --koth-silver: oklch(0.79 0.005 270);
+  --koth-bronze: oklch(0.55 0.08 55);
 
-  --background: oklch(0.98 0 0);
-  --foreground: var(--koth-black);
+  /* ESPN-style dark grey midsection */
+  --background: oklch(0.19 0.005 264);
+  --foreground: var(--koth-white);
 
-  --card: var(--koth-white);
-  --card-foreground: var(--koth-black);
+  --card: oklch(0.235 0.005 264);
+  --card-foreground: var(--koth-white);
 
-  --popover: var(--koth-white);
-  --popover-foreground: var(--koth-black);
+  --popover: oklch(0.22 0.005 264);
+  --popover-foreground: var(--koth-white);
 
   --primary: var(--koth-red);
   --primary-foreground: var(--koth-white);
 
-  --secondary: oklch(0.95 0 0);
-  --secondary-foreground: var(--koth-black);
+  --secondary: oklch(0.26 0.005 264);
+  --secondary-foreground: var(--koth-white);
 
-  --muted: oklch(0.95 0 0);
-  --muted-foreground: var(--koth-steel);
+  --muted: oklch(0.26 0.005 264);
+  --muted-foreground: oklch(0.72 0.005 264);
 
   --accent: var(--koth-pr-bg);
   --accent-foreground: var(--koth-pr-text);
@@ -91,25 +92,11 @@
   --destructive: var(--koth-red);
   --destructive-foreground: var(--koth-white);
 
-  --border: oklch(0.9 0 0);
-  --input: oklch(0.9 0 0);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 14%);
   --ring: var(--koth-red);
 }
 
-.dark {
-  --background: var(--koth-black);
-  --foreground: var(--koth-white);
-  --card: oklch(0.18 0 0);
-  --card-foreground: var(--koth-white);
-  --popover: oklch(0.18 0 0);
-  --popover-foreground: var(--koth-white);
-  --secondary: oklch(0.22 0 0);
-  --secondary-foreground: var(--koth-white);
-  --muted: oklch(0.22 0 0);
-  --muted-foreground: oklch(0.72 0.005 264);
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 15%);
-}
 
 @layer base {
   * { border-color: var(--color-border); }
