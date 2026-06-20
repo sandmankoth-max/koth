@@ -151,7 +151,14 @@ function FeedTab({ onAdd }: { onAdd: () => void }) {
               <Avatar name={p?.display_name ?? p?.username} avatarPath={p?.avatar_url} size={40} />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-foreground">{p?.display_name}</p>
-                <p className="truncate text-xs text-muted-foreground">@{p?.username}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  @{p?.username}
+                  {s.visibility === "friends_only" && (
+                    <span className="ml-2 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                      Friends only
+                    </span>
+                  )}
+                </p>
               </div>
               {c && (
                 <div className="mono-stat text-lg font-bold text-foreground">
