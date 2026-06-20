@@ -100,10 +100,9 @@ function FeedTab({ tab, setTab, onAdd }: { tab: Tab; setTab: (t: Tab) => void; o
       const { data } = await supabase
         .from("submissions")
         .select(
-          "id, user_id, self_reported_value, admin_verified_value, video_path, submitted_at, visibility, profiles!submissions_user_id_fkey(username, display_name, avatar_url)",
+          "id, user_id, self_reported_value, admin_verified_value, video_path, submitted_at, visibility, status, profiles!submissions_user_id_fkey(username, display_name, avatar_url)",
         )
         .eq("challenge_id", challengeQ.data!.id)
-        .neq("status", "disqualified")
         .in("user_id", visibleUserIds)
         .order("submitted_at", { ascending: false });
       return data ?? [];
@@ -113,16 +112,16 @@ function FeedTab({ tab, setTab, onAdd }: { tab: Tab; setTab: (t: Tab) => void; o
   const c = challengeQ.data;
   const noFriends = friendsQ.data && friendsQ.data.length === 0;
 
-  // Friends podium: best entry per user (across all visibility levels).
+  // Friends podium: best entry per user (excluding suspended attempts).
   const podium = (() => {
-    const rows = feedQ.data ?? [];
+    const rows = (feedQ.data ?? []).filter((r: any) => r.status !== "disqualified");
     const byUser = new Map<string, any>();
     for (const r of rows) {
       const val = Number(r.admin_verified_value ?? r.self_reported_value);
       const prev = byUser.get(r.user_id);
       if (!prev || val > prev.val) byUser.set(r.user_id, { ...r, val });
     }
-    return Array.from(byUser.values()).sort((a, b) => b.val - a.val).slice(0, 3);
+    return Array.from(byUser.values()).sort((a, b) => b.val - a.val).slice(0, 10);
   })();
 
   const [podiumOpen, setPodiumOpen] = useState(false);
