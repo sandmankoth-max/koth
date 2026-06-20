@@ -96,6 +96,8 @@ function Home() {
       await queryClient.invalidateQueries({ queryKey: ["my-entry", c?.id, user?.id] });
       await queryClient.invalidateQueries({ queryKey: ["my-rank", c?.id, user?.id] });
       await queryClient.invalidateQueries({ queryKey: ["top3", c?.id] });
+      await queryClient.invalidateQueries({ queryKey: ["leaderboard", c?.id] });
+      await queryClient.invalidateQueries({ queryKey: ["feed", c?.id] });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Delete failed");
     } finally {
