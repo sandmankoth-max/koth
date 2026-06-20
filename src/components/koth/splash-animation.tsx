@@ -1,134 +1,238 @@
 import { CrownPath } from "./logo-mark";
 
 /**
- * Splash animation:
- *   1. Stick figure runs in from the left and stops at the base of the hill.
- *   2. Crouches three times, charging up (energy rings pulse on the last one).
- *   3. Explodes upward, jumps to the apex, and places the crown.
- *   4. Hops down the right side and runs off-screen. Crown stays put. Loops.
+ * Splash hero animation:
+ *   1. Stick figure runs in and stops to the LEFT of the hill (not on it).
+ *   2. Crouches a few times to charge up — white energy rings pulse out.
+ *   3. BLASTOFF — ground-impact starburst, figure rockets up to the apex.
+ *   4. Reaches into the sky; a crown drops from above into his hand.
+ *   5. SLAMS the crown onto the peak with an impact flash.
+ *   6. Blasts off diagonally into space with a comet trail. Crown stays. Loops.
  */
 export function SplashAnimation() {
   return (
     <div className="relative mx-auto w-full max-w-[340px]">
       <svg viewBox="0 0 400 280" className="block h-auto w-full" aria-hidden>
         {/* Ground line */}
-        <line
-          x1="0"
-          y1="240"
-          x2="400"
-          y2="240"
-          stroke="#FFFFFF"
-          strokeOpacity="0.15"
-          strokeWidth="1"
-        />
+        <line x1="0" y1="240" x2="400" y2="240" stroke="#FFFFFF" strokeOpacity="0.15" strokeWidth="1" />
 
         {/* Hill — split into two close reds */}
         <polygon points="200,90 60,240 200,240" fill="#E8262B" />
         <polygon points="200,90 340,240 200,240" fill="#B81F23" />
 
-        {/* Crown — snaps onto the apex when the figure lands */}
+        {/* Charge-up rings at the launch spot */}
+        <g className="koth-charge">
+          <circle cx="0" cy="-18" r="14" fill="none" stroke="#FFFFFF" strokeWidth="1.5" />
+          <circle cx="0" cy="-18" r="22" fill="none" stroke="#FFFFFF" strokeWidth="1" />
+          <circle cx="0" cy="-18" r="30" fill="none" stroke="#FFFFFF" strokeWidth="0.75" />
+        </g>
+
+        {/* Ground-impact starburst at blastoff */}
+        <g className="koth-impact" transform="translate(60 240)">
+          <Starburst />
+        </g>
+
+        {/* Apex slam-impact flash */}
+        <g className="koth-slam" transform="translate(200 78)">
+          <Starburst small />
+        </g>
+
+        {/* Comet trail behind the figure during the final blastoff */}
+        <g className="koth-trail">
+          <polygon
+            points="0,0 -8,4 -80,40 -90,38 -82,32"
+            fill="url(#trailGrad)"
+            opacity="0.9"
+          />
+        </g>
+
+        {/* Crown — falls from the sky, slams onto apex, stays */}
         <g className="koth-crown">
           <CrownPath />
         </g>
 
-        {/* Charge-up rings (only visible during power-up phase) */}
-        <g className="koth-charge">
-          <circle cx="0" cy="-18" r="14" fill="none" stroke="#FFFFFF" strokeWidth="1.5" opacity="0.9" />
-          <circle cx="0" cy="-18" r="22" fill="none" stroke="#FFFFFF" strokeWidth="1" opacity="0.6" />
-          <circle cx="0" cy="-18" r="30" fill="none" stroke="#FFFFFF" strokeWidth="0.75" opacity="0.35" />
-        </g>
-
-        {/* Stick figure — outer group does position, inner group does crouch squash */}
+        {/* Stick figure: outer = position, middle = squash, inner = arms-up swap */}
         <g className="koth-figure">
           <g className="koth-crouch">
-            <StickFigure />
+            <g className="koth-arms-down">
+              <StickFigure />
+            </g>
+            <g className="koth-arms-up">
+              <StickFigure armsUp />
+            </g>
           </g>
         </g>
+
+        <defs>
+          <linearGradient id="trailGrad" x1="1" y1="0" x2="0" y2="0.5">
+            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="1" />
+            <stop offset="60%" stopColor="#FFFFFF" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
+          </linearGradient>
+        </defs>
       </svg>
 
       <style>{`
-        /* ----- Figure path (position only) ----- */
+        /* ===== Figure position ===== */
         .koth-figure {
           transform: translate(-60px, 240px);
-          animation: koth-figure-path 7s ease-in-out infinite;
+          animation: koth-figure-path 8s ease-in-out infinite;
         }
         @keyframes koth-figure-path {
           0%   { transform: translate(-60px, 240px); }
-          12%  { transform: translate(120px, 240px); } /* arrive at hill base, left side */
-          50%  { transform: translate(120px, 240px); } /* hold while crouching/charging */
-          58%  { transform: translate(200px, 90px); animation-timing-function: ease-out; } /* peak */
-          68%  { transform: translate(200px, 90px); } /* plant crown */
-          78%  { transform: translate(280px, 240px); } /* down the right side */
-          92%, 100% { transform: translate(480px, 240px); } /* run off right */
+          12%  { transform: translate(60px, 240px); }              /* arrive LEFT of hill */
+          44%  { transform: translate(60px, 240px); }              /* finish charging */
+          52%  { transform: translate(200px, 90px); animation-timing-function: cubic-bezier(.2,.9,.3,1); } /* land on apex */
+          66%  { transform: translate(200px, 90px); }              /* hold for slam */
+          76%  { transform: translate(300px, 60px); }              /* lift off */
+          90%, 100% { transform: translate(520px, -120px); }       /* blast into space */
         }
 
-        /* ----- Crouch squash (inner group) ----- */
+        /* ===== Crouch squash ===== */
         .koth-crouch {
           transform-origin: 0 0;
-          animation: koth-crouch 7s ease-in-out infinite;
+          animation: koth-crouch 8s ease-in-out infinite;
         }
         @keyframes koth-crouch {
           0%, 14%   { transform: scaleY(1) scaleX(1); }
-          /* crouch 1 */
           18%       { transform: scaleY(0.75) scaleX(1.1); }
           22%       { transform: scaleY(1) scaleX(1); }
-          /* crouch 2 */
           26%       { transform: scaleY(0.7) scaleX(1.15); }
           30%       { transform: scaleY(1) scaleX(1); }
-          /* crouch 3 — deeper, holds while charging */
-          36%       { transform: scaleY(0.55) scaleX(1.25); }
-          48%       { transform: scaleY(0.55) scaleX(1.25); }
-          /* explode upward into the jump */
-          52%       { transform: scaleY(1.25) scaleX(0.85); }
-          58%, 100% { transform: scaleY(1) scaleX(1); }
+          38%       { transform: scaleY(0.5) scaleX(1.3); }
+          44%       { transform: scaleY(0.5) scaleX(1.3); }
+          46%       { transform: scaleY(1.35) scaleX(0.8); }       /* blastoff stretch */
+          52%, 100% { transform: scaleY(1) scaleX(1); }
         }
 
-        /* ----- Charge rings (positioned to match figure base) ----- */
+        /* ===== Arms up swap (while reaching for / slamming the crown) ===== */
+        .koth-arms-down { opacity: 1; animation: koth-arms-down 8s steps(1, end) infinite; }
+        .koth-arms-up   { opacity: 0; animation: koth-arms-up   8s steps(1, end) infinite; }
+        @keyframes koth-arms-down {
+          0%, 51% { opacity: 1; }
+          52%, 67% { opacity: 0; }
+          68%, 100% { opacity: 1; }
+        }
+        @keyframes koth-arms-up {
+          0%, 51% { opacity: 0; }
+          52%, 67% { opacity: 1; }
+          68%, 100% { opacity: 0; }
+        }
+
+        /* ===== Charge rings at (60,240) ===== */
         .koth-charge {
-          transform: translate(120px, 240px);
+          transform: translate(60px, 240px) scale(0.4);
           opacity: 0;
-          animation: koth-charge 7s ease-out infinite;
-          transform-origin: 120px 222px;
+          animation: koth-charge 8s ease-out infinite;
         }
         @keyframes koth-charge {
-          0%, 35%   { opacity: 0; transform: translate(120px, 240px) scale(0.4); }
-          40%       { opacity: 1; transform: translate(120px, 240px) scale(0.7); }
-          50%       { opacity: 0.9; transform: translate(120px, 240px) scale(1); }
-          54%       { opacity: 0; transform: translate(120px, 240px) scale(1.5); }
-          100%      { opacity: 0; transform: translate(120px, 240px) scale(0.4); }
+          0%, 30%   { opacity: 0; transform: translate(60px, 240px) scale(0.4); }
+          36%       { opacity: 1; transform: translate(60px, 240px) scale(0.7); }
+          43%       { opacity: 0.9; transform: translate(60px, 240px) scale(1.05); }
+          46%       { opacity: 0; transform: translate(60px, 240px) scale(1.6); }
+          100%      { opacity: 0; transform: translate(60px, 240px) scale(0.4); }
         }
 
-        /* ----- Crown placement ----- */
+        /* ===== Ground impact at blastoff ===== */
+        .koth-impact {
+          opacity: 0;
+          transform-box: fill-box;
+          transform-origin: center;
+          animation: koth-impact 8s ease-out infinite;
+        }
+        @keyframes koth-impact {
+          0%, 44%   { opacity: 0; transform: translate(60px, 240px) scale(0.3); }
+          46%       { opacity: 1; transform: translate(60px, 240px) scale(1); }
+          50%       { opacity: 0; transform: translate(60px, 240px) scale(1.8); }
+          100%      { opacity: 0; transform: translate(60px, 240px) scale(0.3); }
+        }
+
+        /* ===== Apex slam impact ===== */
+        .koth-slam {
+          opacity: 0;
+          animation: koth-slam 8s ease-out infinite;
+        }
+        @keyframes koth-slam {
+          0%, 63%   { opacity: 0; transform: translate(200px, 78px) scale(0.3); }
+          65%       { opacity: 1; transform: translate(200px, 78px) scale(1); }
+          69%       { opacity: 0; transform: translate(200px, 78px) scale(1.6); }
+          100%      { opacity: 0; transform: translate(200px, 78px) scale(0.3); }
+        }
+
+        /* ===== Comet trail (only during final blastoff) ===== */
+        .koth-trail {
+          opacity: 0;
+          transform: translate(-60px, 240px);
+          animation: koth-trail 8s ease-in infinite;
+        }
+        @keyframes koth-trail {
+          0%, 67%   { opacity: 0; transform: translate(200px, 90px); }
+          70%       { opacity: 1; transform: translate(220px, 84px); }
+          80%       { opacity: 0.9; transform: translate(320px, 50px); }
+          90%, 100% { opacity: 0; transform: translate(520px, -120px); }
+        }
+
+        /* ===== Crown — descends from sky, slams, rests ===== */
         .koth-crown {
           opacity: 0;
-          transform: translate(200px, 60px) scale(0.6);
-          animation: koth-crown-place 7s ease-out infinite;
+          transform: translate(200px, -10px) scale(1.1);
+          animation: koth-crown-place 8s ease-in-out infinite;
         }
         @keyframes koth-crown-place {
-          0%, 60%   { opacity: 0; transform: translate(200px, 55px) scale(0.6); }
-          66%       { opacity: 1; transform: translate(200px, 78px) scale(1.35); }
-          72%, 100% { opacity: 1; transform: translate(200px, 78px) scale(1.2); }
+          0%, 52%   { opacity: 0; transform: translate(200px, -10px) scale(1.1); }
+          56%       { opacity: 1; transform: translate(200px, 40px) scale(1.15); } /* in the sky, visible */
+          63%       { opacity: 1; transform: translate(200px, 60px) scale(1.2); }  /* in figure's hands */
+          66%       { opacity: 1; transform: translate(200px, 78px) scale(1.4); }  /* SLAM */
+          70%, 100% { opacity: 1; transform: translate(200px, 78px) scale(1.2); }  /* rest on apex */
         }
       `}</style>
     </div>
   );
 }
 
-function StickFigure() {
-  // Slightly bigger figure (~20w x 42h). Origin at feet (0,0).
+function StickFigure({ armsUp = false }: { armsUp?: boolean }) {
   const stroke = "#FFFFFF";
   return (
     <g fill="none" stroke={stroke} strokeWidth="2.5" strokeLinecap="round">
-      {/* head */}
       <circle cx="0" cy="-36" r="5.5" fill={stroke} stroke="none" />
-      {/* body */}
       <line x1="0" y1="-30" x2="0" y2="-14" />
-      {/* arms */}
-      <line x1="0" y1="-25" x2="-10" y2="-17" />
-      <line x1="0" y1="-25" x2="10" y2="-17" />
-      {/* legs */}
+      {armsUp ? (
+        <>
+          <line x1="0" y1="-30" x2="-7" y2="-46" />
+          <line x1="0" y1="-30" x2="7" y2="-46" />
+        </>
+      ) : (
+        <>
+          <line x1="0" y1="-25" x2="-10" y2="-17" />
+          <line x1="0" y1="-25" x2="10" y2="-17" />
+        </>
+      )}
       <line x1="0" y1="-14" x2="-7" y2="-1" />
       <line x1="0" y1="-14" x2="7" y2="-1" />
+    </g>
+  );
+}
+
+function Starburst({ small = false }: { small?: boolean }) {
+  const r1 = small ? 6 : 8;
+  const r2 = small ? 16 : 22;
+  const stroke = "#FFFFFF";
+  const spokes = [0, 45, 90, 135, 180, 225, 270, 315];
+  return (
+    <g stroke={stroke} strokeWidth="1.8" strokeLinecap="round" fill="none">
+      {spokes.map((deg) => {
+        const rad = (deg * Math.PI) / 180;
+        return (
+          <line
+            key={deg}
+            x1={Math.cos(rad) * r1}
+            y1={Math.sin(rad) * r1}
+            x2={Math.cos(rad) * r2}
+            y2={Math.sin(rad) * r2}
+          />
+        );
+      })}
+      <circle cx="0" cy="0" r={r1} stroke={stroke} strokeWidth="1.5" fill="none" />
     </g>
   );
 }

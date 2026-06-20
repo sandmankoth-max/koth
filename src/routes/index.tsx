@@ -31,7 +31,7 @@ function Splash() {
       <div className="flex flex-1 flex-col items-center justify-center gap-8">
         <SplashAnimation />
 
-        <h1 className="label-broadcast text-center text-lg tracking-[0.18em] text-koth-white sm:text-xl">
+        <h1 className="label-broadcast text-center text-2xl tracking-[0.18em] text-koth-white sm:text-3xl">
           King<span className="text-koth-red">.</span> Of
           <span className="text-koth-red">.</span> The
           <span className="text-koth-red">.</span> Hill
