@@ -15,6 +15,8 @@ const iconFor = (t: string) =>
   t === "podium_lost" ? <ArrowDown className="h-5 w-5 text-koth-red" /> :
   t === "overtaken" ? <ArrowUp className="h-5 w-5 text-koth-steel" /> :
   t === "deadline_reminder" || t === "deadline_reminder_24h" ? <Flag className="h-5 w-5 text-koth-pr-text" /> :
+  t === "friend_request" ? <UserPlus className="h-5 w-5 text-koth-red" /> :
+  t === "friend_accepted" ? <UserCheck className="h-5 w-5 text-koth-red" /> :
   <Bell className="h-5 w-5 text-foreground" />;
 
 const labelFor = (n: any) => {
