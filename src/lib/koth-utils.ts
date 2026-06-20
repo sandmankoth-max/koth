@@ -23,8 +23,10 @@ export function formatValue(value: number | null | undefined, unitType: string, 
 }
 
 export function shortUnitLabel(unitType: string, unitLabel: string) {
-  if (unitType === "time_seconds") return "sec";
-  if (unitType === "count_reps") return "reps";
+  // formatValue already embeds the unit for these built-ins, so avoid
+  // rendering a duplicate ("80s sec").
+  if (unitType === "time_seconds") return "";
+  if (unitType === "count_reps") return "";
   return unitLabel;
 }
 

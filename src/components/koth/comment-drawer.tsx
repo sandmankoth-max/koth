@@ -2,6 +2,16 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Avatar } from "@/components/koth/avatar";
 import { formatDistanceToNowStrict } from "date-fns";
 import { Heart, MessageCircle, Send, Trash2 } from "lucide-react";
@@ -115,8 +125,12 @@ export function CommentDrawer({ kind, targetId, ownerId, open, onOpenChange }: P
 
   const [replyTo, setReplyTo] = useState<CommentRow | null>(null);
 
-  async function deleteComment(id: string) {
-    if (!confirm("Delete this comment?")) return;
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+
+  async function confirmDelete() {
+    const id = pendingDelete;
+    if (!id) return;
+    setPendingDelete(null);
     const { error } = await (supabase.from(table) as any).delete().eq("id", id);
     if (error) toast.error(error.message);
     else qc.invalidateQueries({ queryKey: [`${kind}-comments`, targetId] });
@@ -126,6 +140,7 @@ export function CommentDrawer({ kind, targetId, ownerId, open, onOpenChange }: P
   }
 
   return (
+    <>
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[85vh]">
         <DrawerHeader>
@@ -155,7 +170,7 @@ export function CommentDrawer({ kind, targetId, ownerId, open, onOpenChange }: P
                   ownerId={ownerId}
                   viewerId={user?.id}
                   onReply={() => setReplyTo(c)}
-                  onDelete={deleteComment}
+                  onDelete={setPendingDelete}
                 />
               ))}
             </ul>
@@ -176,7 +191,29 @@ export function CommentDrawer({ kind, targetId, ownerId, open, onOpenChange }: P
           }}
         />
       </DrawerContent>
+
+      <AlertDialog open={!!pendingDelete} onOpenChange={(o) => !o && setPendingDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this comment?</AlertDialogTitle>
+            <AlertDialogDescription>This cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                confirmDelete();
+              }}
+              className="bg-koth-red text-koth-white hover:bg-koth-red/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Drawer>
+    </>
   );
 }
 
@@ -439,7 +476,7 @@ function Composer({
         author_id: user.id,
         body: text,
         parent_id: replyTo?.id ?? null,
-        tagged_user_ids: tagged_user_ids.length ? tagged_user_ids : null,
+        tagged_user_ids,
       };
       if (kind === "video") row.submission_id = targetId;
       else row.challenge_id = targetId;

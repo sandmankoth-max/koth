@@ -3,6 +3,16 @@ import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Heart, MessageCircle, Share2, X, Play, ChevronUp, ChevronDown, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -94,13 +104,13 @@ function PlayerStage({
   const [burst, setBurst] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const lastTap = useRef(0);
   const touchStartY = useRef<number | null>(null);
   const isOwner = !!user && user.id === item.user.id;
 
   async function handleDelete() {
     if (!isOwner || deleting) return;
-    if (!confirm("Delete this video? This cannot be undone.")) return;
     setDeleting(true);
     try {
       await deleteSubmission({ data: { submissionId: item.id } });
@@ -111,6 +121,7 @@ function PlayerStage({
       qc.invalidateQueries({ queryKey: ["top3"] });
       qc.invalidateQueries({ queryKey: ["feed"] });
       qc.invalidateQueries({ queryKey: ["user-videos"] });
+      setDeleteOpen(false);
       onClose();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Delete failed");
@@ -338,13 +349,37 @@ function PlayerStage({
         />
         {isOwner && (
           <RailButton
-            onClick={handleDelete}
+            onClick={() => setDeleteOpen(true)}
             icon={<Trash2 className="h-6 w-6" />}
             count={0}
             label="delete"
           />
         )}
       </div>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this video?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This cannot be undone. Your entry will be removed from the leaderboard.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDelete();
+              }}
+              disabled={deleting}
+              className="bg-koth-red text-koth-white hover:bg-koth-red/90"
+            >
+              {deleting ? "Deleting…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <CommentDrawer
         kind="video"

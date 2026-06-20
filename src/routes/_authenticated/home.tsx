@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { WelcomeDialog } from "@/components/koth/welcome-dialog";
 import { LiveActivity } from "@/components/koth/live-activity";
 import { PositionCard } from "@/components/koth/position-card";
-import { ChallengeChat } from "@/components/koth/challenge-chat";
+
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/home")({
@@ -161,8 +161,6 @@ function Home() {
       {/* Live activity feed */}
       <LiveActivity challengeId={c.id} unitType={c.unit_type} unitLabel={c.unit_label} />
 
-      {/* Trash talk */}
-      <ChallengeChat challengeId={c.id} />
 
 
       {/* Your position */}
@@ -297,9 +295,11 @@ function TopThreePreview({
                 </div>
                 <div className="mono-stat text-base font-bold text-foreground">
                   {formatValue(r.val, unitType, unitLabel)}
-                  <span className="ml-1 text-xs font-normal text-muted-foreground">
-                    {shortUnitLabel(unitType, unitLabel)}
-                  </span>
+                  {shortUnitLabel(unitType, unitLabel) && (
+                    <span className="ml-1 text-xs font-normal text-muted-foreground">
+                      {shortUnitLabel(unitType, unitLabel)}
+                    </span>
+                  )}
                 </div>
               </li>
             );

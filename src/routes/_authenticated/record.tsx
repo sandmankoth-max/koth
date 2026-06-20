@@ -172,12 +172,14 @@ function Record() {
         <div className="space-y-4">
           <Label className="label-broadcast text-muted-foreground">Your {challenge.unit_label}</Label>
           <Input
-            type="number"
+            type="text"
             inputMode="decimal"
-            step="any"
-            min="0"
+            pattern="[0-9]*[.]?[0-9]*"
             value={reportedValue}
-            onChange={(e) => setReportedValue(e.target.value)}
+            onChange={(e) => {
+              const v = e.target.value.replace(",", ".");
+              if (v === "" || /^\d*\.?\d*$/.test(v)) setReportedValue(v);
+            }}
             autoFocus
             placeholder="0"
             className="mono-stat h-20 rounded-2xl text-center text-4xl font-bold"
