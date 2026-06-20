@@ -87,7 +87,9 @@ function Record() {
         .select("id")
         .single();
       if (insErr) throw insErr;
-      await deletePreviousSubmissions({ data: { challengeId: challenge.id, keepSubmissionId: submission.id } });
+      await deletePreviousSubmissions({
+        data: { challengeId: challenge.id, keepSubmissionId: submission.id },
+      });
 
       toast.success("Submission locked in. Good luck.");
       navigate({ to: "/home" });
