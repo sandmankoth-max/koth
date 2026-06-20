@@ -434,7 +434,7 @@ function Composer({
       if (kind === "video") row.submission_id = targetId;
       else row.challenge_id = targetId;
 
-      const { error } = await supabase.from(tableName(kind)).insert(row);
+      const { error } = await (supabase.from(tableName(kind)) as any).insert(row);
       if (error) throw error;
       setBody("");
       setTaggedIds(new Map());
