@@ -62,8 +62,7 @@ export function CommentDrawer({ kind, targetId, ownerId, open, onOpenChange }: P
     queryKey: [`${kind}-comments`, targetId],
     enabled: open,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from(table)
+      const { data, error } = await (supabase.from(table) as any)
         .select(
           "id, author_id, body, parent_id, reply_count, like_count, created_at, tagged_user_ids, profiles!inner(username, display_name, avatar_url)",
         )
