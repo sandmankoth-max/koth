@@ -30,7 +30,7 @@ export function PositionCard({
         .select("user_id, self_reported_value, admin_verified_value")
         .eq("challenge_id", challengeId)
         .eq("is_active_entry", true)
-        .neq("status", "disqualified");
+        .eq("status", "verified");
       return (data ?? [])
         .map((r) => ({
           user_id: r.user_id,
