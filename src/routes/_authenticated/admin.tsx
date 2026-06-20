@@ -249,12 +249,37 @@ function ReviewSubmissions() {
   );
 }
 
-function SubmissionRow({ s, onUpdate }: { s: any; onUpdate: (p: any) => void }) {
+function SubmissionRow({ s, onUpdate }: { s: any; onUpdate: (p: any) => Promise<void> | void }) {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [verified, setVerified] = useState<string>(s.admin_verified_value?.toString() ?? "");
   useEffect(() => {
     getVideoSignedUrl(s.video_path).then(setVideoUrl);
   }, [s.video_path]);
+
+  async function submitVerified() {
+    const patch: any = {
+      status: "verified",
+      is_active_entry: true,
+      admin_verified_value: verified === "" ? null : Number(verified),
+    };
+    await onUpdate(patch);
+  }
+
+  async function reset() {
+    const { error } = await supabase.rpc("admin_restore_submission" as any, { p_submission_id: s.id });
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Restored to leaderboard");
+      setVerified("");
+      await onUpdate({
+        status: "pending_review",
+        is_active_entry: true,
+        admin_verified_value: null,
+        __local: true,
+      });
+    }
+  }
+
   return (
     <div className="space-y-3 rounded-3xl border border-border bg-card p-4">
       <div className="flex items-center gap-3">
@@ -279,21 +304,22 @@ function SubmissionRow({ s, onUpdate }: { s: any; onUpdate: (p: any) => void }) 
           <p className="mono-stat text-lg font-bold">{s.self_reported_value}</p>
         </div>
         <div>
-          <Label className="label-broadcast text-muted-foreground">Verified value</Label>
+          <Label className="label-broadcast text-muted-foreground">Adjusted value (optional)</Label>
           <Input
             type="number"
             step="any"
+            placeholder="Leave blank to accept reported"
             value={verified}
             onChange={(e) => setVerified(e.target.value)}
-            onBlur={() =>
-              onUpdate({ admin_verified_value: verified === "" ? null : Number(verified) })
-            }
           />
         </div>
       </div>
+      <p className="text-xs text-muted-foreground">
+        Submit accepts the reported time, or the adjusted value if you entered one. The leaderboard updates immediately.
+      </p>
       <div className="flex flex-wrap gap-2">
-        <Button size="sm" onClick={() => onUpdate({ status: "verified" })} className="rounded-full bg-koth-red text-koth-white">
-          Verify
+        <Button size="sm" onClick={submitVerified} className="rounded-full bg-koth-red text-koth-white">
+          Submit
         </Button>
         <Button size="sm" variant="outline" onClick={() => onUpdate({ status: "flagged" })} className="rounded-full">
           Flag
@@ -301,7 +327,7 @@ function SubmissionRow({ s, onUpdate }: { s: any; onUpdate: (p: any) => void }) 
         <Button size="sm" variant="outline" onClick={() => onUpdate({ status: "disqualified", is_active_entry: false })} className="rounded-full">
           Disqualify
         </Button>
-        <Button size="sm" variant="outline" onClick={() => onUpdate({ status: "pending_review" })} className="rounded-full">
+        <Button size="sm" variant="outline" onClick={reset} className="rounded-full">
           Reset
         </Button>
       </div>
