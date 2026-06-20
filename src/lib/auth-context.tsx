@@ -164,6 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // non-fatal — user can set avatar later in profile
       }
     }
+    if (newUserId) recordDeviceFingerprint(newUserId);
   }, []);
 
   const signOut = useCallback(async () => {
