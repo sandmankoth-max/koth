@@ -33,6 +33,7 @@ export type Profile = {
   date_of_birth: string;
   avatar_url: string | null;
   age_consent_ack_at: string;
+  bio: string | null;
 };
 
 interface AuthState {

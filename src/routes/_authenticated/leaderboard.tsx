@@ -6,8 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Countdown } from "@/components/koth/countdown";
 import { RankBadge } from "@/components/koth/rank-badge";
 import { Avatar } from "@/components/koth/avatar";
-import { formatValue, shortUnitLabel, getVideoSignedUrl } from "@/lib/koth-utils";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { formatValue, shortUnitLabel } from "@/lib/koth-utils";
+import { TikTokPlayer, type PlayerItem } from "@/components/koth/tiktok-player";
 import { Crown, Play, Sparkles, Trophy } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/leaderboard")({
@@ -65,11 +65,28 @@ function Leaderboard() {
     },
   });
 
-  const [open, setOpen] = useState<null | { url: string; user: string }>(null);
+  const [playerOpen, setPlayerOpen] = useState(false);
+  const [playerIndex, setPlayerIndex] = useState(0);
 
-  async function openVideo(path: string, user: string) {
-    const url = await getVideoSignedUrl(path);
-    if (url) setOpen({ url, user });
+  const rows = rowsQ.data ?? [];
+  const items: PlayerItem[] = rows.map((r: any) => ({
+    id: r.id,
+    video_path: r.video_path,
+    value: r.val,
+    unit_type: c?.unit_type,
+    unit_label: c?.unit_label,
+    challenge_title: c?.title ?? null,
+    user: {
+      id: r.user_id,
+      username: r.profiles?.username ?? "user",
+      display_name: r.profiles?.display_name,
+      avatar_url: r.profiles?.avatar_url,
+    },
+  }));
+
+  function openVideoAt(i: number) {
+    setPlayerIndex(i);
+    setPlayerOpen(true);
   }
 
   if (!c) {
@@ -82,7 +99,6 @@ function Leaderboard() {
     );
   }
 
-  const rows = rowsQ.data ?? [];
   const podium = rows.slice(0, 3);
   const rest = rows.slice(3);
 
@@ -139,10 +155,11 @@ function Leaderboard() {
                 );
               }
               const p = r.profiles;
+              const idx = rows.findIndex((x: any) => x.id === r.id);
               return (
                 <button
                   key={r.id}
-                  onClick={() => openVideo(r.video_path, p?.username ?? "?")}
+                  onClick={() => openVideoAt(idx)}
                   className={`tap-44 ${orderCls} ${heightCls} relative flex flex-col items-center justify-end rounded-2xl border p-2 text-center shadow-lg ${tile}`}
                 >
                   {isFirst && (
@@ -162,8 +179,8 @@ function Leaderboard() {
                   <p className="mono-stat text-sm font-bold leading-tight">
                     {formatValue(r.val, c.unit_type, c.unit_label)}
                   </p>
-                  <span className="mt-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-black/25 text-[10px] font-bold">
-                    {rank}
+                  <span className="mt-1 inline-flex items-center gap-0.5 rounded-full bg-black/30 px-1.5 py-0.5 text-[9px] font-bold">
+                    <Play className="h-2.5 w-2.5" fill="currentColor" aria-hidden /> Tap to watch
                   </span>
                   {isNew(r.submitted_at) && (
                     <span className="absolute -top-2 right-2 inline-flex items-center gap-0.5 rounded-full bg-koth-white px-1.5 py-0.5 text-[9px] font-bold text-koth-red">
@@ -182,10 +199,11 @@ function Leaderboard() {
                 {rest.map((r: any, i) => {
                   const p = r.profiles;
                   const rank = i + 4;
+                  const idx = rows.findIndex((x: any) => x.id === r.id);
                   return (
                     <li key={r.id}>
                       <button
-                        onClick={() => openVideo(r.video_path, p?.username ?? "?")}
+                        onClick={() => openVideoAt(idx)}
                         className="tap-44 flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted"
                       >
                         <RankBadge rank={rank} size="md" />
@@ -229,14 +247,12 @@ function Leaderboard() {
         </>
       )}
 
-      <Dialog open={!!open} onOpenChange={(o) => !o && setOpen(null)}>
-        <DialogContent className="max-w-md p-0">
-          <DialogTitle className="sr-only">Video by @{open?.user}</DialogTitle>
-          {open && (
-            <video src={open.url} controls autoPlay playsInline className="aspect-[9/16] w-full bg-black" />
-          )}
-        </DialogContent>
-      </Dialog>
+      <TikTokPlayer
+        items={items}
+        startIndex={playerIndex}
+        open={playerOpen}
+        onOpenChange={setPlayerOpen}
+      />
     </div>
   );
 }
