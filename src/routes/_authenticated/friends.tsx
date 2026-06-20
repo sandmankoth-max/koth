@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { formatValue, getVideoSignedUrl } from "@/lib/koth-utils";
 import { CommentDrawer } from "@/components/koth/comment-drawer";
 import { RankBadge } from "@/components/koth/rank-badge";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/friends")({
   head: () => ({ meta: [{ title: "Friends — KOTH" }] }),
@@ -25,6 +26,12 @@ type Tab = "feed" | "add";
 function Friends() {
   const [tab, setTab] = useState<Tab>("feed");
 
+  if (tab === "feed") {
+    // Fullscreen TikTok-style: feed renders its own chrome (floating tabs +
+    // podium button) so it can fill the space between top bar and bottom nav.
+    return <FeedTab tab={tab} setTab={setTab} onAdd={() => setTab("add")} />;
+  }
+
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 gap-2 rounded-full border border-border bg-card p-1">
@@ -32,7 +39,7 @@ function Friends() {
           onClick={() => setTab("feed")}
           className={cn(
             "tap-44 rounded-full py-2 text-sm font-bold transition-colors",
-            tab === "feed" ? "bg-koth-red text-koth-white" : "text-muted-foreground",
+            "text-muted-foreground",
           )}
         >
           Friends Feed
@@ -41,19 +48,19 @@ function Friends() {
           onClick={() => setTab("add")}
           className={cn(
             "tap-44 rounded-full py-2 text-sm font-bold transition-colors",
-            tab === "add" ? "bg-koth-red text-koth-white" : "text-muted-foreground",
+            "bg-koth-red text-koth-white",
           )}
         >
           Add Friends
         </button>
       </div>
 
-      {tab === "feed" ? <FeedTab onAdd={() => setTab("add")} /> : <AddTab />}
+      <AddTab />
     </div>
   );
 }
 
-function FeedTab({ onAdd }: { onAdd: () => void }) {
+function FeedTab({ tab, setTab, onAdd }: { tab: Tab; setTab: (t: Tab) => void; onAdd: () => void }) {
   const { user } = useAuth();
 
   const challengeQ = useQuery({
@@ -118,37 +125,118 @@ function FeedTab({ onAdd }: { onAdd: () => void }) {
     return Array.from(byUser.values()).sort((a, b) => b.val - a.val).slice(0, 3);
   })();
 
-  return (
-    <div className="space-y-4">
-      <section className="koth-stripe overflow-hidden rounded-3xl bg-koth-black p-4 text-koth-white">
-        <p className="label-broadcast text-koth-white/60">Friends feed</p>
-        <h1 className="mt-0.5 text-lg font-bold">{c?.title ?? "No active challenge"}</h1>
-      </section>
+  const [podiumOpen, setPodiumOpen] = useState(false);
+  const hasFeed = !!c && (feedQ.data?.length ?? 0) > 0;
 
-      {noFriends && (
-        <div className="rounded-3xl border border-dashed border-border bg-card p-8 text-center">
-          <Users className="mx-auto h-8 w-8 text-koth-red" aria-hidden />
-          <p className="mt-3 text-base font-bold text-foreground">No friends yet</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Add competitors and track their progress through every challenge.
-          </p>
+  if (!hasFeed) {
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-2 rounded-full border border-border bg-card p-1">
+          <button className="tap-44 rounded-full bg-koth-red py-2 text-sm font-bold text-koth-white">
+            Friends Feed
+          </button>
           <button
-            onClick={onAdd}
-            className="tap-44 mt-4 inline-flex items-center rounded-full bg-koth-red px-4 py-2 text-sm font-bold text-koth-white"
+            onClick={() => setTab("add")}
+            className="tap-44 rounded-full py-2 text-sm font-bold text-muted-foreground"
           >
-            <UserPlus className="mr-2 h-4 w-4" aria-hidden /> Find friends
+            Add Friends
           </button>
         </div>
+
+        <section className="koth-stripe overflow-hidden rounded-3xl bg-koth-black p-4 text-koth-white">
+          <p className="label-broadcast text-koth-white/60">Friends feed</p>
+          <h1 className="mt-0.5 text-lg font-bold">{c?.title ?? "No active challenge"}</h1>
+        </section>
+
+        {noFriends ? (
+          <div className="rounded-3xl border border-dashed border-border bg-card p-8 text-center">
+            <Users className="mx-auto h-8 w-8 text-koth-red" aria-hidden />
+            <p className="mt-3 text-base font-bold text-foreground">No friends yet</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Add competitors and track their progress through every challenge.
+            </p>
+            <button
+              onClick={onAdd}
+              className="tap-44 mt-4 inline-flex items-center rounded-full bg-koth-red px-4 py-2 text-sm font-bold text-koth-white"
+            >
+              <UserPlus className="mr-2 h-4 w-4" aria-hidden /> Find friends
+            </button>
+          </div>
+        ) : (
+          <div className="rounded-3xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
+            No videos yet from your friends in this challenge.
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {/* Fullscreen TikTok-style scroller — escapes the padded shell. */}
+      <FeedScroller rows={feedQ.data!} c={c!} />
+
+      {/* Floating tab switcher */}
+      <div className="fixed left-1/2 top-16 z-40 -translate-x-1/2">
+        <div className="flex items-center gap-1 rounded-full bg-black/50 p-1 backdrop-blur">
+          <button
+            onClick={() => {}}
+            className="tap-44 rounded-full bg-koth-red px-4 py-1.5 text-xs font-bold text-koth-white"
+          >
+            Feed
+          </button>
+          <button
+            onClick={() => setTab("add")}
+            className="tap-44 rounded-full px-4 py-1.5 text-xs font-bold text-white/80"
+          >
+            Add
+          </button>
+        </div>
+      </div>
+
+      {/* Floating podium button */}
+      {podium.length > 0 && (
+        <button
+          onClick={() => setPodiumOpen(true)}
+          className="tap-44 fixed right-3 top-16 z-40 inline-flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-2 text-xs font-bold text-white backdrop-blur"
+        >
+          <Crown className="h-4 w-4 text-koth-red" aria-hidden /> Podium
+        </button>
       )}
 
-      {c && podium.length > 0 && (
+      <PodiumDialog
+        open={podiumOpen}
+        onOpenChange={setPodiumOpen}
+        podium={podium}
+        c={c!}
+      />
+    </>
+  );
+}
+
+function PodiumDialog({
+  open,
+  onOpenChange,
+  podium,
+  c,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  podium: any[];
+  c: any;
+}) {
+  // Lazy import to avoid restructuring imports.
+  
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm">
+        <DialogTitle>Friends podium</DialogTitle>
+        <p className="text-xs text-muted-foreground">
+          Best time per friend for <span className="font-semibold text-foreground">{c.title}</span>.
+        </p>
         <FriendsPodium podium={podium} c={c} />
-      )}
-
-      {c && (feedQ.data?.length ?? 0) > 0 && (
-        <FeedScroller rows={feedQ.data!} c={c} />
-      )}
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -214,19 +302,28 @@ function FriendsPodium({ podium, c }: { podium: any[]; c: any }) {
 }
 
 function FeedScroller({ rows, c }: { rows: any[]; c: any }) {
+  // Fixed overlay between top bar (~56px) and bottom nav (~64px). The IO
+  // root is the scroller itself so autoplay decisions don't depend on
+  // viewport scroll position.
+  const scrollerRef = useRef<HTMLDivElement>(null);
   return (
     <div
-      className="-mx-4 h-[calc(100vh-260px)] snap-y snap-mandatory overflow-y-auto overscroll-y-contain rounded-none bg-black sm:mx-0 sm:rounded-3xl"
-      style={{ scrollSnapType: "y mandatory" }}
+      ref={scrollerRef}
+      className="fixed inset-x-0 top-14 bottom-16 z-20 snap-y snap-mandatory overflow-y-auto overscroll-y-contain bg-black"
+      style={{
+        scrollSnapType: "y mandatory",
+        WebkitOverflowScrolling: "touch",
+        scrollbarWidth: "none",
+      }}
     >
       {rows.map((r) => (
-        <FeedVideo key={r.id} row={r} c={c} />
+        <FeedVideo key={r.id} row={r} c={c} scrollRoot={scrollerRef} />
       ))}
     </div>
   );
 }
 
-function FeedVideo({ row, c }: { row: any; c: any }) {
+function FeedVideo({ row, c, scrollRoot }: { row: any; c: any; scrollRoot: React.RefObject<HTMLDivElement | null> }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -245,11 +342,11 @@ function FeedVideo({ row, c }: { row: any; c: any }) {
     if (!el) return;
     const io = new IntersectionObserver(
       (entries) => entries.forEach((e) => setVisible(e.intersectionRatio > 0.6)),
-      { threshold: [0, 0.6, 1] },
+      { root: scrollRoot.current, threshold: [0, 0.6, 1] },
     );
     io.observe(el);
     return () => io.disconnect();
-  }, []);
+  }, [scrollRoot]);
 
   useEffect(() => {
     if (!visible || url) return;
@@ -319,8 +416,12 @@ function FeedVideo({ row, c }: { row: any; c: any }) {
   return (
     <div
       ref={containerRef}
-      className="relative h-full w-full snap-start snap-always bg-black"
-      style={{ height: "calc(100vh - 260px)", minHeight: "calc(100vh - 260px)" }}
+      className="relative w-full snap-start snap-always bg-black"
+      style={{
+        height: "calc(100dvh - 120px)",
+        minHeight: "calc(100dvh - 120px)",
+        scrollSnapStop: "always",
+      }}
     >
       <button
         type="button"
@@ -397,17 +498,35 @@ function FeedVideo({ row, c }: { row: any; c: any }) {
         </Link>
         <Rail
           onClick={toggleLike}
-          icon={<Heart className={cn("h-7 w-7", likeQ.data?.liked && "fill-koth-red text-koth-red")} />}
+          icon={
+            <Heart
+              strokeWidth={2.5}
+              className={cn(
+                "h-8 w-8 drop-shadow-[0_2px_3px_rgba(0,0,0,0.6)]",
+                likeQ.data?.liked ? "fill-koth-red text-koth-red" : "fill-white text-white",
+              )}
+            />
+          }
           count={likeQ.data?.count ?? 0}
         />
         <Rail
           onClick={() => setCommentsOpen(true)}
-          icon={<MessageCircle className="h-7 w-7" />}
+          icon={
+            <MessageCircle
+              strokeWidth={2.5}
+              className="h-8 w-8 text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.6)]"
+            />
+          }
           count={commentCountQ.data ?? 0}
         />
         <Rail
           onClick={() => toast.message("Sharing coming soon")}
-          icon={<Share2 className="h-7 w-7" />}
+          icon={
+            <Share2
+              strokeWidth={2.5}
+              className="h-8 w-8 text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.6)]"
+            />
+          }
           count={0}
         />
       </div>
