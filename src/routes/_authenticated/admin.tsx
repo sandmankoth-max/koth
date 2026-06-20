@@ -382,7 +382,7 @@ function SubmissionRow({ s, onUpdate }: { s: any; onUpdate: (p: any) => Promise<
           }}
           className="rounded-full border-koth-red text-koth-red hover:bg-koth-red hover:text-koth-white"
         >
-          Disqualify
+          Suspend
         </Button>
         <Button size="sm" variant="outline" onClick={reset} className="rounded-full">
           Reset
