@@ -22,6 +22,8 @@ export type CapturedVideo = {
 type Props = {
   onCancel: () => void;
   onCapture: (v: CapturedVideo) => void;
+  /** Hard cap; recorder auto-stops at this many seconds when set. */
+  maxSeconds?: number | null;
 };
 
 export function CameraRecorder({ onCancel, onCapture }: Props) {
