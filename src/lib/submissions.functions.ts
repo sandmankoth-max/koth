@@ -81,6 +81,7 @@ export const deletePreviousSubmissionsForChallenge = createServerFn({ method: "P
     return { deleted: oldSubmissions.length };
   });
 
+
 export const cleanupOldChallengeSubmissions = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ keepChallengeId: z.string().uuid() }).parse(input))
