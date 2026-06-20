@@ -247,14 +247,12 @@ function Leaderboard() {
         </>
       )}
 
-      <Dialog open={!!open} onOpenChange={(o) => !o && setOpen(null)}>
-        <DialogContent className="max-w-md p-0">
-          <DialogTitle className="sr-only">Video by @{open?.user}</DialogTitle>
-          {open && (
-            <video src={open.url} controls autoPlay playsInline className="aspect-[9/16] w-full bg-black" />
-          )}
-        </DialogContent>
-      </Dialog>
+      <TikTokPlayer
+        items={items}
+        startIndex={playerIndex}
+        open={playerOpen}
+        onOpenChange={setPlayerOpen}
+      />
     </div>
   );
 }
