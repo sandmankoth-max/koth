@@ -118,6 +118,9 @@ function Profile() {
         )}
       </section>
 
+      <PastSubmissions />
+
+
       <section className="rounded-3xl border border-border bg-card">
         <SettingRow to="/notifications" icon={<ShieldCheck className="h-4 w-4" aria-hidden />} label="Notifications" />
         <SettingRow to="/legal/rules" icon={<FileText className="h-4 w-4" aria-hidden />} label="Official Rules" />
