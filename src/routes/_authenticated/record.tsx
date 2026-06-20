@@ -223,7 +223,7 @@ function Record() {
             <p className="label-broadcast text-koth-white/70">Recommended</p>
             <p className="mt-1 text-lg font-bold">Enter Prize Pool</p>
             <p className="mt-1 text-xs text-koth-white/80">
-              Public. Eligible for prize money and the public podium.
+              Public. Eligible for prize money and the public podium. Replaces your previous public attempt for this challenge.
             </p>
           </button>
 
@@ -239,9 +239,9 @@ function Record() {
             className="tap-44 w-full rounded-3xl border-2 border-border bg-card p-5 text-left text-foreground"
           >
             <p className="label-broadcast text-muted-foreground">Lower-stakes</p>
-            <p className="mt-1 text-lg font-bold">Friends Feed Only</p>
+            <p className="mt-1 text-lg font-bold">Save to profile / friends only</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Only your friends see it. Not eligible for the prize pool.
+              Saved to your profile and your friends feed. Doesn't replace earlier attempts and isn't eligible for the prize pool.
             </p>
           </button>
 
