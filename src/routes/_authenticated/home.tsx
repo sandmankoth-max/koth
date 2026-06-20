@@ -79,7 +79,6 @@ function Home() {
 
   async function deleteMyEntry() {
     if (!myEntryQ.data) return;
-    if (!window.confirm("Delete your video and remove it from the leaderboard?")) return;
     setDeletingEntry(true);
     try {
       await deleteSubmission({ data: { submissionId: myEntryQ.data.id } });
@@ -89,6 +88,7 @@ function Home() {
       await queryClient.invalidateQueries({ queryKey: ["top3", c?.id] });
       await queryClient.invalidateQueries({ queryKey: ["leaderboard", c?.id] });
       await queryClient.invalidateQueries({ queryKey: ["feed", c?.id] });
+      setDeleteOpen(false);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Delete failed");
     } finally {
