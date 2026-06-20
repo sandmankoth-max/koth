@@ -5,17 +5,10 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Design system definition.
- *
- * The @theme inline block maps CSS custom properties to Tailwind utility
- * classes (e.g. --color-primary -> bg-primary, text-primary).
- *
- * The :root and .dark blocks define the actual color values using oklch.
- * All colors MUST use oklch format.
- *
- * To add a new semantic color:
- * 1. Add the variable to :root (light value) and .dark (dark value)
- * 2. Register it in @theme inline as --color-<name>: var(--<name>)
+ * KOTH design system — sporty broadcast-ticker look softened with rounded UI.
+ * - Color tokens are exact brand hex values, expressed in oklch via Tailwind theme.
+ * - Use semantic tokens only in components (never raw hex / text-white / bg-black).
+ * - Body uses Inter; numeric stats and times use JetBrains Mono via .font-mono / .mono-stat.
  */
 
 @theme inline {
@@ -25,7 +18,7 @@
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -46,99 +39,135 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-ring-offset-background: var(--background);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* KOTH brand tokens */
+  --color-koth-black: var(--koth-black);
+  --color-koth-white: var(--koth-white);
+  --color-koth-red: var(--koth-red);
+  --color-koth-steel: var(--koth-steel);
+  --color-koth-pr-bg: var(--koth-pr-bg);
+  --color-koth-pr-text: var(--koth-pr-text);
+  --color-koth-silver: var(--koth-silver);
+  --color-koth-bronze: var(--koth-bronze);
+
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.984 0.003 247.858);
-  --sidebar-foreground: oklch(0.129 0.042 264.695);
-  --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
-  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
+  --radius: 1rem;
+
+  /* Brand hex → oklch */
+  --koth-black: oklch(0.13 0 0);            /* #0D0D0D */
+  --koth-white: oklch(1 0 0);                /* #FFFFFF */
+  --koth-red: oklch(0.58 0.21 27);           /* #E8262B */
+  --koth-steel: oklch(0.42 0.012 264);       /* #4A4F58 */
+  --koth-pr-bg: oklch(0.96 0.04 90);         /* #FFF3D6 */
+  --koth-pr-text: oklch(0.45 0.13 56);       /* #8A4B00 */
+  --koth-silver: oklch(0.79 0.005 270);      /* #B8BCC2 */
+  --koth-bronze: oklch(0.55 0.08 55);        /* #A66A3D */
+
+  --background: oklch(0.98 0 0);
+  --foreground: var(--koth-black);
+
+  --card: var(--koth-white);
+  --card-foreground: var(--koth-black);
+
+  --popover: var(--koth-white);
+  --popover-foreground: var(--koth-black);
+
+  --primary: var(--koth-red);
+  --primary-foreground: var(--koth-white);
+
+  --secondary: oklch(0.95 0 0);
+  --secondary-foreground: var(--koth-black);
+
+  --muted: oklch(0.95 0 0);
+  --muted-foreground: var(--koth-steel);
+
+  --accent: var(--koth-pr-bg);
+  --accent-foreground: var(--koth-pr-text);
+
+  --destructive: var(--koth-red);
+  --destructive-foreground: var(--koth-white);
+
+  --border: oklch(0.9 0 0);
+  --input: oklch(0.9 0 0);
+  --ring: var(--koth-red);
 }
 
 .dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(1 0 0 / 10%);
+  --background: var(--koth-black);
+  --foreground: var(--koth-white);
+  --card: oklch(0.18 0 0);
+  --card-foreground: var(--koth-white);
+  --popover: oklch(0.18 0 0);
+  --popover-foreground: var(--koth-white);
+  --secondary: oklch(0.22 0 0);
+  --secondary-foreground: var(--koth-white);
+  --muted: oklch(0.22 0 0);
+  --muted-foreground: oklch(0.72 0.005 264);
+  --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
 }
 
 @layer base {
-  * {
-    border-color: var(--color-border);
+  * { border-color: var(--color-border); }
+  html, body { background-color: var(--color-background); color: var(--color-foreground); }
+  body {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  button, [role="button"] { touch-action: manipulation; }
+}
+
+@layer components {
+  /* The signature: bold uppercase header label with broadcast letter-spacing. */
+  .label-broadcast {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.75rem;
   }
 
-  body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
+  /* Monospaced scoreboard digits. */
+  .mono-stat {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
   }
+
+  /* Fully-rounded pill chip. */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    font-size: 0.8125rem;
+    line-height: 1;
+    min-height: 28px;
+  }
+
+  /* Diagonal red broadcast stripe in the top-left corner of dark cards. */
+  .koth-stripe {
+    position: relative;
+    overflow: hidden;
+  }
+  .koth-stripe::before {
+    content: "";
+    position: absolute;
+    top: -14px;
+    left: -28px;
+    width: 110px;
+    height: 18px;
+    background-color: var(--color-koth-red);
+    transform: rotate(-35deg);
+    pointer-events: none;
+  }
+
+  /* Native-tap-target sized button surface. */
+  .tap-44 { min-height: 44px; min-width: 44px; }
 }
