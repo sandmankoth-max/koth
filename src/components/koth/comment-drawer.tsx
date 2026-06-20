@@ -107,7 +107,7 @@ export function CommentDrawer({ kind, targetId, ownerId, open, onOpenChange }: P
 
   async function deleteComment(id: string) {
     if (!confirm("Delete this comment?")) return;
-    const { error } = await supabase.from(table).delete().eq("id", id);
+    const { error } = await (supabase.from(table) as any).delete().eq("id", id);
     if (error) toast.error(error.message);
     else qc.invalidateQueries({ queryKey: [`${kind}-comments`, targetId] });
     if (kind === "video") {
