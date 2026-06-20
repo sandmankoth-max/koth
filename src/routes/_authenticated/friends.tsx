@@ -100,6 +100,24 @@ function FeedTab({ onAdd }: { onAdd: () => void }) {
   const c = challengeQ.data;
   const noFriends = friendsQ.data && friendsQ.data.length === 0;
 
+  const items: PlayerItem[] = (feedQ.data ?? []).map((s: any) => ({
+    id: s.id,
+    video_path: s.video_path,
+    value: Number(s.admin_verified_value ?? s.self_reported_value),
+    unit_type: c?.unit_type,
+    unit_label: c?.unit_label,
+    challenge_title: c?.title ?? null,
+    user: {
+      id: s.user_id ?? "",
+      username: s.profiles?.username ?? "user",
+      display_name: s.profiles?.display_name,
+      avatar_url: s.profiles?.avatar_url,
+    },
+  }));
+
+  const [playerOpen, setPlayerOpen] = useState(false);
+  const [playerIndex, setPlayerIndex] = useState(0);
+
   return (
     <div className="space-y-4">
       <section className="koth-stripe overflow-hidden rounded-3xl bg-koth-black p-5 text-koth-white">
@@ -123,10 +141,11 @@ function FeedTab({ onAdd }: { onAdd: () => void }) {
         </div>
       )}
 
-      {feedQ.data?.map((s) => {
-        const p = (s as any).profiles;
+      {items.map((it, i) => {
+        const s = (feedQ.data ?? [])[i] as any;
+        const p = s.profiles;
         return (
-          <article key={s.id} className="overflow-hidden rounded-3xl border border-border bg-card">
+          <article key={it.id} className="overflow-hidden rounded-3xl border border-border bg-card">
             <div className="flex items-center gap-3 p-4">
               <Avatar name={p?.display_name ?? p?.username} avatarPath={p?.avatar_url} size={40} />
               <div className="min-w-0 flex-1">
@@ -135,14 +154,34 @@ function FeedTab({ onAdd }: { onAdd: () => void }) {
               </div>
               {c && (
                 <div className="mono-stat text-lg font-bold text-foreground">
-                  {formatValue(Number(s.admin_verified_value ?? s.self_reported_value), c.unit_type, c.unit_label)}
+                  {formatValue(it.value!, c.unit_type, c.unit_label)}
                 </div>
               )}
             </div>
-            <AutoPlayVideo path={s.video_path} />
+            <button
+              type="button"
+              onClick={() => {
+                setPlayerIndex(i);
+                setPlayerOpen(true);
+              }}
+              className="relative block w-full"
+              aria-label="Play attempt"
+            >
+              <AutoPlayVideo path={s.video_path} />
+              <span className="pointer-events-none absolute bottom-3 left-3 inline-flex items-center gap-1 rounded-full bg-black/50 px-2 py-1 text-[11px] font-bold text-white backdrop-blur">
+                <Play className="h-3 w-3" fill="currentColor" /> Tap to watch attempt
+              </span>
+            </button>
           </article>
         );
       })}
+
+      <TikTokPlayer
+        items={items}
+        startIndex={playerIndex}
+        open={playerOpen}
+        onOpenChange={setPlayerOpen}
+      />
     </div>
   );
 }
