@@ -531,17 +531,17 @@ function Composer({
           value={body}
           onChange={(e) => handleChange(e.target.value)}
           rows={1}
-          placeholder="Add a comment… use @ to tag"
+          placeholder="Add comment… @ to tag"
           maxLength={500}
-          className="min-h-[44px] flex-1 resize-none rounded-2xl border border-border bg-muted/40 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-koth-red"
+          className="min-h-[40px] max-h-24 flex-1 resize-none rounded-2xl border border-border bg-muted/40 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-koth-red"
         />
         <button
           onClick={send}
           disabled={posting || !body.trim()}
-          className="tap-44 inline-flex h-11 w-11 items-center justify-center rounded-full bg-koth-red text-koth-white disabled:opacity-50"
+          className="tap-44 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-koth-red text-koth-white disabled:opacity-50"
           aria-label="Post"
         >
-          <Send className="h-5 w-5" />
+          <Send className="h-4 w-4" />
         </button>
       </div>
     </div>
