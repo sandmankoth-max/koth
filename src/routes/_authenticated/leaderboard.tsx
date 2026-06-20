@@ -65,11 +65,28 @@ function Leaderboard() {
     },
   });
 
-  const [open, setOpen] = useState<null | { url: string; user: string }>(null);
+  const [playerOpen, setPlayerOpen] = useState(false);
+  const [playerIndex, setPlayerIndex] = useState(0);
 
-  async function openVideo(path: string, user: string) {
-    const url = await getVideoSignedUrl(path);
-    if (url) setOpen({ url, user });
+  const rows = rowsQ.data ?? [];
+  const items: PlayerItem[] = rows.map((r: any) => ({
+    id: r.id,
+    video_path: r.video_path,
+    value: r.val,
+    unit_type: c?.unit_type,
+    unit_label: c?.unit_label,
+    challenge_title: c?.title ?? null,
+    user: {
+      id: r.user_id,
+      username: r.profiles?.username ?? "user",
+      display_name: r.profiles?.display_name,
+      avatar_url: r.profiles?.avatar_url,
+    },
+  }));
+
+  function openVideoAt(i: number) {
+    setPlayerIndex(i);
+    setPlayerOpen(true);
   }
 
   if (!c) {
@@ -82,7 +99,6 @@ function Leaderboard() {
     );
   }
 
-  const rows = rowsQ.data ?? [];
   const podium = rows.slice(0, 3);
   const rest = rows.slice(3);
 
