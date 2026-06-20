@@ -218,6 +218,11 @@ function ReviewSubmissions() {
   }, [sel]);
 
   async function update(id: string, patch: any) {
+    if (patch.__local) {
+      const { __local, ...rest } = patch;
+      setSubs((cur) => cur.map((s) => (s.id === id ? { ...s, ...rest } : s)));
+      return;
+    }
     const { error } = await supabase.from("submissions").update(patch).eq("id", id);
     if (error) toast.error(error.message);
     else {
@@ -249,12 +254,37 @@ function ReviewSubmissions() {
   );
 }
 
-function SubmissionRow({ s, onUpdate }: { s: any; onUpdate: (p: any) => void }) {
+function SubmissionRow({ s, onUpdate }: { s: any; onUpdate: (p: any) => Promise<void> | void }) {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [verified, setVerified] = useState<string>(s.admin_verified_value?.toString() ?? "");
   useEffect(() => {
     getVideoSignedUrl(s.video_path).then(setVideoUrl);
   }, [s.video_path]);
+
+  async function submitVerified() {
+    const patch: any = {
+      status: "verified",
+      is_active_entry: true,
+      admin_verified_value: verified === "" ? null : Number(verified),
+    };
+    await onUpdate(patch);
+  }
+
+  async function reset() {
+    const { error } = await supabase.rpc("admin_restore_submission" as any, { p_submission_id: s.id });
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Restored to leaderboard");
+      setVerified("");
+      await onUpdate({
+        status: "pending_review",
+        is_active_entry: true,
+        admin_verified_value: null,
+        __local: true,
+      });
+    }
+  }
+
   return (
     <div className="space-y-3 rounded-3xl border border-border bg-card p-4">
       <div className="flex items-center gap-3">
@@ -279,21 +309,22 @@ function SubmissionRow({ s, onUpdate }: { s: any; onUpdate: (p: any) => void }) 
           <p className="mono-stat text-lg font-bold">{s.self_reported_value}</p>
         </div>
         <div>
-          <Label className="label-broadcast text-muted-foreground">Verified value</Label>
+          <Label className="label-broadcast text-muted-foreground">Adjusted value (optional)</Label>
           <Input
             type="number"
             step="any"
+            placeholder="Leave blank to accept reported"
             value={verified}
             onChange={(e) => setVerified(e.target.value)}
-            onBlur={() =>
-              onUpdate({ admin_verified_value: verified === "" ? null : Number(verified) })
-            }
           />
         </div>
       </div>
+      <p className="text-xs text-muted-foreground">
+        Submit accepts the reported time, or the adjusted value if you entered one. The leaderboard updates immediately.
+      </p>
       <div className="flex flex-wrap gap-2">
-        <Button size="sm" onClick={() => onUpdate({ status: "verified" })} className="rounded-full bg-koth-red text-koth-white">
-          Verify
+        <Button size="sm" onClick={submitVerified} className="rounded-full bg-koth-red text-koth-white">
+          Submit
         </Button>
         <Button size="sm" variant="outline" onClick={() => onUpdate({ status: "flagged" })} className="rounded-full">
           Flag
@@ -301,7 +332,7 @@ function SubmissionRow({ s, onUpdate }: { s: any; onUpdate: (p: any) => void }) 
         <Button size="sm" variant="outline" onClick={() => onUpdate({ status: "disqualified", is_active_entry: false })} className="rounded-full">
           Disqualify
         </Button>
-        <Button size="sm" variant="outline" onClick={() => onUpdate({ status: "pending_review" })} className="rounded-full">
+        <Button size="sm" variant="outline" onClick={reset} className="rounded-full">
           Reset
         </Button>
       </div>
@@ -387,13 +418,16 @@ function MarkPaid() {
 
 function Lifecycle() {
   const [busy, setBusy] = useState(false);
+  const [last, setLast] = useState<null | { activated: number; reminders: number; closed: number }>(null);
 
   async function tick() {
     setBusy(true);
     try {
-      const { error } = await supabase.rpc("lifecycle_tick" as any);
+      const { data, error } = await supabase.rpc("lifecycle_tick" as any);
       if (error) throw error;
-      toast.success("Lifecycle tick complete");
+      const r = (data as any) ?? { activated: 0, reminders: 0, closed: 0 };
+      setLast({ activated: r.activated ?? 0, reminders: r.reminders ?? 0, closed: r.closed ?? 0 });
+      toast.success(`Tick: ${r.activated ?? 0} activated · ${r.reminders ?? 0} reminders · ${r.closed ?? 0} closed`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
     } finally {
@@ -420,12 +454,22 @@ function Lifecycle() {
   return (
     <div className="mt-4 space-y-3 rounded-3xl border border-border bg-card p-5">
       <p className="text-sm text-muted-foreground">
-        Lifecycle runs automatically (Monday 10am open, Sunday 7pm reminders, Sunday 8pm close). Use these
-        controls to trigger manually.
+        The lifecycle tick scans every challenge and does three things in one pass: activates any{" "}
+        <strong>upcoming</strong> challenge whose start time has arrived (and notifies all players), sends a
+        one-hour <strong>deadline reminder</strong> to anyone without a submission, and{" "}
+        <strong>closes</strong> any active challenge past its end time (computing podium &amp; prizes). It's
+        safe to run on demand — each step is idempotent.
       </p>
       <Button onClick={tick} disabled={busy} className="tap-44 h-12 w-full rounded-full bg-koth-red text-koth-white">
         {busy ? "Running…" : "Run lifecycle tick now"}
       </Button>
+      {last && (
+        <div className="grid grid-cols-3 gap-2 rounded-2xl bg-muted p-3 text-center text-xs">
+          <div><div className="mono-stat text-lg font-bold">{last.activated}</div>activated</div>
+          <div><div className="mono-stat text-lg font-bold">{last.reminders}</div>reminders</div>
+          <div><div className="mono-stat text-lg font-bold">{last.closed}</div>closed</div>
+        </div>
+      )}
       <div className="divide-y divide-border">
         {active.map((c) => (
           <div key={c.id} className="flex items-center justify-between gap-2 py-2">

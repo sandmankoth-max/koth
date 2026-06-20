@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { z } from "zod";
+import { Camera } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,8 +35,22 @@ function AuthPage() {
   const [sd, setSd] = useState("");
   const [sdob, setSdob] = useState("");
   const [consent, setConsent] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const isSignup = mode === "signup";
+
+  function onPickAvatar(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (f.size > 5 * 1024 * 1024) {
+      toast.error("Image must be under 5MB");
+      return;
+    }
+    setAvatarFile(f);
+    setAvatarPreview(URL.createObjectURL(f));
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -48,6 +63,7 @@ function AuthPage() {
           display_name: sd || su,
           date_of_birth: sdob,
           age_consent: consent,
+          avatar_file: avatarFile,
         });
         toast.success("Welcome to KOTH");
       } else {
@@ -79,6 +95,34 @@ function AuthPage() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {isSignup ? (
           <>
+            <div className="flex flex-col items-center gap-2">
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                className="tap-44 relative inline-flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-koth-white/20 bg-koth-white/5"
+                aria-label="Add profile photo"
+              >
+                {avatarPreview ? (
+                  <img src={avatarPreview} alt="Profile preview" className="h-full w-full object-cover" />
+                ) : (
+                  <Camera className="h-7 w-7 text-koth-white/60" aria-hidden />
+                )}
+                <span className="absolute -bottom-1 -right-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-koth-red text-[10px] font-bold text-koth-white">
+                  +
+                </span>
+              </button>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                capture="user"
+                className="hidden"
+                onChange={onPickAvatar}
+              />
+              <p className="text-xs text-koth-white/50">
+                {avatarFile ? "Tap to change photo" : "Add a profile photo (optional)"}
+              </p>
+            </div>
             <Field label="Username" hint="3–20 chars, lowercase letters / numbers / underscore">
               <Input
                 value={su}
