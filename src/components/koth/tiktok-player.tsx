@@ -1,14 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Heart, MessageCircle, Share2, X, Play, ChevronUp, ChevronDown } from "lucide-react";
+import { Heart, MessageCircle, Share2, X, Play, ChevronUp, ChevronDown, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Avatar } from "@/components/koth/avatar";
 import { getVideoSignedUrl, formatValue } from "@/lib/koth-utils";
 import { cn } from "@/lib/utils";
+import { CommentDrawer } from "@/components/koth/comment-drawer";
+import { deleteOwnSubmission } from "@/lib/submissions.functions";
 
 export type PlayerItem = {
   id: string; // submission id
