@@ -41,6 +41,8 @@ const labelFor = (n: any) => {
       return `@${n.payload?.from_username ?? "someone"} sent you a friend request`;
     case "friend_accepted":
       return `@${n.payload?.from_username ?? "someone"} accepted your friend request`;
+    case "admin_message":
+      return n.payload?.message ?? "Message from admin";
     default:
       return "Notification";
   }
