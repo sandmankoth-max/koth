@@ -63,18 +63,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const loadProfile = useCallback(async (uid: string) => {
+  const loadProfile = useCallback(async (_uid: string) => {
     const [{ data: p }, { data: roles }] = await Promise.all([
-      supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
-      supabase.from("user_roles").select("role").eq("user_id", uid),
+      supabase.rpc("get_my_profile" as any),
+      supabase.from("user_roles").select("role").eq("user_id", _uid),
     ]);
-    if (p && (p as any).banned) {
+    const profileRow = Array.isArray(p) ? (p[0] as any) : (p as any);
+    if (profileRow && profileRow.banned) {
       await supabase.auth.signOut();
       setProfile(null);
       setIsAdmin(false);
       throw new Error("This account has been banned.");
     }
-    setProfile((p as Profile) ?? null);
+    setProfile((profileRow as Profile) ?? null);
     setIsAdmin(Boolean(roles?.some((r) => r.role === "admin")));
   }, []);
 
