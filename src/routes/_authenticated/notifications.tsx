@@ -85,7 +85,9 @@ function Notifications() {
 
       <section className="rounded-3xl border border-border bg-card">
         {items.length === 0 ? (
-          <div className="p-8 text-center text-sm text-muted-foreground">No activity yet.</div>
+          <div className="p-8 text-center text-sm text-muted-foreground">
+            No activity yet. Make a move and the board will start lighting up.
+          </div>
         ) : (
           <ul className="divide-y divide-border">
             {items.map((n) => (
