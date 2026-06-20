@@ -21,6 +21,7 @@ import { Avatar } from "@/components/koth/avatar";
 import { getVideoSignedUrl, formatValue } from "@/lib/koth-utils";
 import { cn } from "@/lib/utils";
 import { CommentDrawer } from "@/components/koth/comment-drawer";
+import { VideoScrubber } from "@/components/koth/video-scrubber";
 import { deleteOwnSubmission } from "@/lib/submissions.functions";
 
 export type PlayerItem = {
