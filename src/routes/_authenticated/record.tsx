@@ -188,14 +188,24 @@ function Record() {
             pattern="[0-9]*[.]?[0-9]*"
             value={reportedValue}
             onChange={(e) => {
-              const v = e.target.value.replace(",", ".");
-              if (v === "" || /^\d*\.?\d*$/.test(v)) setReportedValue(v);
+              const raw = e.target.value.replace(",", ".");
+              if (raw === "") { setReportedValue(""); return; }
+              if (!/^\d*\.?\d*$/.test(raw)) return;
+              // Cap at < 1000 (three integer digits) to block 99999999 nonsense.
+              const n = Number(raw);
+              if (Number.isFinite(n) && n >= 1000) return;
+              // Limit integer part to 3 digits even mid-type.
+              const [intPart] = raw.split(".");
+              if (intPart.length > 3) return;
+              setReportedValue(raw);
             }}
             autoFocus
             placeholder="0"
             className="mono-stat h-20 rounded-2xl text-center text-4xl font-bold"
           />
-          <p className="text-center text-sm text-muted-foreground">{challenge.unit_label}</p>
+          <p className="text-center text-xs text-muted-foreground">
+            {challenge.unit_label} · max 999
+          </p>
           <div className="grid grid-cols-2 gap-3">
             <Button
               variant="outline"
@@ -206,7 +216,7 @@ function Record() {
             </Button>
             <Button
               onClick={() => setStage("visibility")}
-              disabled={!reportedValue || Number(reportedValue) < 0}
+              disabled={!reportedValue || Number(reportedValue) <= 0 || Number(reportedValue) >= 1000}
               className="tap-44 h-12 rounded-full bg-koth-red text-koth-white hover:bg-koth-red/90"
             >
               Next
