@@ -148,93 +148,89 @@ function Home() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <WelcomeDialog />
       <RankNotifications />
 
-      {/* Challenge hero card */}
-      <section className="koth-stripe relative overflow-hidden rounded-3xl bg-koth-black p-5 text-koth-white">
+      {/* Challenge hero card — tightened */}
+      <section className="koth-stripe relative overflow-hidden rounded-3xl bg-koth-black p-4 text-koth-white">
         <div className="flex items-start justify-between gap-3">
-          <div>
+          <div className="min-w-0">
             <p className="label-broadcast text-koth-white/60">This week's challenge</p>
-            <h1 className="mt-1 text-2xl font-bold leading-tight">{c.title}</h1>
+            <h1 className="mt-0.5 truncate text-xl font-bold leading-tight">{c.title}</h1>
           </div>
           <Countdown target={c.ends_at} />
         </div>
-        {c.description && <p className="mt-3 text-sm text-koth-white/80">{c.description}</p>}
+        {c.description && (
+          <p className="mt-2 line-clamp-2 text-xs text-koth-white/80">{c.description}</p>
+        )}
         {c.safety_note && (
-          <div className="mt-3 flex items-start gap-2 rounded-xl bg-koth-pr-bg p-3 text-koth-pr-text">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-            <span className="text-xs font-medium">{c.safety_note}</span>
+          <div className="mt-2 flex items-start gap-2 rounded-lg bg-koth-pr-bg px-2.5 py-1.5 text-koth-pr-text">
+            <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" aria-hidden />
+            <span className="text-[11px] font-medium">{c.safety_note}</span>
           </div>
         )}
 
-        <div className="mt-4 grid grid-cols-3 gap-2">
+        <div className="mt-3 grid grid-cols-3 gap-1.5">
           <PrizeChip label="1st" amount={Number(c.prize_first)} rank={1} />
           <PrizeChip label="2nd" amount={Number(c.prize_second)} rank={2} />
           <PrizeChip label="3rd" amount={Number(c.prize_third)} rank={3} />
         </div>
       </section>
 
-      {/* Your rank */}
-      <section className="rounded-3xl border border-border bg-card p-5">
-        {myEntryQ.data ? (
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="label-broadcast text-muted-foreground">Your rank</p>
-              <div className="mt-1 flex items-baseline gap-2">
-                {myRankQ.data && <RankBadge rank={myRankQ.data} size="lg" />}
-                <div className="mono-stat text-3xl font-bold text-foreground">
-                  {formatValue(
-                    Number(myEntryQ.data.admin_verified_value ?? myEntryQ.data.self_reported_value),
-                    c.unit_type,
-                    c.unit_label,
-                  )}
-                </div>
-              </div>
-              <p className="mt-1 text-xs text-muted-foreground">
+      {/* Live activity feed */}
+      <LiveActivity challengeId={c.id} unitType={c.unit_type} unitLabel={c.unit_label} />
+
+      {/* Your position */}
+      {user && (
+        <PositionCard
+          challengeId={c.id}
+          userId={user.id}
+          hasEntry={!!myEntryQ.data}
+          myValue={
+            myEntryQ.data
+              ? Number(myEntryQ.data.admin_verified_value ?? myEntryQ.data.self_reported_value)
+              : null
+          }
+          unitType={c.unit_type}
+          unitLabel={c.unit_label}
+        />
+      )}
+
+      {/* My entry status + delete control */}
+      {myEntryQ.data && (
+        <section className="rounded-3xl border border-border bg-card p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="label-broadcast text-muted-foreground">Your time</p>
+              <p className="mono-stat mt-0.5 text-2xl font-bold text-foreground">
+                {formatValue(
+                  Number(myEntryQ.data.admin_verified_value ?? myEntryQ.data.self_reported_value),
+                  c.unit_type,
+                  c.unit_label,
+                )}
+              </p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
                 {myEntryQ.data.status === "pending_review" && "Awaiting admin verification"}
                 {myEntryQ.data.status === "verified" && "Verified"}
                 {myEntryQ.data.status === "flagged" && "Flagged for review"}
                 {myEntryQ.data.status === "disqualified" && "Disqualified"}
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0 sm:flex-col">
-              <Link
-                to="/record"
-                className="tap-44 inline-flex items-center justify-center gap-1.5 rounded-full bg-koth-red px-4 py-2 text-sm font-bold text-koth-white"
-              >
-                <Video className="h-4 w-4" aria-hidden />
-                Try again
-              </Link>
-              <Button
-                type="button"
-                variant="outline"
-                disabled={deletingEntry}
-                onClick={deleteMyEntry}
-                className="tap-44 rounded-full border-koth-red text-koth-red hover:bg-koth-red hover:text-koth-white"
-              >
-                <Trash2 className="mr-1.5 h-4 w-4" aria-hidden />
-                Delete video
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="label-broadcast text-muted-foreground">No entry yet</p>
-              <p className="mt-1 text-sm text-foreground">Drop your first attempt of the week.</p>
-            </div>
-            <Link
-              to="/record"
-              className="tap-44 inline-flex items-center gap-1.5 rounded-full bg-koth-red px-4 py-2 text-sm font-bold text-koth-white"
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={deletingEntry}
+              onClick={deleteMyEntry}
+              className="tap-44 rounded-full border-koth-red text-koth-red hover:bg-koth-red hover:text-koth-white"
             >
-              <Video className="h-4 w-4" aria-hidden />
-              Record
-            </Link>
+              <Trash2 className="mr-1.5 h-4 w-4" aria-hidden />
+              Delete
+            </Button>
           </div>
-        )}
-      </section>
+        </section>
+      )}
 
       {/* Top 3 preview */}
       <TopThreePreview challengeId={c.id} unitType={c.unit_type} unitLabel={c.unit_label} />
