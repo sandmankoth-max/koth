@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      banned_fingerprints: {
+        Row: {
+          banned_at: string
+          banned_by: string | null
+          fp_hash: string
+          reason: string | null
+        }
+        Insert: {
+          banned_at?: string
+          banned_by?: string | null
+          fp_hash: string
+          reason?: string | null
+        }
+        Update: {
+          banned_at?: string
+          banned_by?: string | null
+          fp_hash?: string
+          reason?: string | null
+        }
+        Relationships: []
+      }
       banned_usernames: {
         Row: {
           banned_at: string
@@ -93,6 +114,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      device_fingerprints: {
+        Row: {
+          created_at: string
+          fp_hash: string
+          id: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          fp_hash: string
+          id?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          fp_hash?: string
+          id?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       friendships: {
         Row: {
@@ -354,6 +399,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_fingerprint_banned: { Args: { _fp: string }; Returns: boolean }
       is_profane: { Args: { _text: string }; Returns: boolean }
       lifecycle_tick: { Args: never; Returns: Json }
       notify_rank_changes: {
