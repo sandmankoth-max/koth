@@ -105,8 +105,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (ageYears < 13) throw new Error("You must be 13 or older to use KOTH.");
 
     const username = input.username.trim().toLowerCase();
-    if (!/^[a-z0-9_]{3,20}$/.test(username)) {
-      throw new Error("Username must be 3–20 chars: lowercase letters, numbers, underscore.");
+    if (!/^[a-z0-9_]{3,16}$/.test(username)) {
+      throw new Error("Username must be 3–16 chars: lowercase letters, numbers, underscore.");
+    }
+    if (PROFANITY.some((w) => username.includes(w) || input.display_name.toLowerCase().includes(w))) {
+      throw new Error("Username or display name contains disallowed language.");
+    }
+    if (input.password.length < 8 || input.password.length > 16) {
+      throw new Error("Password must be 8–16 characters.");
+    }
+    if (!/[A-Z]/.test(input.password) || !/[0-9]/.test(input.password)) {
+      throw new Error("Password must include at least one uppercase letter and one number.");
     }
 
     const { data: signUpData, error } = await supabase.auth.signUp({
