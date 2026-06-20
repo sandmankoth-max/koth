@@ -538,7 +538,7 @@ function Composer({
           rows={1}
           placeholder="Add comment… @ to tag"
           maxLength={500}
-          className="min-h-[40px] max-h-24 flex-1 resize-none rounded-2xl border border-border bg-muted/40 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-koth-red"
+          className="min-h-[40px] max-h-24 flex-1 resize-none rounded-2xl border border-border bg-muted/40 px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-koth-red"
         />
         <button
           onClick={send}
