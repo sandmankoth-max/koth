@@ -56,7 +56,7 @@ function Leaderboard() {
         )
         .eq("challenge_id", c!.id)
         .eq("is_active_entry", true)
-        .neq("status", "disqualified");
+        .eq("status", "verified");
       if (!data) return [];
       return data
         .map((r) => ({ ...r, val: Number(r.admin_verified_value ?? r.self_reported_value) }))
