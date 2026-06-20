@@ -78,15 +78,14 @@ function UserProfile() {
       const q = supabase
         .from("submissions")
         .select(
-          "id, video_path, self_reported_value, admin_verified_value, submitted_at, visibility, is_active_entry, challenges(id, title, unit_type, unit_label)",
+          "id, video_path, self_reported_value, admin_verified_value, submitted_at, visibility, is_active_entry, status, challenges(id, title, unit_type, unit_label)",
         )
         .eq("user_id", profileId!)
-        .neq("status", "disqualified")
         .order("submitted_at", { ascending: false });
       const { data } = canSeeAll ? await q : await q.limit(1);
       return (data ?? []).filter(
         (s: any) =>
-          s.challenges && (s.visibility === "friends_only" || s.is_active_entry),
+          s.challenges && (s.visibility === "friends_only" || s.is_active_entry || s.status === "disqualified"),
       );
     },
   });
@@ -188,17 +187,38 @@ function UserProfile() {
         {items.length === 0 ? (
           <p className="text-sm text-muted-foreground">No videos to show.</p>
         ) : (
-          <div className="grid grid-cols-3 gap-1.5">
-            {items.map((it, i) => (
-              <VideoThumb
-                key={it.id}
-                videoPath={it.video_path}
-                onClick={() => {
-                  setPlayerIndex(i);
-                  setPlayerOpen(true);
-                }}
-              />
-            ))}
+          <div className="grid grid-cols-3 gap-3">
+            {(videosQ.data ?? []).map((s: any, i: number) => {
+              const it = items[i];
+              const title = s.challenges?.title as string | undefined;
+              return (
+                <div key={it.id} className="flex flex-col items-center">
+                  <VideoThumb
+                    videoPath={it.video_path}
+                    onClick={() => {
+                      setPlayerIndex(i);
+                      setPlayerOpen(true);
+                    }}
+                    badge={
+                      s.status === "disqualified" ? (
+                        <span className="rounded-full bg-koth-red px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
+                          Suspended
+                        </span>
+                      ) : s.status === "verified" ? (
+                        <span className="rounded-full bg-koth-pr-bg px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-koth-pr-text">
+                          Verified
+                        </span>
+                      ) : null
+                    }
+                  />
+                  {title && (
+                    <p className="mt-1 w-full truncate text-center text-[11px] font-semibold text-foreground">
+                      {title}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </section>

@@ -15,6 +15,7 @@ import { formatValue, getVideoSignedUrl } from "@/lib/koth-utils";
 import { CommentDrawer } from "@/components/koth/comment-drawer";
 import { RankBadge } from "@/components/koth/rank-badge";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { VideoScrubber } from "@/components/koth/video-scrubber";
 
 export const Route = createFileRoute("/_authenticated/friends")({
   head: () => ({ meta: [{ title: "Friends — KOTH" }] }),
@@ -100,10 +101,9 @@ function FeedTab({ tab, setTab, onAdd }: { tab: Tab; setTab: (t: Tab) => void; o
       const { data } = await supabase
         .from("submissions")
         .select(
-          "id, user_id, self_reported_value, admin_verified_value, video_path, submitted_at, visibility, profiles!submissions_user_id_fkey(username, display_name, avatar_url)",
+          "id, user_id, self_reported_value, admin_verified_value, video_path, submitted_at, visibility, status, profiles!submissions_user_id_fkey(username, display_name, avatar_url)",
         )
         .eq("challenge_id", challengeQ.data!.id)
-        .neq("status", "disqualified")
         .in("user_id", visibleUserIds)
         .order("submitted_at", { ascending: false });
       return data ?? [];
@@ -113,16 +113,16 @@ function FeedTab({ tab, setTab, onAdd }: { tab: Tab; setTab: (t: Tab) => void; o
   const c = challengeQ.data;
   const noFriends = friendsQ.data && friendsQ.data.length === 0;
 
-  // Friends podium: best entry per user (across all visibility levels).
+  // Friends podium: best entry per user (excluding suspended attempts).
   const podium = (() => {
-    const rows = feedQ.data ?? [];
+    const rows = (feedQ.data ?? []).filter((r: any) => r.status !== "disqualified");
     const byUser = new Map<string, any>();
     for (const r of rows) {
       const val = Number(r.admin_verified_value ?? r.self_reported_value);
       const prev = byUser.get(r.user_id);
       if (!prev || val > prev.val) byUser.set(r.user_id, { ...r, val });
     }
-    return Array.from(byUser.values()).sort((a, b) => b.val - a.val).slice(0, 3);
+    return Array.from(byUser.values()).sort((a, b) => b.val - a.val).slice(0, 10);
   })();
 
   const [podiumOpen, setPodiumOpen] = useState(false);
@@ -225,14 +225,12 @@ function PodiumDialog({
   podium: any[];
   c: any;
 }) {
-  // Lazy import to avoid restructuring imports.
-  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogTitle>Friends podium</DialogTitle>
         <p className="text-xs text-muted-foreground">
-          Best time per friend for <span className="font-semibold text-foreground">{c.title}</span>.
+          Best result per friend for <span className="font-semibold text-foreground">{c.title}</span>.
         </p>
         <FriendsPodium podium={podium} c={c} />
       </DialogContent>
@@ -241,12 +239,13 @@ function PodiumDialog({
 }
 
 function FriendsPodium({ podium, c }: { podium: any[]; c: any }) {
+  const top3 = podium.slice(0, 3);
+  const rest = podium.slice(3);
   return (
-    <section className="rounded-3xl border border-border bg-card p-3">
-      <p className="label-broadcast mb-2 px-1 text-muted-foreground">Friends podium</p>
-      <div className="grid grid-cols-3 items-end gap-2 pt-5">
+    <section className="space-y-3 rounded-3xl border border-border bg-card p-3">
+      <div className="grid grid-cols-3 items-end gap-2 pt-6">
         {[1, 0, 2].map((pos) => {
-          const r = podium[pos];
+          const r = top3[pos];
           const rank = pos + 1;
           const heights = ["h-32", "h-28", "h-24"];
           const isFirst = rank === 1;
@@ -297,6 +296,30 @@ function FriendsPodium({ podium, c }: { podium: any[]; c: any }) {
           );
         })}
       </div>
+
+      {rest.length > 0 && (
+        <ul className="divide-y divide-border rounded-2xl border border-border bg-background">
+          {rest.map((r, i) => {
+            const p = r.profiles;
+            return (
+              <li key={r.id} className="flex items-center gap-3 px-3 py-2">
+                <span className="mono-stat w-6 text-center text-xs font-bold text-muted-foreground">
+                  {i + 4}
+                </span>
+                <Avatar
+                  name={p?.display_name ?? p?.username ?? "?"}
+                  avatarPath={p?.avatar_url}
+                  size={28}
+                />
+                <p className="min-w-0 flex-1 truncate text-sm text-foreground">@{p?.username}</p>
+                <p className="mono-stat text-sm font-bold text-foreground">
+                  {formatValue(r.val, c.unit_type, c.unit_label)}
+                </p>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </section>
   );
 }
@@ -456,6 +479,11 @@ function FeedVideo({ row, c, scrollRoot }: { row: any; c: any; scrollRoot: React
         )}
       </button>
 
+      {/* Scrubber */}
+      <div className="absolute inset-x-3 bottom-[88px] z-20">
+        <VideoScrubber videoRef={videoRef} />
+      </div>
+
       {/* Bottom-left info */}
       <div className="absolute bottom-4 left-4 right-20 z-20 text-white">
         <Link
@@ -466,15 +494,25 @@ function FeedVideo({ row, c, scrollRoot }: { row: any; c: any; scrollRoot: React
         >
           @{p?.username}
         </Link>
-        <p className="mt-1 text-xs text-white/80">
+        <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-white/80">
           <span className="rounded-full bg-koth-red px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
             {c.title}
           </span>
-          <span className="ml-2 mono-stat font-bold">
+          <span className="mono-stat font-bold">
             {formatValue(val, c.unit_type, c.unit_label)}
           </span>
+          {row.status === "verified" && (
+            <span className="rounded-full bg-koth-pr-bg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-koth-pr-text">
+              Verified
+            </span>
+          )}
+          {row.status === "disqualified" && (
+            <span className="rounded-full bg-koth-red/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+              Suspended
+            </span>
+          )}
           {row.visibility === "friends_only" && (
-            <span className="ml-2 rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+            <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
               Friends
             </span>
           )}

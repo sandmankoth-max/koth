@@ -59,14 +59,13 @@ function Record() {
   }
 
   if (stage === "camera") {
+    const cap = challenge.max_video_seconds ?? 300;
     return (
       <CameraRecorder
-        maxSeconds={challenge.max_video_seconds ?? null}
+        maxSeconds={cap}
         onCancel={() => setStage("intro")}
         onCapture={(v) => {
-          // Hard reject if somehow over the cap.
-          const cap = challenge.max_video_seconds as number | null;
-          if (cap && v.durationMs > cap * 1000 + 500) {
+          if (v.durationMs > cap * 1000 + 500) {
             toast.error(`Video exceeded the ${cap}s limit. Please re-record.`);
             URL.revokeObjectURL(v.previewUrl);
             return;
@@ -188,14 +187,24 @@ function Record() {
             pattern="[0-9]*[.]?[0-9]*"
             value={reportedValue}
             onChange={(e) => {
-              const v = e.target.value.replace(",", ".");
-              if (v === "" || /^\d*\.?\d*$/.test(v)) setReportedValue(v);
+              const raw = e.target.value.replace(",", ".");
+              if (raw === "") { setReportedValue(""); return; }
+              if (!/^\d*\.?\d*$/.test(raw)) return;
+              // Cap at < 1000 (three integer digits) to block 99999999 nonsense.
+              const n = Number(raw);
+              if (Number.isFinite(n) && n >= 1000) return;
+              // Limit integer part to 3 digits even mid-type.
+              const [intPart] = raw.split(".");
+              if (intPart.length > 3) return;
+              setReportedValue(raw);
             }}
             autoFocus
             placeholder="0"
             className="mono-stat h-20 rounded-2xl text-center text-4xl font-bold"
           />
-          <p className="text-center text-sm text-muted-foreground">{challenge.unit_label}</p>
+          <p className="text-center text-xs text-muted-foreground">
+            {challenge.unit_label} · max 999
+          </p>
           <div className="grid grid-cols-2 gap-3">
             <Button
               variant="outline"
@@ -206,7 +215,7 @@ function Record() {
             </Button>
             <Button
               onClick={() => setStage("visibility")}
-              disabled={!reportedValue || Number(reportedValue) < 0}
+              disabled={!reportedValue || Number(reportedValue) <= 0 || Number(reportedValue) >= 1000}
               className="tap-44 h-12 rounded-full bg-koth-red text-koth-white hover:bg-koth-red/90"
             >
               Next
@@ -310,6 +319,14 @@ function Record() {
               Change
             </button>
           </div>
+          {visibility === "public" && (
+            <div className="rounded-2xl border border-koth-red/40 bg-koth-red/5 p-3 text-xs text-foreground">
+              <p className="label-broadcast text-koth-red">Heads up — resubmit</p>
+              <p className="mt-1">
+                Submitting this will <span className="font-bold">delete your previous attempt</span> for this challenge (even if it was already verified or suspended). The new attempt appears on the leaderboard once an admin verifies it.
+              </p>
+            </div>
+          )}
           <p className="text-xs text-muted-foreground">
             {visibility === "friends_only"
               ? "Saved to your profile and friends feed. Doesn't replace earlier attempts."

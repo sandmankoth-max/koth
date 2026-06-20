@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { formatDistanceToNow } from "date-fns";
-import { Bell, Crown, ArrowDown, ArrowUp, Flag, UserPlus, UserCheck, Check, X } from "lucide-react";
+import { Bell, Crown, ArrowDown, ArrowUp, Flag, UserPlus, UserCheck, Check, X, Heart, MessageCircle, AtSign, Megaphone, ShieldAlert, BadgeCheck } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/notifications")({
@@ -18,9 +18,18 @@ const iconFor = (t: string) =>
   t === "deadline_reminder" || t === "deadline_reminder_24h" ? <Flag className="h-5 w-5 text-koth-pr-text" /> :
   t === "friend_request" ? <UserPlus className="h-5 w-5 text-koth-red" /> :
   t === "friend_accepted" ? <UserCheck className="h-5 w-5 text-koth-red" /> :
+  t === "like_video" || t === "like_comment" ? <Heart className="h-5 w-5 text-koth-red" fill="currentColor" /> :
+  t === "comment_video" || t === "reply_comment" || t === "reply_challenge_comment" ? <MessageCircle className="h-5 w-5 text-koth-red" /> :
+  t === "tag_comment" || t === "tag_challenge_comment" ? <AtSign className="h-5 w-5 text-koth-red" /> :
+  t === "admin_message" ? <Megaphone className="h-5 w-5 text-koth-red" /> :
+  t === "time_verified" ? <BadgeCheck className="h-5 w-5 text-koth-pr-text" /> :
+  t === "time_disqualified" ? <ShieldAlert className="h-5 w-5 text-koth-red" /> :
   <Bell className="h-5 w-5 text-foreground" />;
 
+const preview = (s?: string) => (s ? `: "${s.length > 60 ? s.slice(0, 60) + "…" : s}"` : "");
+
 const labelFor = (n: any) => {
+  const u = n.payload?.from_username ? `@${n.payload.from_username}` : "Someone";
   switch (n.type) {
     case "new_challenge":
       return `New challenge is live: ${n.payload?.title ?? "this week's challenge"}`;
@@ -37,11 +46,27 @@ const labelFor = (n: any) => {
     case "time_verified":
       return `Your time was verified${n.payload?.value != null ? ` — ${n.payload.value}` : ""}`;
     case "time_disqualified":
-      return `Your submission was disqualified`;
+      return n.payload?.reason
+        ? `Your submission was suspended — ${n.payload.reason}`
+        : `Your submission was suspended`;
     case "friend_request":
-      return `@${n.payload?.from_username ?? "someone"} sent you a friend request`;
+      return `${u} sent you a friend request`;
     case "friend_accepted":
-      return `@${n.payload?.from_username ?? "someone"} accepted your friend request`;
+      return `${u} accepted your friend request`;
+    case "like_video":
+      return `${u} liked your video`;
+    case "like_comment":
+      return `${u} liked your comment`;
+    case "comment_video":
+      return `${u} commented on your video${preview(n.payload?.preview)}`;
+    case "reply_comment":
+      return `${u} replied to your comment${preview(n.payload?.preview)}`;
+    case "reply_challenge_comment":
+      return `${u} replied to your challenge comment${preview(n.payload?.preview)}`;
+    case "tag_comment":
+      return `${u} mentioned you in a video comment${preview(n.payload?.preview)}`;
+    case "tag_challenge_comment":
+      return `${u} mentioned you in a challenge comment${preview(n.payload?.preview)}`;
     case "admin_message":
       return n.payload?.message ?? "Message from admin";
     default:

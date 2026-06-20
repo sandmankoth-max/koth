@@ -60,40 +60,46 @@ export const deletePreviousSubmissionsForChallenge = createServerFn({ method: "P
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    // Friends-only uploads should NEVER delete a user's prior attempts —
-    // they accumulate on the profile / friends feed forever.
-    if (data.visibility === "friends_only") {
-      return { deleted: 0 };
-    }
-
-    // Public uploads replace earlier public attempts only. Keep friends-only
-    // history intact.
-    const { data: submissions, error: fetchError } = await context.supabase
+    // Always purge any prior SUSPENDED attempts for this user/challenge —
+    // they should not linger anywhere once the user reattempts.
+    const { data: suspended, error: suspErr } = await context.supabase
       .from("submissions")
       .select("id, video_path")
       .eq("user_id", context.userId)
       .eq("challenge_id", data.challengeId)
-      .eq("visibility", "public")
+      .eq("status", "disqualified")
       .neq("id", data.keepSubmissionId);
-    if (fetchError) throw new Error(fetchError.message);
+    if (suspErr) throw new Error(suspErr.message);
 
-    const oldSubmissions = submissions ?? [];
-    if (oldSubmissions.length === 0) return { deleted: 0 };
+    let toDelete = suspended ?? [];
+
+    if (data.visibility !== "friends_only") {
+      // Public uploads also replace earlier non-suspended public attempts.
+      const { data: pubs, error: pubErr } = await context.supabase
+        .from("submissions")
+        .select("id, video_path")
+        .eq("user_id", context.userId)
+        .eq("challenge_id", data.challengeId)
+        .eq("visibility", "public")
+        .neq("status", "disqualified")
+        .neq("id", data.keepSubmissionId);
+      if (pubErr) throw new Error(pubErr.message);
+      toDelete = [...toDelete, ...(pubs ?? [])];
+    }
+
+    if (toDelete.length === 0) return { deleted: 0 };
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await removeVideoPaths(
-      supabaseAdmin,
-      oldSubmissions.map((submission) => submission.video_path),
-    );
+    await removeVideoPaths(supabaseAdmin, toDelete.map((s) => s.video_path));
 
-    const ids = oldSubmissions.map((s) => s.id);
+    const ids = toDelete.map((s) => s.id);
     const { error: deleteError } = await context.supabase
       .from("submissions")
       .delete()
       .in("id", ids);
     if (deleteError) throw new Error(deleteError.message);
 
-    return { deleted: oldSubmissions.length };
+    return { deleted: toDelete.length };
   });
 
 export const cleanupOldChallengeSubmissions = createServerFn({ method: "POST" })

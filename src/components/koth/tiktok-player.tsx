@@ -21,6 +21,7 @@ import { Avatar } from "@/components/koth/avatar";
 import { getVideoSignedUrl, formatValue } from "@/lib/koth-utils";
 import { cn } from "@/lib/utils";
 import { CommentDrawer } from "@/components/koth/comment-drawer";
+import { VideoScrubber } from "@/components/koth/video-scrubber";
 import { deleteOwnSubmission } from "@/lib/submissions.functions";
 
 export type PlayerItem = {
@@ -283,6 +284,11 @@ function PlayerStage({
           />
         )}
       </button>
+
+      {/* Scrubber */}
+      <div className="absolute inset-x-3 bottom-[88px] z-20">
+        <VideoScrubber videoRef={videoRef} />
+      </div>
 
       {/* Bottom-left info */}
       <div className="absolute bottom-4 left-4 right-20 z-20 text-white">

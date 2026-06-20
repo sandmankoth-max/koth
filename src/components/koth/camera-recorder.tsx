@@ -134,14 +134,36 @@ export function CameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
   const ss = String(seconds % 60).padStart(2, "0");
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-koth-black text-koth-white">
-      <div className="flex items-center justify-between px-4 py-3">
+    <div className="fixed inset-0 z-50 bg-black text-koth-white">
+      {/* Full-bleed camera preview */}
+      <div className="absolute inset-0">
+        {error ? (
+          <div className="flex h-full w-full items-center justify-center px-6 text-center">
+            <div>
+              <p className="label-broadcast mb-2 text-koth-red">Camera unavailable</p>
+              <p className="text-sm text-koth-white/80">{error}</p>
+            </div>
+          </div>
+        ) : (
+          <video
+            ref={videoRef}
+            playsInline
+            muted
+            autoPlay
+            className="h-full w-full object-cover"
+            style={facing === "user" ? { transform: "scaleX(-1)" } : undefined}
+          />
+        )}
+      </div>
+
+      {/* Top overlay */}
+      <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-4 py-3">
         <button
           onClick={() => {
             stop();
             onCancel();
           }}
-          className="tap-44 rounded-full p-2"
+          className="tap-44 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur"
           aria-label="Close camera"
         >
           <X className="h-6 w-6" aria-hidden />
@@ -152,13 +174,13 @@ export function CameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
             {mm}:{ss}{maxSeconds ? ` / ${String(Math.floor(maxSeconds/60)).padStart(2,"0")}:${String(maxSeconds%60).padStart(2,"0")}` : ""}
           </span>
         ) : maxSeconds ? (
-          <span className="pill mono-stat bg-koth-white/10 text-koth-white">
-            Max {maxSeconds}s
+          <span className="pill mono-stat bg-black/40 text-koth-white backdrop-blur">
+            Max {Math.floor(maxSeconds/60)}:{String(maxSeconds%60).padStart(2,"0")}
           </span>
         ) : <span />}
         <button
           onClick={() => setFacing((f) => (f === "user" ? "environment" : "user"))}
-          className="tap-44 rounded-full p-2"
+          className="tap-44 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur disabled:opacity-50"
           aria-label="Switch camera"
           disabled={recording}
         >
@@ -166,24 +188,19 @@ export function CameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
         </button>
       </div>
 
-      <div className="relative flex flex-1 items-center justify-center overflow-hidden bg-koth-black">
-        {error ? (
-          <div className="px-6 text-center">
-            <p className="label-broadcast mb-2 text-koth-red">Camera unavailable</p>
-            <p className="text-sm text-koth-white/80">{error}</p>
-          </div>
-        ) : (
-          <video
-            ref={videoRef}
-            playsInline
-            muted
-            autoPlay
-            className="h-full w-full object-cover"
-          />
-        )}
-      </div>
+      {/* Front-facing "ring light" when recording on front cam */}
+      {recording && facing === "user" && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 z-[5]"
+          style={{
+            boxShadow: "inset 0 0 120px 40px rgba(255,255,255,0.35)",
+          }}
+        />
+      )}
 
-      <div className="flex items-center justify-center gap-8 px-6 py-8">
+      {/* Bottom shutter */}
+      <div className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-8 px-6 pb-10 pt-6">
         {!recording ? (
           <Button
             onClick={start}
