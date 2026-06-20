@@ -85,7 +85,7 @@ function Home() {
 
   return (
     <div className="space-y-5">
-      <WelcomeDialog>
+      <WelcomeDialog />
       <RankNotifications />
 
       {/* Challenge hero card */}
