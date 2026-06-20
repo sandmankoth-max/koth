@@ -245,6 +245,9 @@ function ReviewSubmissions() {
         "*, profiles!submissions_user_id_fkey(username, display_name, avatar_url)",
       )
       .eq("challenge_id", sel)
+      .eq("visibility", "public")
+      .eq("is_active_entry", true)
+      .eq("status", "pending_review")
       .order("submitted_at", { ascending: false })
       .then(({ data }) => setSubs(data ?? []));
   }, [sel]);
