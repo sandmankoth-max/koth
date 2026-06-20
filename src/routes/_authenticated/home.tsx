@@ -12,6 +12,8 @@ import { Video, AlertTriangle, X, Trash2 } from "lucide-react";
 import { formatValue, shortUnitLabel } from "@/lib/koth-utils";
 import { Button } from "@/components/ui/button";
 import { WelcomeDialog } from "@/components/koth/welcome-dialog";
+import { LiveActivity } from "@/components/koth/live-activity";
+import { PositionCard } from "@/components/koth/position-card";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/home")({
