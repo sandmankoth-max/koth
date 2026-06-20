@@ -16,7 +16,10 @@ export const Route = createFileRoute("/_authenticated/record")({
   component: Record,
 });
 
-type Stage = "intro" | "camera" | "preview" | "report" | "confirm" | "uploading";
+type Stage = "intro" | "camera" | "preview" | "report" | "visibility" | "confirm" | "uploading";
+type Visibility = "public" | "friends_only";
+
+const SEEN_VIS_KEY = "koth.seenVisibilityExplainer";
 
 function Record() {
   const navigate = useNavigate();
@@ -25,6 +28,8 @@ function Record() {
   const [stage, setStage] = useState<Stage>("intro");
   const [captured, setCaptured] = useState<CapturedVideo | null>(null);
   const [reportedValue, setReportedValue] = useState("");
+  const [visibility, setVisibility] = useState<Visibility | null>(null);
+  const [explainOpen, setExplainOpen] = useState<Visibility | null>(null);
   const [challenge, setChallenge] = useState<any>(null);
 
   useEffect(() => {
