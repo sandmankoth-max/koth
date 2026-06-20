@@ -27,9 +27,9 @@ export function SplashAnimation() {
           <circle cx="0" cy="-18" r="30" fill="none" stroke="#FFFFFF" strokeWidth="0.75" />
         </g>
 
-        {/* Ground-impact starburst at blastoff */}
+        {/* Ground-burst kickoff at blastoff */}
         <g className="koth-impact" transform="translate(60 240)">
-          <Starburst />
+          <GroundBurst />
         </g>
 
         {/* Apex slam-impact flash */}
@@ -51,14 +51,19 @@ export function SplashAnimation() {
           <CrownPath />
         </g>
 
-        {/* Stick figure: outer = position, middle = squash, inner = arms-up swap */}
+        {/* Stick figure: outer = position, middle = squash/rotate, inner = pose swap */}
         <g className="koth-figure">
-          <g className="koth-crouch">
-            <g className="koth-arms-down">
-              <StickFigure />
-            </g>
-            <g className="koth-arms-up">
-              <StickFigure armsUp />
+          <g className="koth-blast-rotate">
+            <g className="koth-crouch">
+              <g className="koth-arms-down">
+                <StickFigure />
+              </g>
+              <g className="koth-arms-up">
+                <StickFigure armsUp />
+              </g>
+              <g className="koth-arms-fly">
+                <StickFigure flying />
+              </g>
             </g>
           </g>
         </g>
