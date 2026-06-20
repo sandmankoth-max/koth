@@ -25,6 +25,12 @@ type Tab = "feed" | "add";
 function Friends() {
   const [tab, setTab] = useState<Tab>("feed");
 
+  if (tab === "feed") {
+    // Fullscreen TikTok-style: feed renders its own chrome (floating tabs +
+    // podium button) so it can fill the space between top bar and bottom nav.
+    return <FeedTab tab={tab} setTab={setTab} onAdd={() => setTab("add")} />;
+  }
+
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 gap-2 rounded-full border border-border bg-card p-1">
@@ -48,7 +54,7 @@ function Friends() {
         </button>
       </div>
 
-      {tab === "feed" ? <FeedTab onAdd={() => setTab("add")} /> : <AddTab />}
+      <AddTab />
     </div>
   );
 }
