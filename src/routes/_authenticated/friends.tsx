@@ -87,7 +87,7 @@ function FeedTab({ onAdd }: { onAdd: () => void }) {
       const { data } = await supabase
         .from("submissions")
         .select(
-          "id, self_reported_value, admin_verified_value, video_path, submitted_at, profiles!submissions_user_id_fkey(username, display_name, avatar_url)",
+          "id, user_id, self_reported_value, admin_verified_value, video_path, submitted_at, profiles!submissions_user_id_fkey(username, display_name, avatar_url)",
         )
         .eq("challenge_id", challengeQ.data!.id)
         .eq("is_active_entry", true)
