@@ -31,14 +31,20 @@ export function ChallengeChat({ challengeId }: Props) {
     queryFn: async () => {
       const { data } = await supabase
         .from("challenge_comments")
-        .select(
-          "id, body, created_at, author_id, profiles!inner(username, display_name, avatar_url)",
-        )
+        .select("id, body, created_at, author_id")
         .eq("challenge_id", challengeId)
         .is("parent_id", null)
         .order("created_at", { ascending: false })
         .limit(3);
-      return data ?? [];
+      const rows = data ?? [];
+      if (rows.length === 0) return [] as any[];
+      const ids = Array.from(new Set(rows.map((r) => r.author_id)));
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, username, display_name, avatar_url")
+        .in("id", ids);
+      const m = new Map((profs ?? []).map((p) => [p.id, p]));
+      return rows.map((r) => ({ ...r, profiles: m.get(r.author_id) ?? null }));
     },
   });
 
