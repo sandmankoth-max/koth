@@ -658,6 +658,16 @@ function EditChallenge() {
               <Input type="number" min="0" value={form.prize_third} onChange={(e) => setForm({ ...form, prize_third: e.target.value })} />
             </Field>
           </div>
+          <Field label="Max video seconds (blank = no cap)">
+            <Input
+              type="number"
+              min="5"
+              max="300"
+              placeholder="e.g. 60"
+              value={form.max_video_seconds}
+              onChange={(e) => setForm({ ...form, max_video_seconds: e.target.value })}
+            />
+          </Field>
           <Button onClick={save} disabled={busy} className="tap-44 h-12 w-full rounded-full bg-koth-red text-koth-white">
             {busy ? "…" : "Save changes"}
           </Button>
