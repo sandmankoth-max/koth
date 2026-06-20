@@ -146,12 +146,16 @@ export function CameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
         >
           <X className="h-6 w-6" aria-hidden />
         </button>
-        {recording && (
+        {recording ? (
           <span className="pill mono-stat bg-koth-red text-koth-white">
             <span className="h-2 w-2 animate-pulse rounded-full bg-koth-white" />
-            {mm}:{ss}
+            {mm}:{ss}{maxSeconds ? ` / ${String(Math.floor(maxSeconds/60)).padStart(2,"0")}:${String(maxSeconds%60).padStart(2,"0")}` : ""}
           </span>
-        )}
+        ) : maxSeconds ? (
+          <span className="pill mono-stat bg-koth-white/10 text-koth-white">
+            Max {maxSeconds}s
+          </span>
+        ) : <span />}
         <button
           onClick={() => setFacing((f) => (f === "user" ? "environment" : "user"))}
           className="tap-44 rounded-full p-2"
