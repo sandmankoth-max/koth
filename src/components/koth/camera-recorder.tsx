@@ -22,9 +22,11 @@ export type CapturedVideo = {
 type Props = {
   onCancel: () => void;
   onCapture: (v: CapturedVideo) => void;
+  /** Hard cap; recorder auto-stops at this many seconds when set. */
+  maxSeconds?: number | null;
 };
 
-export function CameraRecorder({ onCancel, onCapture }: Props) {
+export function CameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -121,6 +123,12 @@ export function CameraRecorder({ onCancel, onCapture }: Props) {
     setRecording(false);
   }, []);
 
+  // Auto-stop when reaching the per-challenge cap.
+  useEffect(() => {
+    if (!recording || !maxSeconds) return;
+    if (elapsed >= maxSeconds * 1000) finish();
+  }, [recording, elapsed, maxSeconds, finish]);
+
   const seconds = Math.floor(elapsed / 1000);
   const mm = String(Math.floor(seconds / 60)).padStart(2, "0");
   const ss = String(seconds % 60).padStart(2, "0");
@@ -138,12 +146,16 @@ export function CameraRecorder({ onCancel, onCapture }: Props) {
         >
           <X className="h-6 w-6" aria-hidden />
         </button>
-        {recording && (
+        {recording ? (
           <span className="pill mono-stat bg-koth-red text-koth-white">
             <span className="h-2 w-2 animate-pulse rounded-full bg-koth-white" />
-            {mm}:{ss}
+            {mm}:{ss}{maxSeconds ? ` / ${String(Math.floor(maxSeconds/60)).padStart(2,"0")}:${String(maxSeconds%60).padStart(2,"0")}` : ""}
           </span>
-        )}
+        ) : maxSeconds ? (
+          <span className="pill mono-stat bg-koth-white/10 text-koth-white">
+            Max {maxSeconds}s
+          </span>
+        ) : <span />}
         <button
           onClick={() => setFacing((f) => (f === "user" ? "environment" : "user"))}
           className="tap-44 rounded-full p-2"

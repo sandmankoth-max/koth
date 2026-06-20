@@ -56,7 +56,7 @@ function Leaderboard() {
         )
         .eq("challenge_id", c!.id)
         .eq("is_active_entry", true)
-        .neq("status", "disqualified");
+        .eq("status", "verified");
       if (!data) return [];
       return data
         .map((r) => ({ ...r, val: Number(r.admin_verified_value ?? r.self_reported_value) }))
@@ -130,11 +130,11 @@ function Leaderboard() {
       ) : (
         <>
           {/* Podium */}
-          <section className="grid grid-cols-3 gap-2">
+          <section className="grid grid-cols-3 items-end gap-2 pt-5">
             {[1, 0, 2].map((podiumPos) => {
               const r: any = podium[podiumPos];
               const rank = podiumPos + 1;
-              const heights = ["h-36", "h-28", "h-24"]; // 1st tallest, then 2nd, 3rd
+              const heights = ["h-44", "h-36", "h-32"]; // 1st tallest, then 2nd, 3rd
               const heightCls = heights[podiumPos];
               const isFirst = rank === 1;
               const tile = isFirst
@@ -157,37 +157,40 @@ function Leaderboard() {
               const p = r.profiles;
               const idx = rows.findIndex((x: any) => x.id === r.id);
               return (
-              <button
-                  key={r.id}
-                  onClick={() => openVideoAt(idx)}
-                  className={`tap-44 ${orderCls} ${heightCls} relative flex flex-col items-center justify-end overflow-hidden rounded-2xl border p-2 text-center shadow-lg ${tile}`}
-                >
+                <div key={r.id} className={`${orderCls} relative flex flex-col items-center`}>
                   {isFirst && (
                     <Crown
-                      className="absolute -top-3 left-1/2 h-5 w-5 -translate-x-1/2 text-koth-red drop-shadow"
+                      className="absolute -top-5 left-1/2 z-10 h-7 w-7 -translate-x-1/2 fill-koth-red text-koth-red drop-shadow"
                       aria-hidden
                     />
                   )}
-                  <Avatar
-                    name={p?.display_name ?? p?.username ?? "?"}
-                    avatarPath={p?.avatar_url}
-                    size={isFirst ? 48 : 40}
-                  />
-                  <p className="mt-1 w-full truncate text-[11px] font-semibold opacity-90">
-                    @{p?.username}
-                  </p>
-                  <p className="mono-stat w-full truncate text-sm font-bold leading-tight">
-                    {formatValue(r.val, c.unit_type, c.unit_label)}
-                  </p>
-                  <span className="mt-1 inline-flex items-center gap-0.5 rounded-full bg-black/30 px-1.5 py-0.5 text-[9px] font-bold">
-                    <Play className="h-2.5 w-2.5" fill="currentColor" aria-hidden /> Tap to watch
-                  </span>
                   {isNew(r.submitted_at) && (
-                    <span className="absolute -top-2 right-2 inline-flex items-center gap-0.5 rounded-full bg-koth-white px-1.5 py-0.5 text-[9px] font-bold text-koth-red">
+                    <span className="absolute -top-2 right-1 z-10 inline-flex items-center gap-0.5 rounded-full bg-koth-white px-1.5 py-0.5 text-[9px] font-bold text-koth-red shadow">
                       <Sparkles className="h-2.5 w-2.5" aria-hidden /> NEW
                     </span>
                   )}
-                </button>
+                  <button
+                    onClick={() => openVideoAt(idx)}
+                    className={`tap-44 ${heightCls} relative flex w-full flex-col items-center justify-between rounded-2xl border px-1.5 pb-2 pt-3 text-center shadow-lg ${tile}`}
+                  >
+                    <Avatar
+                      name={p?.display_name ?? p?.username ?? "?"}
+                      avatarPath={p?.avatar_url}
+                      size={isFirst ? 44 : 36}
+                    />
+                    <div className="min-w-0 flex w-full flex-col items-center">
+                      <p className="w-full truncate text-[10px] font-semibold opacity-90">
+                        @{p?.username}
+                      </p>
+                      <p className="mono-stat w-full truncate text-sm font-bold leading-tight">
+                        {formatValue(r.val, c.unit_type, c.unit_label)}
+                      </p>
+                    </div>
+                    <span className="inline-flex items-center gap-0.5 rounded-full bg-black/30 px-1.5 py-0.5 text-[9px] font-bold">
+                      <Play className="h-2.5 w-2.5" fill="currentColor" aria-hidden />
+                    </span>
+                  </button>
+                </div>
               );
             })}
           </section>

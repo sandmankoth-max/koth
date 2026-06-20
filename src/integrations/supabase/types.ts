@@ -114,6 +114,7 @@ export type Database = {
           description: string | null
           ends_at: string
           id: string
+          max_video_seconds: number | null
           prize_first: number
           prize_second: number
           prize_third: number
@@ -130,6 +131,7 @@ export type Database = {
           description?: string | null
           ends_at: string
           id?: string
+          max_video_seconds?: number | null
           prize_first?: number
           prize_second?: number
           prize_third?: number
@@ -146,6 +148,7 @@ export type Database = {
           description?: string | null
           ends_at?: string
           id?: string
+          max_video_seconds?: number | null
           prize_first?: number
           prize_second?: number
           prize_third?: number

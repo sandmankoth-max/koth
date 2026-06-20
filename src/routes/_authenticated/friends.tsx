@@ -1,16 +1,19 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Avatar } from "@/components/koth/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Check, UserPlus, X, Users, Play } from "lucide-react";
+import {
+  Check, UserPlus, X, Users, Heart, MessageCircle, Share2, Play, Crown,
+} from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { formatValue, getVideoSignedUrl } from "@/lib/koth-utils";
-import { TikTokPlayer, type PlayerItem } from "@/components/koth/tiktok-player";
+import { CommentDrawer } from "@/components/koth/comment-drawer";
+import { RankBadge } from "@/components/koth/rank-badge";
 
 export const Route = createFileRoute("/_authenticated/friends")({
   head: () => ({ meta: [{ title: "Friends — KOTH" }] }),
@@ -80,9 +83,12 @@ function FeedTab({ onAdd }: { onAdd: () => void }) {
     },
   });
 
+  // Include the user themselves so their own friends-only submissions show.
+  const visibleUserIds = [...(friendsQ.data ?? []), ...(user ? [user.id] : [])];
+
   const feedQ = useQuery({
-    queryKey: ["feed", challengeQ.data?.id, friendsQ.data],
-    enabled: !!challengeQ.data && !!friendsQ.data && friendsQ.data.length > 0,
+    queryKey: ["feed", challengeQ.data?.id, visibleUserIds.sort().join(",")],
+    enabled: !!challengeQ.data && visibleUserIds.length > 0,
     queryFn: async () => {
       const { data } = await supabase
         .from("submissions")
@@ -91,8 +97,7 @@ function FeedTab({ onAdd }: { onAdd: () => void }) {
         )
         .eq("challenge_id", challengeQ.data!.id)
         .neq("status", "disqualified")
-        .in("user_id", friendsQ.data!)
-        .in("visibility", ["public", "friends_only"])
+        .in("user_id", visibleUserIds)
         .order("submitted_at", { ascending: false });
       return data ?? [];
     },
@@ -101,29 +106,23 @@ function FeedTab({ onAdd }: { onAdd: () => void }) {
   const c = challengeQ.data;
   const noFriends = friendsQ.data && friendsQ.data.length === 0;
 
-  const items: PlayerItem[] = (feedQ.data ?? []).map((s: any) => ({
-    id: s.id,
-    video_path: s.video_path,
-    value: Number(s.admin_verified_value ?? s.self_reported_value),
-    unit_type: c?.unit_type,
-    unit_label: c?.unit_label,
-    challenge_title: c?.title ?? null,
-    user: {
-      id: s.user_id ?? "",
-      username: s.profiles?.username ?? "user",
-      display_name: s.profiles?.display_name,
-      avatar_url: s.profiles?.avatar_url,
-    },
-  }));
-
-  const [playerOpen, setPlayerOpen] = useState(false);
-  const [playerIndex, setPlayerIndex] = useState(0);
+  // Friends podium: best entry per user (across all visibility levels).
+  const podium = (() => {
+    const rows = feedQ.data ?? [];
+    const byUser = new Map<string, any>();
+    for (const r of rows) {
+      const val = Number(r.admin_verified_value ?? r.self_reported_value);
+      const prev = byUser.get(r.user_id);
+      if (!prev || val > prev.val) byUser.set(r.user_id, { ...r, val });
+    }
+    return Array.from(byUser.values()).sort((a, b) => b.val - a.val).slice(0, 3);
+  })();
 
   return (
     <div className="space-y-4">
-      <section className="koth-stripe overflow-hidden rounded-3xl bg-koth-black p-5 text-koth-white">
+      <section className="koth-stripe overflow-hidden rounded-3xl bg-koth-black p-4 text-koth-white">
         <p className="label-broadcast text-koth-white/60">Friends feed</p>
-        <h1 className="mt-1 text-xl font-bold">{c?.title ?? "No active challenge"}</h1>
+        <h1 className="mt-0.5 text-lg font-bold">{c?.title ?? "No active challenge"}</h1>
       </section>
 
       {noFriends && (
@@ -142,98 +141,299 @@ function FeedTab({ onAdd }: { onAdd: () => void }) {
         </div>
       )}
 
-      {items.map((it, i) => {
-        const s = (feedQ.data ?? [])[i] as any;
-        const p = s.profiles;
-        return (
-          <article key={it.id} className="overflow-hidden rounded-3xl border border-border bg-card">
-            <div className="flex items-center gap-3 p-4">
-              <Avatar name={p?.display_name ?? p?.username} avatarPath={p?.avatar_url} size={40} />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-foreground">{p?.display_name}</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  @{p?.username}
-                  {s.visibility === "friends_only" && (
-                    <span className="ml-2 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                      Friends only
-                    </span>
-                  )}
-                </p>
-              </div>
-              {c && (
-                <div className="mono-stat text-lg font-bold text-foreground">
-                  {formatValue(it.value!, c.unit_type, c.unit_label)}
-                </div>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setPlayerIndex(i);
-                setPlayerOpen(true);
-              }}
-              className="relative block w-full"
-              aria-label="Play attempt"
-            >
-              <AutoPlayVideo path={s.video_path} />
-              <span className="pointer-events-none absolute bottom-3 left-3 inline-flex items-center gap-1 rounded-full bg-black/50 px-2 py-1 text-[11px] font-bold text-white backdrop-blur">
-                <Play className="h-3 w-3" fill="currentColor" /> Tap to watch attempt
-              </span>
-            </button>
-          </article>
-        );
-      })}
+      {c && podium.length > 0 && (
+        <FriendsPodium podium={podium} c={c} />
+      )}
 
-      <TikTokPlayer
-        items={items}
-        startIndex={playerIndex}
-        open={playerOpen}
-        onOpenChange={setPlayerOpen}
+      {c && (feedQ.data?.length ?? 0) > 0 && (
+        <FeedScroller rows={feedQ.data!} c={c} />
+      )}
+    </div>
+  );
+}
+
+function FriendsPodium({ podium, c }: { podium: any[]; c: any }) {
+  return (
+    <section className="rounded-3xl border border-border bg-card p-3">
+      <p className="label-broadcast mb-2 px-1 text-muted-foreground">Friends podium</p>
+      <div className="grid grid-cols-3 items-end gap-2 pt-5">
+        {[1, 0, 2].map((pos) => {
+          const r = podium[pos];
+          const rank = pos + 1;
+          const heights = ["h-32", "h-28", "h-24"];
+          const isFirst = rank === 1;
+          const tile = isFirst
+            ? "bg-gradient-to-b from-koth-red to-[color-mix(in_oklab,var(--color-koth-red)_70%,black)] text-koth-white"
+            : rank === 2
+              ? "bg-koth-silver text-koth-black"
+              : "bg-koth-bronze text-koth-white";
+          const orderCls = pos === 1 ? "order-1" : pos === 0 ? "order-2" : "order-3";
+          if (!r) {
+            return (
+              <div
+                key={rank}
+                className={`${orderCls} ${heights[pos]} flex flex-col items-center justify-end rounded-2xl border border-dashed border-border bg-card p-2`}
+              >
+                <RankBadge rank={rank} size="sm" />
+                <p className="mt-1 text-[10px] text-muted-foreground">Open</p>
+              </div>
+            );
+          }
+          const p = r.profiles;
+          return (
+            <div key={r.id} className={`${orderCls} relative flex flex-col items-center`}>
+              {isFirst && (
+                <Crown
+                  className="absolute -top-5 left-1/2 z-10 h-6 w-6 -translate-x-1/2 fill-koth-red text-koth-red drop-shadow"
+                  aria-hidden
+                />
+              )}
+              <div
+                className={`${heights[pos]} flex w-full flex-col items-center justify-between rounded-2xl px-1.5 pb-2 pt-3 text-center shadow ${tile}`}
+              >
+                <Avatar
+                  name={p?.display_name ?? p?.username ?? "?"}
+                  avatarPath={p?.avatar_url}
+                  size={isFirst ? 38 : 32}
+                />
+                <div className="min-w-0 w-full">
+                  <p className="w-full truncate text-[10px] font-semibold opacity-90">
+                    @{p?.username}
+                  </p>
+                  <p className="mono-stat w-full truncate text-sm font-bold leading-tight">
+                    {formatValue(r.val, c.unit_type, c.unit_label)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function FeedScroller({ rows, c }: { rows: any[]; c: any }) {
+  return (
+    <div
+      className="-mx-4 h-[calc(100vh-260px)] snap-y snap-mandatory overflow-y-auto overscroll-y-contain rounded-none bg-black sm:mx-0 sm:rounded-3xl"
+      style={{ scrollSnapType: "y mandatory" }}
+    >
+      {rows.map((r) => (
+        <FeedVideo key={r.id} row={r} c={c} />
+      ))}
+    </div>
+  );
+}
+
+function FeedVideo({ row, c }: { row: any; c: any }) {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [url, setUrl] = useState<string | null>(null);
+  const [visible, setVisible] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [burst, setBurst] = useState(false);
+  const lastTap = useRef(0);
+  const p = row.profiles;
+  const val = Number(row.admin_verified_value ?? row.self_reported_value);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => setVisible(e.intersectionRatio > 0.6)),
+      { threshold: [0, 0.6, 1] },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!visible || url) return;
+    let active = true;
+    getVideoSignedUrl(row.video_path).then((u) => active && setUrl(u));
+    return () => { active = false; };
+  }, [visible, url, row.video_path]);
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (visible && !paused) v.play().catch(() => {});
+    else v.pause();
+  }, [visible, paused, url]);
+
+  const likeQ = useQuery({
+    queryKey: ["video-likes", row.id],
+    queryFn: async () => {
+      const [{ count }, mine] = await Promise.all([
+        supabase.from("video_likes").select("*", { count: "exact", head: true }).eq("submission_id", row.id),
+        user
+          ? supabase
+              .from("video_likes").select("submission_id")
+              .eq("submission_id", row.id).eq("user_id", user.id).maybeSingle()
+          : Promise.resolve({ data: null } as any),
+      ]);
+      return { count: count ?? 0, liked: !!mine.data };
+    },
+  });
+  const commentCountQ = useQuery({
+    queryKey: ["video-comment-count", row.id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("video_comments").select("*", { count: "exact", head: true }).eq("submission_id", row.id);
+      return count ?? 0;
+    },
+  });
+
+  async function toggleLike() {
+    if (!user) { toast.error("Sign in to like"); return; }
+    const liked = likeQ.data?.liked;
+    qc.setQueryData(["video-likes", row.id], (old: any) => ({
+      count: (old?.count ?? 0) + (liked ? -1 : 1),
+      liked: !liked,
+    }));
+    if (liked) {
+      await supabase.from("video_likes").delete().eq("submission_id", row.id).eq("user_id", user.id);
+    } else {
+      await supabase.from("video_likes").insert({ submission_id: row.id, user_id: user.id });
+    }
+    qc.invalidateQueries({ queryKey: ["video-likes", row.id] });
+  }
+
+  function handleTap() {
+    const now = Date.now();
+    if (now - lastTap.current < 300) {
+      if (!likeQ.data?.liked) toggleLike();
+      setBurst(true);
+      window.setTimeout(() => setBurst(false), 700);
+      lastTap.current = 0;
+      return;
+    }
+    lastTap.current = now;
+    setPaused((p) => !p);
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative h-full w-full snap-start snap-always bg-black"
+      style={{ height: "calc(100vh - 260px)", minHeight: "calc(100vh - 260px)" }}
+    >
+      <button
+        type="button"
+        onClick={handleTap}
+        className="absolute inset-0 z-0 flex items-center justify-center"
+        aria-label="Tap to pause or play"
+      >
+        {url ? (
+          <video
+            ref={videoRef}
+            src={url}
+            loop
+            playsInline
+            muted={false}
+            className="h-full w-full object-contain"
+          />
+        ) : (
+          <div className="h-full w-full animate-pulse bg-neutral-900" />
+        )}
+        {paused && (
+          <span className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+            <span className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-black/40 backdrop-blur">
+              <Play className="h-8 w-8 text-white" />
+            </span>
+          </span>
+        )}
+        {burst && (
+          <Heart
+            className="pointer-events-none absolute z-20 h-32 w-32 animate-ping text-koth-red"
+            fill="currentColor"
+          />
+        )}
+      </button>
+
+      {/* Bottom-left info */}
+      <div className="absolute bottom-4 left-4 right-20 z-20 text-white">
+        <Link
+          to="/u/$username"
+          params={{ username: p?.username ?? "user" }}
+          onClick={(e) => e.stopPropagation()}
+          className="text-base font-bold"
+        >
+          @{p?.username}
+        </Link>
+        <p className="mt-1 text-xs text-white/80">
+          <span className="rounded-full bg-koth-red px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+            {c.title}
+          </span>
+          <span className="ml-2 mono-stat font-bold">
+            {formatValue(val, c.unit_type, c.unit_label)}
+          </span>
+          {row.visibility === "friends_only" && (
+            <span className="ml-2 rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+              Friends
+            </span>
+          )}
+        </p>
+      </div>
+
+      {/* Right action rail */}
+      <div className="absolute right-2 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center gap-5 text-white">
+        <Link
+          to="/u/$username"
+          params={{ username: p?.username ?? "user" }}
+          onClick={(e) => e.stopPropagation()}
+          className="tap-44 inline-flex items-center justify-center rounded-full ring-2 ring-koth-red"
+          aria-label={`Open @${p?.username}'s profile`}
+        >
+          <Avatar
+            name={p?.display_name ?? p?.username ?? "?"}
+            avatarPath={p?.avatar_url}
+            size={42}
+          />
+        </Link>
+        <Rail
+          onClick={toggleLike}
+          icon={<Heart className={cn("h-7 w-7", likeQ.data?.liked && "fill-koth-red text-koth-red")} />}
+          count={likeQ.data?.count ?? 0}
+        />
+        <Rail
+          onClick={() => setCommentsOpen(true)}
+          icon={<MessageCircle className="h-7 w-7" />}
+          count={commentCountQ.data ?? 0}
+        />
+        <Rail
+          onClick={() => toast.message("Sharing coming soon")}
+          icon={<Share2 className="h-7 w-7" />}
+          count={0}
+        />
+      </div>
+
+      <CommentDrawer
+        kind="video"
+        targetId={row.id}
+        ownerId={row.user_id}
+        open={commentsOpen}
+        onOpenChange={setCommentsOpen}
       />
     </div>
   );
 }
 
-function AutoPlayVideo({ path }: { path: string }) {
-  const [url, setUrl] = useState<string | null>(null);
-  const ref = useRef<HTMLVideoElement | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    getVideoSignedUrl(path).then((u) => {
-      if (active) setUrl(u);
-    });
-    return () => {
-      active = false;
-    };
-  }, [path]);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) el.play().catch(() => {});
-          else el.pause();
-        }
-      },
-      { threshold: 0.5 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [url]);
-
-  if (!url) return <div className="aspect-[9/16] w-full bg-black" />;
+function Rail({ onClick, icon, count }: { onClick: () => void; icon: React.ReactNode; count: number }) {
   return (
-    <video
-      ref={ref}
-      src={url}
-      muted
-      loop
-      playsInline
-      className="pointer-events-none aspect-[9/16] w-full bg-black object-cover"
-    />
+    <button
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      className="tap-44 flex flex-col items-center gap-0.5"
+    >
+      {icon}
+      <span className="mono-stat text-[11px] font-bold leading-none">
+        {count < 1000 ? count : `${(count / 1000).toFixed(1).replace(/\.0$/, "")}K`}
+      </span>
+    </button>
   );
 }
 

@@ -61,8 +61,16 @@ function Record() {
   if (stage === "camera") {
     return (
       <CameraRecorder
+        maxSeconds={challenge.max_video_seconds ?? null}
         onCancel={() => setStage("intro")}
         onCapture={(v) => {
+          // Hard reject if somehow over the cap.
+          const cap = challenge.max_video_seconds as number | null;
+          if (cap && v.durationMs > cap * 1000 + 500) {
+            toast.error(`Video exceeded the ${cap}s limit. Please re-record.`);
+            URL.revokeObjectURL(v.previewUrl);
+            return;
+          }
           setCaptured(v);
           setStage("preview");
         }}
@@ -115,7 +123,10 @@ function Record() {
       <section className="koth-stripe overflow-hidden rounded-3xl bg-koth-black p-5 text-koth-white">
         <p className="label-broadcast text-koth-white/60">Recording for</p>
         <h1 className="mt-1 text-xl font-bold">{challenge.title}</h1>
-        <p className="mt-2 text-xs text-koth-white/70">Live capture only — no uploads from camera roll.</p>
+        <p className="mt-2 text-xs text-koth-white/70">
+          Live capture only — no uploads from camera roll.
+          {challenge.max_video_seconds ? ` Max ${challenge.max_video_seconds}s.` : ""}
+        </p>
       </section>
 
       {stage === "intro" && (

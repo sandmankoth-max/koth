@@ -310,7 +310,7 @@ function PlayerStage({
       </div>
 
       {/* Right action rail */}
-      <div className="absolute bottom-6 right-3 z-20 flex flex-col items-center gap-4 text-white">
+      <div className="absolute right-2 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center gap-5 text-white">
         <Link
           to="/u/$username"
           params={{ username: item.user.username }}

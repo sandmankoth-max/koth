@@ -142,9 +142,9 @@ export function CommentDrawer({ kind, targetId, ownerId, open, onOpenChange }: P
   return (
     <>
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[85vh]">
-        <DrawerHeader>
-          <DrawerTitle className="text-base">
+      <DrawerContent className="flex h-[75vh] max-h-[75vh] flex-col">
+        <DrawerHeader className="px-4 pb-2 pt-3">
+          <DrawerTitle className="text-sm font-bold">
             {tops.length} {tops.length === 1 ? "comment" : "comments"}
           </DrawerTitle>
         </DrawerHeader>
@@ -494,7 +494,7 @@ function Composer({
   }
 
   return (
-    <div className="relative border-t border-border bg-background p-3">
+    <div className="relative border-t border-border bg-background p-2 pb-3">
       {mentionQ && suggestionsQ.data && suggestionsQ.data.length > 0 && (
         <div className="absolute bottom-full left-0 right-0 mx-3 mb-1 max-h-56 overflow-y-auto rounded-2xl border border-border bg-card shadow-lg">
           {suggestionsQ.data.map((p: any) => (
@@ -531,17 +531,17 @@ function Composer({
           value={body}
           onChange={(e) => handleChange(e.target.value)}
           rows={1}
-          placeholder="Add a comment… use @ to tag"
+          placeholder="Add comment… @ to tag"
           maxLength={500}
-          className="min-h-[44px] flex-1 resize-none rounded-2xl border border-border bg-muted/40 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-koth-red"
+          className="min-h-[40px] max-h-24 flex-1 resize-none rounded-2xl border border-border bg-muted/40 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-koth-red"
         />
         <button
           onClick={send}
           disabled={posting || !body.trim()}
-          className="tap-44 inline-flex h-11 w-11 items-center justify-center rounded-full bg-koth-red text-koth-white disabled:opacity-50"
+          className="tap-44 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-koth-red text-koth-white disabled:opacity-50"
           aria-label="Post"
         >
-          <Send className="h-5 w-5" />
+          <Send className="h-4 w-4" />
         </button>
       </div>
     </div>

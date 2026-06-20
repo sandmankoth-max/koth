@@ -84,6 +84,7 @@ function CreateChallenge() {
     prize_second: 20,
     prize_third: 10,
     status: "upcoming" as "upcoming" | "active",
+    max_video_seconds: 60,
   });
 
   async function submit(e: React.FormEvent) {
@@ -111,8 +112,9 @@ function CreateChallenge() {
           prize_first: form.prize_first,
           prize_second: form.prize_second,
           prize_third: form.prize_third,
+          max_video_seconds: form.max_video_seconds || null,
           created_by: user.id,
-        })
+        } as any)
         .select("id")
         .single();
       if (error) throw error;
@@ -191,6 +193,15 @@ function CreateChallenge() {
           </Field>
         ))}
       </div>
+      <Field label="Max video seconds (recording auto-stops here)">
+        <Input
+          type="number"
+          min="5"
+          max="300"
+          value={form.max_video_seconds}
+          onChange={(e) => setForm({ ...form, max_video_seconds: Number(e.target.value) })}
+        />
+      </Field>
       <Field label="Initial status">
         <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as any })}>
           <SelectTrigger><SelectValue /></SelectTrigger>
@@ -234,6 +245,9 @@ function ReviewSubmissions() {
         "*, profiles!submissions_user_id_fkey(username, display_name, avatar_url)",
       )
       .eq("challenge_id", sel)
+      .eq("visibility", "public")
+      .eq("is_active_entry", true)
+      .eq("status", "pending_review")
       .order("submitted_at", { ascending: false })
       .then(({ data }) => setSubs(data ?? []));
   }, [sel]);
@@ -571,6 +585,7 @@ function EditChallenge() {
       prize_first: c.prize_first ?? 0,
       prize_second: c.prize_second ?? 0,
       prize_third: c.prize_third ?? 0,
+      max_video_seconds: c.max_video_seconds ?? "",
     });
   }, [sel, items]);
 
@@ -589,7 +604,8 @@ function EditChallenge() {
         prize_first: Number(form.prize_first),
         prize_second: Number(form.prize_second),
         prize_third: Number(form.prize_third),
-      })
+        max_video_seconds: form.max_video_seconds === "" ? null : Number(form.max_video_seconds),
+      } as any)
       .eq("id", sel);
     setBusy(false);
     if (error) toast.error(error.message);
@@ -642,6 +658,16 @@ function EditChallenge() {
               <Input type="number" min="0" value={form.prize_third} onChange={(e) => setForm({ ...form, prize_third: e.target.value })} />
             </Field>
           </div>
+          <Field label="Max video seconds (blank = no cap)">
+            <Input
+              type="number"
+              min="5"
+              max="300"
+              placeholder="e.g. 60"
+              value={form.max_video_seconds}
+              onChange={(e) => setForm({ ...form, max_video_seconds: e.target.value })}
+            />
+          </Field>
           <Button onClick={save} disabled={busy} className="tap-44 h-12 w-full rounded-full bg-koth-red text-koth-white">
             {busy ? "…" : "Save changes"}
           </Button>

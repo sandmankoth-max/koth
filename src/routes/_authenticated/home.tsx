@@ -11,6 +11,10 @@ import { ProfileAvatar } from "@/components/koth/profile-avatar";
 import { AlertTriangle, X, Trash2 } from "lucide-react";
 import { formatValue, shortUnitLabel } from "@/lib/koth-utils";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { WelcomeDialog } from "@/components/koth/welcome-dialog";
 import { LiveActivity } from "@/components/koth/live-activity";
 import { PositionCard } from "@/components/koth/position-card";
@@ -27,6 +31,7 @@ function Home() {
   const queryClient = useQueryClient();
   const deleteSubmission = useServerFn(deleteOwnSubmission);
   const [deletingEntry, setDeletingEntry] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const challengeQ = useQuery({
     queryKey: ["active-or-upcoming-challenge"],
@@ -54,11 +59,14 @@ function Home() {
     queryKey: ["my-entry", challengeQ.data?.id, user?.id],
     enabled: !!challengeQ.data?.id && !!user?.id,
     queryFn: async () => {
+      // Home shows the user's PUBLIC (prize-pool) entry only. Friends-only
+      // uploads live on the profile / friends feed and don't affect rank.
       const { data } = await supabase
         .from("submissions")
         .select("*")
         .eq("challenge_id", challengeQ.data!.id)
         .eq("user_id", user!.id)
+        .eq("visibility", "public")
         .order("submitted_at", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -71,7 +79,6 @@ function Home() {
 
   async function deleteMyEntry() {
     if (!myEntryQ.data) return;
-    if (!window.confirm("Delete your video and remove it from the leaderboard?")) return;
     setDeletingEntry(true);
     try {
       await deleteSubmission({ data: { submissionId: myEntryQ.data.id } });
@@ -81,6 +88,7 @@ function Home() {
       await queryClient.invalidateQueries({ queryKey: ["top3", c?.id] });
       await queryClient.invalidateQueries({ queryKey: ["leaderboard", c?.id] });
       await queryClient.invalidateQueries({ queryKey: ["feed", c?.id] });
+      setDeleteOpen(false);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Delete failed");
     } finally {
@@ -204,7 +212,7 @@ function Home() {
               variant="outline"
               size="sm"
               disabled={deletingEntry}
-              onClick={deleteMyEntry}
+              onClick={() => setDeleteOpen(true)}
               className="tap-44 rounded-full border-koth-red text-koth-red hover:bg-koth-red hover:text-koth-white"
             >
               <Trash2 className="mr-1.5 h-4 w-4" aria-hidden />
@@ -213,6 +221,27 @@ function Home() {
           </div>
         </section>
       )}
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete your entry?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This removes your video from the leaderboard. You can re-record any time before the challenge ends.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingEntry}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deletingEntry}
+              onClick={(e) => { e.preventDefault(); deleteMyEntry(); }}
+              className="bg-koth-red text-koth-white hover:bg-koth-red/90"
+            >
+              {deletingEntry ? "Deleting…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Top 3 preview */}
       <TopThreePreview challengeId={c.id} unitType={c.unit_type} unitLabel={c.unit_label} />
@@ -254,7 +283,7 @@ function TopThreePreview({
         )
         .eq("challenge_id", challengeId)
         .eq("is_active_entry", true)
-        .neq("status", "disqualified");
+        .eq("status", "verified");
       if (!rows) return [];
       return rows
         .map((r) => ({
