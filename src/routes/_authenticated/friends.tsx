@@ -416,8 +416,8 @@ function FeedVideo({ row, c, scrollRoot }: { row: any; c: any; scrollRoot: React
   return (
     <div
       ref={containerRef}
-      className="relative h-full w-full snap-start snap-always bg-black"
-      style={{ height: "calc(100vh - 260px)", minHeight: "calc(100vh - 260px)" }}
+      className="relative w-full snap-start snap-always bg-black"
+      style={{ height: "100%", minHeight: "100%", scrollSnapStop: "always" }}
     >
       <button
         type="button"
