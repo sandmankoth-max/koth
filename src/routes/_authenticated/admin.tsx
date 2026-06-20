@@ -360,10 +360,20 @@ function SubmissionRow({ s, onUpdate }: { s: any; onUpdate: (p: any) => Promise<
         <Button size="sm" onClick={submitVerified} className="rounded-full bg-koth-red text-koth-white">
           Submit
         </Button>
-        <Button size="sm" variant="outline" onClick={() => onUpdate({ status: "flagged" })} className="rounded-full">
-          Flag
-        </Button>
-        <Button size="sm" variant="outline" onClick={() => onUpdate({ status: "disqualified", is_active_entry: false })} className="rounded-full">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={async () => {
+            if (!window.confirm("Disqualify this submission? The video will be deleted and removed from all leaderboards.")) return;
+            const { error } = await supabase.rpc("admin_disqualify_submission" as any, { p_submission_id: s.id });
+            if (error) toast.error(error.message);
+            else {
+              toast.success("Disqualified");
+              await onUpdate({ status: "disqualified", is_active_entry: false, video_path: null, __local: true });
+            }
+          }}
+          className="rounded-full border-koth-red text-koth-red hover:bg-koth-red hover:text-koth-white"
+        >
           Disqualify
         </Button>
         <Button size="sm" variant="outline" onClick={reset} className="rounded-full">

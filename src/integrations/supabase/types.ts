@@ -387,6 +387,10 @@ export type Database = {
         Args: { p_reason: string; p_user_id: string }
         Returns: undefined
       }
+      admin_disqualify_submission: {
+        Args: { p_submission_id: string }
+        Returns: undefined
+      }
       admin_restore_submission: {
         Args: { p_submission_id: string }
         Returns: undefined
