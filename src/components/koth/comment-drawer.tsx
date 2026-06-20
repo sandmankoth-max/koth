@@ -140,6 +140,7 @@ export function CommentDrawer({ kind, targetId, ownerId, open, onOpenChange }: P
   }
 
   return (
+    <>
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[85vh]">
         <DrawerHeader>
