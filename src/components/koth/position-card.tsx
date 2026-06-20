@@ -81,7 +81,7 @@ export function PositionCard({
   // Gap to the next rank up.
   const above = myRank > 1 ? data[myRank - 2] : null;
   const gapToAbove =
-    above && myValue != null ? Math.max(0, above.val - myValue) + (above.val === myValue ? 0 : 0.01) : null;
+    above && myValue != null ? Math.max(0, above.val - myValue) : null;
 
   return (
     <section className="rounded-3xl border border-border bg-card p-4">
