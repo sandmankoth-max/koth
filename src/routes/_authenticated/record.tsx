@@ -288,7 +288,7 @@ function Record() {
           </div>
           <div className="flex items-center justify-between rounded-2xl bg-muted/40 px-3 py-2 text-xs">
             <span className="text-muted-foreground">
-              {visibility === "friends_only" ? "Friends Feed only" : "Public · Prize pool eligible"}
+              {visibility === "friends_only" ? "Profile + friends feed" : "Public · Prize pool eligible"}
             </span>
             <button
               onClick={() => setStage("visibility")}
@@ -298,7 +298,9 @@ function Record() {
             </button>
           </div>
           <p className="text-xs text-muted-foreground">
-            This becomes your active entry and supersedes any previous submission for this challenge.
+            {visibility === "friends_only"
+              ? "Saved to your profile and friends feed. Doesn't replace earlier attempts."
+              : "This becomes your active entry and supersedes any previous public submission for this challenge."}
           </p>
           <div className="grid grid-cols-2 gap-3">
             <Button variant="outline" onClick={() => setStage("visibility")} className="tap-44 h-12 rounded-full">
