@@ -59,14 +59,13 @@ function Record() {
   }
 
   if (stage === "camera") {
+    const cap = challenge.max_video_seconds ?? 300;
     return (
       <CameraRecorder
-        maxSeconds={challenge.max_video_seconds ?? null}
+        maxSeconds={cap}
         onCancel={() => setStage("intro")}
         onCapture={(v) => {
-          // Hard reject if somehow over the cap.
-          const cap = challenge.max_video_seconds as number | null;
-          if (cap && v.durationMs > cap * 1000 + 500) {
+          if (v.durationMs > cap * 1000 + 500) {
             toast.error(`Video exceeded the ${cap}s limit. Please re-record.`);
             URL.revokeObjectURL(v.previewUrl);
             return;
