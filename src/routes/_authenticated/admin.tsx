@@ -193,6 +193,15 @@ function CreateChallenge() {
           </Field>
         ))}
       </div>
+      <Field label="Max video seconds (recording auto-stops here)">
+        <Input
+          type="number"
+          min="5"
+          max="300"
+          value={form.max_video_seconds}
+          onChange={(e) => setForm({ ...form, max_video_seconds: Number(e.target.value) })}
+        />
+      </Field>
       <Field label="Initial status">
         <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as any })}>
           <SelectTrigger><SelectValue /></SelectTrigger>
