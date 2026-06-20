@@ -1,11 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Avatar } from "@/components/koth/avatar";
 import { formatValue, getVideoSignedUrl } from "@/lib/koth-utils";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Users } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/feed")({
@@ -60,12 +59,6 @@ function Feed() {
     },
   });
 
-  const [open, setOpen] = useState<null | { url: string; user: string }>(null);
-  async function openVideo(path: string, u: string) {
-    const url = await getVideoSignedUrl(path);
-    if (url) setOpen({ url, user: u });
-  }
-
   const c = challengeQ.data;
 
   return (
@@ -73,6 +66,12 @@ function Feed() {
       <section className="koth-stripe overflow-hidden rounded-3xl bg-koth-black p-5 text-koth-white">
         <p className="label-broadcast text-koth-white/60">Friends feed</p>
         <h1 className="mt-1 text-xl font-bold">{c?.title ?? "No active challenge"}</h1>
+        <Link
+          to="/friends"
+          className="tap-44 mt-3 inline-flex items-center rounded-full bg-koth-white/10 px-4 py-2 text-sm font-bold text-koth-white"
+        >
+          <Users className="mr-2 h-4 w-4" aria-hidden /> Add friends
+        </Link>
       </section>
 
       {(!friendsQ.data || friendsQ.data.length === 0) && (
@@ -80,12 +79,6 @@ function Feed() {
           <Users className="mx-auto h-8 w-8 text-muted-foreground" aria-hidden />
           <p className="mt-3 label-broadcast text-muted-foreground">No friends yet</p>
           <p className="mt-1 text-sm text-muted-foreground">Add friends to see their attempts here.</p>
-          <Link
-            to="/friends"
-            className="tap-44 mt-4 inline-flex items-center rounded-full bg-koth-red px-4 py-2 text-sm font-bold text-koth-white"
-          >
-            Find friends
-          </Link>
         </div>
       )}
 
@@ -105,25 +98,54 @@ function Feed() {
                 </div>
               )}
             </div>
-            <button
-              onClick={() => openVideo(s.video_path, p?.username ?? "?")}
-              className="block aspect-[9/16] w-full bg-black"
-              aria-label={`Play ${p?.username}'s attempt`}
-            >
-              <div className="flex h-full w-full items-center justify-center text-koth-white/60">
-                Tap to play
-              </div>
-            </button>
+            <AutoPlayVideo path={s.video_path} />
           </article>
         );
       })}
-
-      <Dialog open={!!open} onOpenChange={(o) => !o && setOpen(null)}>
-        <DialogContent className="max-w-md p-0">
-          <DialogTitle className="sr-only">Video by @{open?.user}</DialogTitle>
-          {open && <video src={open.url} controls autoPlay playsInline className="aspect-[9/16] w-full bg-black" />}
-        </DialogContent>
-      </Dialog>
     </div>
+  );
+}
+
+function AutoPlayVideo({ path }: { path: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const ref = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    getVideoSignedUrl(path).then((u) => {
+      if (active) setUrl(u);
+    });
+    return () => {
+      active = false;
+    };
+  }, [path]);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) el.play().catch(() => {});
+          else el.pause();
+        }
+      },
+      { threshold: 0.5 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [url]);
+
+  if (!url) return <div className="aspect-[9/16] w-full bg-black" />;
+  return (
+    <video
+      ref={ref}
+      src={url}
+      muted
+      loop
+      playsInline
+      controls
+      className="aspect-[9/16] w-full bg-black"
+    />
   );
 }

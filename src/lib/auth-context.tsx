@@ -9,6 +9,7 @@ import {
 } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session, User } from "@supabase/supabase-js";
+import { assertDeviceNotBanned, recordDeviceFingerprint } from "@/lib/device-fingerprint";
 
 /**
  * KOTH uses username + password auth (no email, no phone).
@@ -101,15 +102,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [loadProfile]);
 
   const signIn = useCallback(async (username: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    await assertDeviceNotBanned();
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: usernameToEmail(username),
       password,
     });
     if (error) throw new Error(error.message.replace("Email", "Username"));
+    if (data.user) recordDeviceFingerprint(data.user.id);
   }, []);
 
   const signUp: AuthState["signUp"] = useCallback(async (input) => {
     if (!input.age_consent) throw new Error("You must confirm the age statement to continue.");
+    await assertDeviceNotBanned();
     const dob = new Date(input.date_of_birth);
     if (Number.isNaN(dob.getTime())) throw new Error("Invalid date of birth.");
     const ageMs = Date.now() - dob.getTime();
@@ -160,6 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // non-fatal — user can set avatar later in profile
       }
     }
+    if (newUserId) recordDeviceFingerprint(newUserId);
   }, []);
 
   const signOut = useCallback(async () => {

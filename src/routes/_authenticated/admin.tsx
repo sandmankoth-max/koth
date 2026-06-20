@@ -47,12 +47,13 @@ function Admin() {
           <TabsTrigger value="create" className="flex-1">Create</TabsTrigger>
           <TabsTrigger value="review" className="flex-1">Review</TabsTrigger>
           <TabsTrigger value="results" className="flex-1">Results</TabsTrigger>
-          <TabsTrigger value="lifecycle" className="flex-1">Lifecycle</TabsTrigger>
         </TabsList>
-        <TabsContent value="create"><CreateChallenge /></TabsContent>
+        <TabsContent value="create">
+          <CreateChallenge />
+          <ManageChallenges />
+        </TabsContent>
         <TabsContent value="review"><ReviewSubmissions /></TabsContent>
         <TabsContent value="results"><MarkPaid /></TabsContent>
-        <TabsContent value="lifecycle"><Lifecycle /></TabsContent>
       </Tabs>
     </div>
   );
@@ -439,70 +440,62 @@ function MarkPaid() {
   );
 }
 
-function Lifecycle() {
-  const [busy, setBusy] = useState(false);
-  const [last, setLast] = useState<null | { activated: number; reminders: number; closed: number }>(null);
+function ManageChallenges() {
+  const [items, setItems] = useState<any[]>([]);
+  async function load() {
+    const { data } = await supabase
+      .from("challenges")
+      .select("id, title, status, starts_at, ends_at")
+      .in("status", ["active", "upcoming"])
+      .order("starts_at");
+    setItems(data ?? []);
+  }
+  useEffect(() => {
+    load();
+  }, []);
 
-  async function tick() {
-    setBusy(true);
-    try {
-      const { data, error } = await supabase.rpc("lifecycle_tick" as any);
-      if (error) throw error;
-      const r = (data as any) ?? { activated: 0, reminders: 0, closed: 0 };
-      setLast({ activated: r.activated ?? 0, reminders: r.reminders ?? 0, closed: r.closed ?? 0 });
-      toast.success(`Tick: ${r.activated ?? 0} activated · ${r.reminders ?? 0} reminders · ${r.closed ?? 0} closed`);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed");
-    } finally {
-      setBusy(false);
+  async function closeNow(id: string) {
+    if (!confirm("Close this challenge now? Final results will be computed.")) return;
+    const { error } = await supabase.rpc("close_challenge" as any, { p_challenge_id: id });
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Challenge closed & results computed");
+      load();
     }
   }
 
-  async function closeNow(challengeId: string) {
-    const { error } = await supabase.rpc("close_challenge" as any, { p_challenge_id: challengeId });
+  async function cancelChallenge(id: string) {
+    if (!confirm("Delete this scheduled challenge? This cannot be undone.")) return;
+    const { error } = await supabase.from("challenges").delete().eq("id", id);
     if (error) toast.error(error.message);
-    else toast.success("Challenge closed & results computed");
+    else {
+      toast.success("Removed");
+      load();
+    }
   }
 
-  const [active, setActive] = useState<any[]>([]);
-  useEffect(() => {
-    supabase
-      .from("challenges")
-      .select("id, title, status, ends_at")
-      .in("status", ["active", "upcoming"])
-      .order("starts_at")
-      .then(({ data }) => setActive(data ?? []));
-  }, []);
-
+  if (items.length === 0) return null;
   return (
-    <div className="mt-4 space-y-3 rounded-3xl border border-border bg-card p-5">
-      <p className="text-sm text-muted-foreground">
-        The lifecycle tick scans every challenge and does three things in one pass: activates any{" "}
-        <strong>upcoming</strong> challenge whose start time has arrived (and notifies all players), sends a
-        one-hour <strong>deadline reminder</strong> to anyone without a submission, and{" "}
-        <strong>closes</strong> any active challenge past its end time (computing podium &amp; prizes). It's
-        safe to run on demand — each step is idempotent.
-      </p>
-      <Button onClick={tick} disabled={busy} className="tap-44 h-12 w-full rounded-full bg-koth-red text-koth-white">
-        {busy ? "Running…" : "Run lifecycle tick now"}
-      </Button>
-      {last && (
-        <div className="grid grid-cols-3 gap-2 rounded-2xl bg-muted p-3 text-center text-xs">
-          <div><div className="mono-stat text-lg font-bold">{last.activated}</div>activated</div>
-          <div><div className="mono-stat text-lg font-bold">{last.reminders}</div>reminders</div>
-          <div><div className="mono-stat text-lg font-bold">{last.closed}</div>closed</div>
-        </div>
-      )}
+    <div className="mt-4 rounded-3xl border border-border bg-card p-5">
+      <p className="label-broadcast text-muted-foreground mb-3">Active & upcoming</p>
       <div className="divide-y divide-border">
-        {active.map((c) => (
+        {items.map((c) => (
           <div key={c.id} className="flex items-center justify-between gap-2 py-2">
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold">{c.title}</p>
-              <p className="text-xs text-muted-foreground">{c.status}</p>
+              <p className="text-xs text-muted-foreground">
+                {c.status} · starts {new Date(c.starts_at).toLocaleString()}
+              </p>
             </div>
-            <Button size="sm" variant="outline" onClick={() => closeNow(c.id)} className="rounded-full">
-              Close now
-            </Button>
+            {c.status === "active" ? (
+              <Button size="sm" variant="outline" onClick={() => closeNow(c.id)} className="rounded-full">
+                Close now
+              </Button>
+            ) : (
+              <Button size="sm" variant="outline" onClick={() => cancelChallenge(c.id)} className="rounded-full">
+                Cancel
+              </Button>
+            )}
           </div>
         ))}
       </div>

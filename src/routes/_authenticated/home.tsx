@@ -20,16 +20,24 @@ function Home() {
   const { user } = useAuth();
 
   const challengeQ = useQuery({
-    queryKey: ["active-challenge"],
+    queryKey: ["active-or-upcoming-challenge"],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data: active } = await supabase
         .from("challenges")
         .select("*")
         .eq("status", "active")
         .order("starts_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      return data;
+      if (active) return active;
+      const { data: upcoming } = await supabase
+        .from("challenges")
+        .select("*")
+        .eq("status", "upcoming")
+        .order("starts_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      return upcoming;
     },
   });
 
@@ -79,6 +87,34 @@ function Home() {
       <div className="space-y-4">
         <RankNotifications />
         <EmptyState />
+      </div>
+    );
+  }
+
+  if (c.status === "upcoming") {
+    const startsAt = new Date(c.starts_at);
+    const fmt = startsAt.toLocaleString(undefined, {
+      weekday: "long",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    return (
+      <div className="space-y-4">
+        <WelcomeDialog />
+        <RankNotifications />
+        <section className="koth-stripe relative overflow-hidden rounded-3xl bg-koth-black p-5 text-koth-white">
+          <p className="label-broadcast text-koth-white/60">This week's challenge</p>
+          <h1 className="mt-1 text-2xl font-bold leading-tight">New challenge drops {fmt}</h1>
+          <p className="mt-3 text-sm text-koth-white/80">
+            The next challenge is locked in. You'll be notified the moment it goes live.
+          </p>
+          <div className="mt-4 flex items-center justify-between">
+            <p className="label-broadcast text-koth-white/60">Starts in</p>
+            <Countdown target={c.starts_at} />
+          </div>
+        </section>
       </div>
     );
   }
