@@ -115,7 +115,7 @@ function CreateChallenge() {
 
       await cleanupOldSubmissions({ data: { keepChallengeId: created.id } });
 
-      toast.success("Challenge created. Previous videos and leaderboards wiped.");
+      toast.success("Challenge created. Old intermediate takes wiped; each user's final entries kept.");
       setForm((f) => ({ ...f, title: "", description: "", safety_note: "" }));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed");
