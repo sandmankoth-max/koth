@@ -199,10 +199,11 @@ function Leaderboard() {
                 {rest.map((r: any, i) => {
                   const p = r.profiles;
                   const rank = i + 4;
+                  const idx = rows.findIndex((x: any) => x.id === r.id);
                   return (
                     <li key={r.id}>
                       <button
-                        onClick={() => openVideo(r.video_path, p?.username ?? "?")}
+                        onClick={() => openVideoAt(idx)}
                         className="tap-44 flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted"
                       >
                         <RankBadge rank={rank} size="md" />
