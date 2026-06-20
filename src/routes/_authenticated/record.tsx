@@ -123,7 +123,10 @@ function Record() {
       <section className="koth-stripe overflow-hidden rounded-3xl bg-koth-black p-5 text-koth-white">
         <p className="label-broadcast text-koth-white/60">Recording for</p>
         <h1 className="mt-1 text-xl font-bold">{challenge.title}</h1>
-        <p className="mt-2 text-xs text-koth-white/70">Live capture only — no uploads from camera roll.</p>
+        <p className="mt-2 text-xs text-koth-white/70">
+          Live capture only — no uploads from camera roll.
+          {challenge.max_video_seconds ? ` Max ${challenge.max_video_seconds}s.` : ""}
+        </p>
       </section>
 
       {stage === "intro" && (
