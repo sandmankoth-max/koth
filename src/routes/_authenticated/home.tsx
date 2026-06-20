@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/auth-context";
 import { deleteOwnSubmission } from "@/lib/submissions.functions";
 import { Countdown } from "@/components/koth/countdown";
 import { RankBadge } from "@/components/koth/rank-badge";
-import { Avatar } from "@/components/koth/avatar";
+import { ProfileAvatar } from "@/components/koth/profile-avatar";
 import { AlertTriangle, X, Trash2 } from "lucide-react";
 import { formatValue, shortUnitLabel } from "@/lib/koth-utils";
 import { Button } from "@/components/ui/button";
