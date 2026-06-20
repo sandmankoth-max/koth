@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { formatDistanceToNow } from "date-fns";
-import { Bell, Crown, ArrowDown, ArrowUp, Flag } from "lucide-react";
+import { Bell, Crown, ArrowDown, ArrowUp, Flag, UserPlus, UserCheck } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/notifications")({
   head: () => ({ meta: [{ title: "Notifications — KOTH" }] }),
