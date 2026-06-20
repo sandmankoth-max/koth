@@ -498,17 +498,35 @@ function FeedVideo({ row, c, scrollRoot }: { row: any; c: any; scrollRoot: React
         </Link>
         <Rail
           onClick={toggleLike}
-          icon={<Heart className={cn("h-7 w-7", likeQ.data?.liked && "fill-koth-red text-koth-red")} />}
+          icon={
+            <Heart
+              strokeWidth={2.5}
+              className={cn(
+                "h-8 w-8 drop-shadow-[0_2px_3px_rgba(0,0,0,0.6)]",
+                likeQ.data?.liked ? "fill-koth-red text-koth-red" : "fill-white text-white",
+              )}
+            />
+          }
           count={likeQ.data?.count ?? 0}
         />
         <Rail
           onClick={() => setCommentsOpen(true)}
-          icon={<MessageCircle className="h-7 w-7" />}
+          icon={
+            <MessageCircle
+              strokeWidth={2.5}
+              className="h-8 w-8 fill-white text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.6)]"
+            />
+          }
           count={commentCountQ.data ?? 0}
         />
         <Rail
           onClick={() => toast.message("Sharing coming soon")}
-          icon={<Share2 className="h-7 w-7" />}
+          icon={
+            <Share2
+              strokeWidth={2.5}
+              className="h-8 w-8 text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.6)]"
+            />
+          }
           count={0}
         />
       </div>
