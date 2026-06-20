@@ -628,6 +628,14 @@ export type Database = {
         | "deadline_reminder_24h"
         | "friend_request"
         | "friend_accepted"
+        | "comment_video"
+        | "reply_comment"
+        | "tag_comment"
+        | "like_video"
+        | "like_comment"
+        | "reply_challenge_comment"
+        | "tag_challenge_comment"
+        | "admin_message"
       submission_status:
         | "pending_review"
         | "verified"
@@ -778,6 +786,14 @@ export const Constants = {
         "deadline_reminder_24h",
         "friend_request",
         "friend_accepted",
+        "comment_video",
+        "reply_comment",
+        "tag_comment",
+        "like_video",
+        "like_comment",
+        "reply_challenge_comment",
+        "tag_challenge_comment",
+        "admin_message",
       ],
       submission_status: [
         "pending_review",
