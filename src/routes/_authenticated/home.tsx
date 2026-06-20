@@ -65,27 +65,6 @@ function Home() {
     },
   });
 
-  const myRankQ = useQuery({
-    queryKey: ["my-rank", challengeQ.data?.id, user?.id],
-    enabled: !!challengeQ.data?.id && !!user?.id && !!myEntryQ.data,
-    queryFn: async () => {
-      const { data: rows } = await supabase
-        .from("submissions")
-        .select("user_id, self_reported_value, admin_verified_value, status")
-        .eq("challenge_id", challengeQ.data!.id)
-        .eq("is_active_entry", true)
-        .neq("status", "disqualified");
-      if (!rows) return null;
-      const ranked = rows
-        .map((r) => ({
-          user_id: r.user_id,
-          val: Number(r.admin_verified_value ?? r.self_reported_value),
-        }))
-        .sort((a, b) => b.val - a.val);
-      const myIdx = ranked.findIndex((r) => r.user_id === user!.id);
-      return myIdx >= 0 ? myIdx + 1 : null;
-    },
-  });
 
   const c = challengeQ.data;
 
