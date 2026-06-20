@@ -258,12 +258,12 @@ function PastSubmissions() {
 
   return (
     <section className="rounded-3xl border border-border bg-card p-5">
-      <h2 className="label-broadcast text-muted-foreground">Your past submissions</h2>
+      <h2 className="label-broadcast text-muted-foreground">Recent challenges</h2>
       <p className="mt-1 text-xs text-muted-foreground">Only you can see these — your final entry per challenge.</p>
       {loading ? (
         <p className="mt-3 text-sm text-muted-foreground">Loading…</p>
       ) : items.length === 0 ? (
-        <p className="mt-3 text-sm text-muted-foreground">No submissions yet.</p>
+        <p className="mt-3 text-sm text-muted-foreground">No submissions yet. Record your first attempt to start your history.</p>
       ) : (
         <ul className="mt-3 divide-y divide-border">
           {items.map((s: any) => {
