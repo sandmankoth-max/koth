@@ -108,8 +108,11 @@ function FeedTab({ onAdd }: { onAdd: () => void }) {
 
       {noFriends && (
         <div className="rounded-3xl border border-dashed border-border bg-card p-8 text-center">
-          <Users className="mx-auto h-8 w-8 text-muted-foreground" aria-hidden />
-          <p className="mt-3 label-broadcast text-muted-foreground">No Friends Added</p>
+          <Users className="mx-auto h-8 w-8 text-koth-red" aria-hidden />
+          <p className="mt-3 text-base font-bold text-foreground">No friends yet</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Add competitors and track their progress through every challenge.
+          </p>
           <button
             onClick={onAdd}
             className="tap-44 mt-4 inline-flex items-center rounded-full bg-koth-red px-4 py-2 text-sm font-bold text-koth-white"

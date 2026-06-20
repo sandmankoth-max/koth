@@ -90,6 +90,8 @@ function Profile() {
         </div>
       </section>
 
+      <CareerStats />
+
       <section className="rounded-3xl border border-border bg-card p-5">
         <h2 className="label-broadcast text-muted-foreground">Past wins</h2>
         {winsQ.isLoading ? (
@@ -113,7 +115,7 @@ function Profile() {
           </ul>
         ) : (
           <p className="mt-3 text-sm text-muted-foreground">
-            No podiums yet. Make this week count.
+            No podium finishes yet. Your first win starts this week.
           </p>
         )}
       </section>
@@ -165,6 +167,62 @@ function SettingRow({
   );
 }
 
+function CareerStats() {
+  const { user } = useAuth();
+  const statsQ = useQuery({
+    queryKey: ["career-stats", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const [resultsRes, subsRes] = await Promise.all([
+        supabase
+          .from("results")
+          .select("rank, prize_amount")
+          .eq("user_id", user!.id),
+        supabase
+          .from("submissions")
+          .select("challenge_id")
+          .eq("user_id", user!.id)
+          .eq("is_active_entry", true),
+      ]);
+      const results = resultsRes.data ?? [];
+      const wins = results.filter((r) => r.rank === 1).length;
+      const podiums = results.filter((r) => r.rank <= 3).length;
+      const prize = results.reduce((s, r) => s + Number(r.prize_amount ?? 0), 0);
+      const entered = new Set((subsRes.data ?? []).map((s) => s.challenge_id)).size;
+      const best = results.length ? Math.min(...results.map((r) => r.rank)) : null;
+      return { wins, podiums, prize, entered, best };
+    },
+  });
+  const s = statsQ.data;
+  return (
+    <section className="rounded-3xl border border-border bg-card p-5">
+      <h2 className="label-broadcast text-muted-foreground">Career stats</h2>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <Stat label="Wins" value={s?.wins ?? 0} />
+        <Stat label="Podiums" value={s?.podiums ?? 0} />
+        <Stat label="Entered" value={s?.entered ?? 0} />
+        <Stat label="Prize $" value={`$${s?.prize ?? 0}`} accent />
+      </div>
+      {s?.best != null && (
+        <p className="mt-3 text-xs text-muted-foreground">
+          Best finish: <span className="font-semibold text-foreground">#{s.best}</span>
+        </p>
+      )}
+    </section>
+  );
+}
+
+function Stat({ label, value, accent }: { label: string; value: string | number; accent?: boolean }) {
+  return (
+    <div className="rounded-2xl bg-muted/40 px-3 py-2.5">
+      <p className="label-broadcast text-[10px] text-muted-foreground">{label}</p>
+      <p className={`mono-stat mt-0.5 text-lg font-bold ${accent ? "text-koth-red" : "text-foreground"}`}>
+        {value}
+      </p>
+    </div>
+  );
+}
+
 function PastSubmissions() {
   const { user } = useAuth();
   const [items, setItems] = useState<any[]>([]);
@@ -200,12 +258,12 @@ function PastSubmissions() {
 
   return (
     <section className="rounded-3xl border border-border bg-card p-5">
-      <h2 className="label-broadcast text-muted-foreground">Your past submissions</h2>
+      <h2 className="label-broadcast text-muted-foreground">Recent challenges</h2>
       <p className="mt-1 text-xs text-muted-foreground">Only you can see these — your final entry per challenge.</p>
       {loading ? (
         <p className="mt-3 text-sm text-muted-foreground">Loading…</p>
       ) : items.length === 0 ? (
-        <p className="mt-3 text-sm text-muted-foreground">No submissions yet.</p>
+        <p className="mt-3 text-sm text-muted-foreground">No submissions yet. Record your first attempt to start your history.</p>
       ) : (
         <ul className="mt-3 divide-y divide-border">
           {items.map((s: any) => {
