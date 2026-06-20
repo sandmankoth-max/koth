@@ -87,7 +87,7 @@ function CreateChallenge() {
     if (!user) return;
     if (
       !window.confirm(
-        "Creating a new challenge will permanently delete every video and leaderboard entry from previous challenges to free up storage. Continue?",
+        "Creating a new challenge will permanently delete every intermediate take from previous challenges to free up storage. Each user's final submission for past challenges is kept so they can view it on their profile. Continue?",
       )
     )
       return;
