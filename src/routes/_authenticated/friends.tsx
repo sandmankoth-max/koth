@@ -26,12 +26,10 @@ function Friends() {
     const { data: rels } = await supabase
       .from("friendships")
       .select(
-        "id, status, requester_id, addressee_id, " +
-          "req:profiles!friendships_requester_id_fkey(username, display_name, avatar_url), " +
-          "addr:profiles!friendships_addressee_id_fkey(username, display_name, avatar_url)",
+        "id, status, requester_id, addressee_id, req:profiles!friendships_requester_id_fkey(username, display_name, avatar_url), addr:profiles!friendships_addressee_id_fkey(username, display_name, avatar_url)",
       )
       .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`);
-    const all = rels ?? [];
+    const all = (rels as any[] | null) ?? [];
     setIncoming(all.filter((r) => r.status === "pending" && r.addressee_id === user.id));
     setOutgoing(all.filter((r) => r.status === "pending" && r.requester_id === user.id));
     setAccepted(all.filter((r) => r.status === "accepted"));
