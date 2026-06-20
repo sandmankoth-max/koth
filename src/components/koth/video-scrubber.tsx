@@ -13,38 +13,36 @@ function fmt(t: number) {
 }
 
 /**
- * TikTok-style draggable progress bar.
- * - Thin line at rest, plumps up while dragging
- * - Shows current / total timestamp overlay during drag
- * - Pauses on drag, resumes on release
+ * Smooth TikTok-style draggable scrubber.
+ * - rAF-driven progress so it moves continuously, not on `timeupdate` ticks.
+ * - Generous invisible hit area (24px tall) over a 2px visible track.
+ * - Plumps + shows time overlay while dragging.
  */
 export function VideoScrubber({ videoRef, className }: Props) {
   const trackRef = useRef<HTMLDivElement>(null);
-  const [progress, setProgress] = useState(0); // 0..1
+  const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [dragTime, setDragTime] = useState(0);
+  const draggingRef = useRef(false);
   const wasPlayingRef = useRef(false);
 
+  // rAF loop for smooth progress.
   useEffect(() => {
-    const v = videoRef.current;
-    if (!v) return;
-    const onTime = () => {
-      if (dragging) return;
-      const d = v.duration || 0;
-      setDuration(d);
-      setProgress(d ? v.currentTime / d : 0);
+    let raf = 0;
+    const tick = () => {
+      const v = videoRef.current;
+      if (v && !draggingRef.current) {
+        const d = v.duration || 0;
+        if (d !== duration) setDuration(d);
+        setProgress(d ? v.currentTime / d : 0);
+      }
+      raf = requestAnimationFrame(tick);
     };
-    const onMeta = () => setDuration(v.duration || 0);
-    v.addEventListener("timeupdate", onTime);
-    v.addEventListener("loadedmetadata", onMeta);
-    v.addEventListener("durationchange", onMeta);
-    return () => {
-      v.removeEventListener("timeupdate", onTime);
-      v.removeEventListener("loadedmetadata", onMeta);
-      v.removeEventListener("durationchange", onMeta);
-    };
-  }, [videoRef, dragging]);
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videoRef]);
 
   function ratioFromClient(clientX: number) {
     const el = trackRef.current;
@@ -52,17 +50,18 @@ export function VideoScrubber({ videoRef, className }: Props) {
     const r = el.getBoundingClientRect();
     return Math.min(1, Math.max(0, (clientX - r.left) / r.width));
   }
-
   function startDrag(clientX: number) {
     const v = videoRef.current;
     if (!v) return;
     wasPlayingRef.current = !v.paused;
-    if (!v.paused) v.pause();
+    draggingRef.current = true;
     setDragging(true);
     const ratio = ratioFromClient(clientX);
     const d = v.duration || duration || 0;
     setProgress(ratio);
     setDragTime(ratio * d);
+    // Seek live so the preview frame updates while dragging.
+    try { v.currentTime = ratio * d; } catch {}
   }
   function moveDrag(clientX: number) {
     const v = videoRef.current;
@@ -71,16 +70,13 @@ export function VideoScrubber({ videoRef, className }: Props) {
     const d = v.duration || duration || 0;
     setProgress(ratio);
     setDragTime(ratio * d);
+    try { v.currentTime = ratio * d; } catch {}
   }
   function endDrag() {
     const v = videoRef.current;
-    if (!v) {
-      setDragging(false);
-      return;
-    }
-    const d = v.duration || duration || 0;
-    v.currentTime = progress * d;
+    draggingRef.current = false;
     setDragging(false);
+    if (!v) return;
     if (wasPlayingRef.current) v.play().catch(() => {});
   }
 
@@ -88,9 +84,7 @@ export function VideoScrubber({ videoRef, className }: Props) {
     if (!dragging) return;
     const onMove = (e: MouseEvent) => moveDrag(e.clientX);
     const onUp = () => endDrag();
-    const onTouchMove = (e: TouchEvent) => {
-      if (e.touches[0]) moveDrag(e.touches[0].clientX);
-    };
+    const onTouchMove = (e: TouchEvent) => { if (e.touches[0]) moveDrag(e.touches[0].clientX); };
     const onTouchEnd = () => endDrag();
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
@@ -103,47 +97,49 @@ export function VideoScrubber({ videoRef, className }: Props) {
       window.removeEventListener("touchend", onTouchEnd);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dragging, progress, duration]);
+  }, [dragging]);
 
   const pct = Math.min(100, Math.max(0, progress * 100));
-  const trackH = dragging ? "h-1.5" : "h-[3px]";
-  const dotSize = dragging ? 14 : 10;
+  const trackH = dragging ? 6 : 2;
+  const dotSize = dragging ? 14 : 0;
 
   return (
     <div className={`pointer-events-auto select-none ${className ?? ""}`}>
       {dragging && (
         <div className="mb-1 flex justify-center">
-          <span className="mono-stat rounded-full bg-black/60 px-2 py-0.5 text-[11px] font-bold text-white backdrop-blur">
+          <span className="mono-stat rounded-full bg-black/70 px-2.5 py-0.5 text-[11px] font-bold text-white backdrop-blur">
             {fmt(dragTime)} / {fmt(duration)}
           </span>
         </div>
       )}
+      {/* Tall transparent hit target so the thin bar is easy to grab */}
       <div
         ref={trackRef}
-        onMouseDown={(e) => {
-          e.stopPropagation();
-          startDrag(e.clientX);
-        }}
-        onTouchStart={(e) => {
-          e.stopPropagation();
-          if (e.touches[0]) startDrag(e.touches[0].clientX);
-        }}
-        className={`relative w-full cursor-pointer rounded-full bg-white/30 ${trackH} transition-all`}
+        onMouseDown={(e) => { e.stopPropagation(); startDrag(e.clientX); }}
+        onTouchStart={(e) => { e.stopPropagation(); if (e.touches[0]) startDrag(e.touches[0].clientX); }}
+        className="relative flex w-full cursor-pointer items-center"
+        style={{ height: 24 }}
       >
         <div
-          className="absolute inset-y-0 left-0 rounded-full bg-white"
-          style={{ width: `${pct}%` }}
-        />
-        <div
-          className="absolute top-1/2 rounded-full bg-white shadow"
-          style={{
-            left: `${pct}%`,
-            width: dotSize,
-            height: dotSize,
-            transform: "translate(-50%, -50%)",
-            transition: dragging ? "none" : "width 120ms, height 120ms",
-          }}
-        />
+          className="relative w-full rounded-full bg-white/30 transition-[height] duration-150"
+          style={{ height: trackH }}
+        >
+          <div
+            className="absolute inset-y-0 left-0 rounded-full bg-white"
+            style={{ width: `${pct}%` }}
+          />
+          {dragging && (
+            <div
+              className="absolute top-1/2 rounded-full bg-white shadow"
+              style={{
+                left: `${pct}%`,
+                width: dotSize,
+                height: dotSize,
+                transform: "translate(-50%, -50%)",
+              }}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
