@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { formatDistanceToNow } from "date-fns";
-import { Bell, Crown, ArrowDown, ArrowUp, Flag, UserPlus, UserCheck } from "lucide-react";
+import { Bell, Crown, ArrowDown, ArrowUp, Flag, UserPlus, UserCheck, Check, X } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/notifications")({
   head: () => ({ meta: [{ title: "Notifications — KOTH" }] }),
@@ -51,30 +52,63 @@ const labelFor = (n: any) => {
 function Notifications() {
   const { user } = useAuth();
   const [items, setItems] = useState<any[]>([]);
+  const [busy, setBusy] = useState<string | null>(null);
+
+  async function load() {
+    if (!user) return;
+    const { data } = await supabase
+      .from("notifications")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(100);
+    setItems(data ?? []);
+  }
 
   useEffect(() => {
     if (!user) return;
     let active = true;
-    async function load() {
+    (async () => {
       const { data } = await supabase
         .from("notifications")
         .select("*")
-        .eq("user_id", user!.id)
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(100);
       if (active) setItems(data ?? []);
-      // mark all read on open
       await supabase
         .from("notifications")
         .update({ read: true })
-        .eq("user_id", user!.id)
+        .eq("user_id", user.id)
         .eq("read", false);
-    }
-    load();
-    return () => {
-      active = false;
-    };
+    })();
+    return () => { active = false; };
   }, [user]);
+
+  async function accept(n: any) {
+    const fid = n.payload?.friendship_id;
+    if (!fid) { toast.error("Invalid request"); return; }
+    setBusy(n.id);
+    const { error } = await supabase.from("friendships").update({ status: "accepted" }).eq("id", fid);
+    setBusy(null);
+    if (error) toast.error(error.message);
+    else {
+      toast.success(`You and @${n.payload?.from_username} are now friends`);
+      setItems((cur) => cur.map((x) => x.id === n.id ? { ...x, _resolved: "accepted" } : x));
+    }
+  }
+
+  async function reject(n: any) {
+    const fid = n.payload?.friendship_id;
+    if (!fid) { toast.error("Invalid request"); return; }
+    setBusy(n.id);
+    const { error } = await supabase.from("friendships").delete().eq("id", fid);
+    setBusy(null);
+    if (error) toast.error(error.message);
+    else {
+      setItems((cur) => cur.map((x) => x.id === n.id ? { ...x, _resolved: "rejected" } : x));
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -100,6 +134,30 @@ function Notifications() {
                   <p className="mt-0.5 text-xs text-muted-foreground">
                     {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
                   </p>
+                  {n.type === "friend_request" && !n._resolved && (
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        onClick={() => accept(n)}
+                        disabled={busy === n.id}
+                        className="tap-44 inline-flex items-center gap-1 rounded-full bg-koth-red px-3 py-1.5 text-xs font-bold text-koth-white disabled:opacity-50"
+                      >
+                        <Check className="h-3.5 w-3.5" /> Accept
+                      </button>
+                      <button
+                        onClick={() => reject(n)}
+                        disabled={busy === n.id}
+                        className="tap-44 inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-bold text-muted-foreground disabled:opacity-50"
+                      >
+                        <X className="h-3.5 w-3.5" /> Decline
+                      </button>
+                    </div>
+                  )}
+                  {n._resolved === "accepted" && (
+                    <p className="mt-1 text-[11px] font-semibold text-koth-red">Accepted ✓</p>
+                  )}
+                  {n._resolved === "rejected" && (
+                    <p className="mt-1 text-[11px] text-muted-foreground">Declined</p>
+                  )}
                 </div>
               </li>
             ))}
