@@ -57,6 +57,33 @@ export function PositionCard({
   const myRank = myIdx >= 0 ? myIdx + 1 : null;
 
   if (!hasEntry || myRank == null) {
+    // User has submitted but it isn't on the verified leaderboard yet.
+    if (hasEntry && pendingVerification) {
+      return (
+        <section className="rounded-3xl border border-border bg-card p-4">
+          <p className="label-broadcast text-muted-foreground">Your position</p>
+          <div className="mt-2 flex items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-base font-bold text-foreground">Entered — awaiting verification</p>
+              {myValue != null && (
+                <p className="mono-stat mt-0.5 text-sm font-semibold text-foreground">
+                  Your time: {formatValue(myValue, unitType, unitLabel)}
+                </p>
+              )}
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                We'll rank you on the leaderboard once an admin verifies your video.
+              </p>
+            </div>
+            <Link
+              to="/record"
+              className="tap-44 inline-flex items-center gap-1.5 rounded-full border border-koth-red px-3 py-2 text-xs font-bold text-koth-red"
+            >
+              Try again
+            </Link>
+          </div>
+        </section>
+      );
+    }
     return (
       <section className="rounded-3xl border border-border bg-card p-4">
         <div className="flex items-center justify-between gap-3">
@@ -80,6 +107,7 @@ export function PositionCard({
       </section>
     );
   }
+
 
   // Gap to the next rank up.
   const above = myRank > 1 ? data[myRank - 2] : null;

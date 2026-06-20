@@ -177,6 +177,9 @@ function Home() {
           challengeId={c.id}
           userId={user.id}
           hasEntry={!!myEntryQ.data}
+          pendingVerification={
+            !!myEntryQ.data && myEntryQ.data.status !== "verified"
+          }
           myValue={
             myEntryQ.data
               ? Number(myEntryQ.data.admin_verified_value ?? myEntryQ.data.self_reported_value)
