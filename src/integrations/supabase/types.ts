@@ -422,6 +422,9 @@ export type Database = {
         | "overtaken"
         | "podium_lost"
         | "podium_gained"
+        | "time_verified"
+        | "time_disqualified"
+        | "deadline_reminder_24h"
       submission_status:
         | "pending_review"
         | "verified"
@@ -565,6 +568,9 @@ export const Constants = {
         "overtaken",
         "podium_lost",
         "podium_gained",
+        "time_verified",
+        "time_disqualified",
+        "deadline_reminder_24h",
       ],
       submission_status: [
         "pending_review",
