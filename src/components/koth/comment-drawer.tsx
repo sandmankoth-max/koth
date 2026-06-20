@@ -213,6 +213,7 @@ export function CommentDrawer({ kind, targetId, ownerId, open, onOpenChange }: P
         </AlertDialogContent>
       </AlertDialog>
     </Drawer>
+    </>
   );
 }
 
