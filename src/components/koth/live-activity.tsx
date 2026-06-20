@@ -66,6 +66,7 @@ export function LiveActivity({ challengeId, unitType, unitLabel }: Props) {
           {data.map((s: any) => {
             const p = s.profiles;
             const val = Number(s.admin_verified_value ?? s.self_reported_value);
+            const verified = s.status === "verified";
             return (
               <li key={s.id} className="flex items-center gap-3 py-2">
                 <ProfileAvatar
@@ -77,10 +78,22 @@ export function LiveActivity({ challengeId, unitType, unitLabel }: Props) {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm text-foreground">
                     <span className="font-semibold">@{p?.username ?? "user"}</span>
-                    <span className="text-muted-foreground"> submitted </span>
+                    <span className="text-muted-foreground">
+                      {verified ? " verified " : " submitted "}
+                    </span>
                     <span className="mono-stat font-semibold">
                       {formatValue(val, unitType, unitLabel)}
                     </span>
+                    {!verified && (
+                      <span className="ml-1.5 rounded-full bg-koth-pr-bg px-1.5 py-0.5 text-[9px] font-bold uppercase text-koth-pr-text">
+                        pending
+                      </span>
+                    )}
+                    {verified && (
+                      <span className="ml-1.5 rounded-full bg-koth-red px-1.5 py-0.5 text-[9px] font-bold uppercase text-koth-white">
+                        on board
+                      </span>
+                    )}
                   </p>
                   <p className="text-xs text-muted-foreground">{relTime(s.submitted_at)}</p>
                 </div>
