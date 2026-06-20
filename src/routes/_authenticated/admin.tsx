@@ -45,17 +45,21 @@ function Admin() {
       </section>
 
       <Tabs defaultValue="create">
-        <TabsList className="w-full">
+        <TabsList className="w-full flex-wrap">
           <TabsTrigger value="create" className="flex-1">Create</TabsTrigger>
+          <TabsTrigger value="edit" className="flex-1">Edit</TabsTrigger>
           <TabsTrigger value="review" className="flex-1">Review</TabsTrigger>
           <TabsTrigger value="results" className="flex-1">Results</TabsTrigger>
+          <TabsTrigger value="notify" className="flex-1">Notify</TabsTrigger>
         </TabsList>
         <TabsContent value="create">
           <CreateChallenge />
           <ManageChallenges />
         </TabsContent>
+        <TabsContent value="edit"><EditChallenge /></TabsContent>
         <TabsContent value="review"><ReviewSubmissions /></TabsContent>
         <TabsContent value="results"><MarkPaid /></TabsContent>
+        <TabsContent value="notify"><SendNotification /></TabsContent>
       </Tabs>
     </div>
   );
@@ -87,7 +91,7 @@ function CreateChallenge() {
     if (!user) return;
     if (
       !window.confirm(
-        "Creating a new challenge will permanently delete every video and leaderboard entry from previous challenges to free up storage. Continue?",
+        "Creating a new challenge will permanently delete every intermediate take from previous challenges to free up storage. Each user's final submission for past challenges is kept so they can view it on their profile. Continue?",
       )
     )
       return;
@@ -115,7 +119,7 @@ function CreateChallenge() {
 
       await cleanupOldSubmissions({ data: { keepChallengeId: created.id } });
 
-      toast.success("Challenge created. Previous videos and leaderboards wiped.");
+      toast.success("Challenge created. Old intermediate takes wiped; each user's final entries kept.");
       setForm((f) => ({ ...f, title: "", description: "", safety_note: "" }));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed");
@@ -534,6 +538,176 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     <div className="flex flex-col gap-1.5">
       <Label className="label-broadcast text-muted-foreground">{label}</Label>
       {children}
+    </div>
+  );
+}
+
+function EditChallenge() {
+  const [items, setItems] = useState<any[]>([]);
+  const [sel, setSel] = useState<string>("");
+  const [form, setForm] = useState<any | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function load() {
+    const { data } = await supabase
+      .from("challenges")
+      .select("*")
+      .order("starts_at", { ascending: false })
+      .limit(50);
+    setItems(data ?? []);
+  }
+  useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    const c = items.find((x) => x.id === sel);
+    if (!c) { setForm(null); return; }
+    setForm({
+      title: c.title ?? "",
+      description: c.description ?? "",
+      safety_note: c.safety_note ?? "",
+      unit_label: c.unit_label ?? "",
+      starts_at: new Date(c.starts_at).toISOString().slice(0, 16),
+      ends_at: new Date(c.ends_at).toISOString().slice(0, 16),
+      prize_first: c.prize_first ?? 0,
+      prize_second: c.prize_second ?? 0,
+      prize_third: c.prize_third ?? 0,
+    });
+  }, [sel, items]);
+
+  async function save() {
+    if (!sel || !form) return;
+    setBusy(true);
+    const { error } = await supabase
+      .from("challenges")
+      .update({
+        title: form.title,
+        description: form.description || null,
+        safety_note: form.safety_note || null,
+        unit_label: form.unit_label,
+        starts_at: new Date(form.starts_at).toISOString(),
+        ends_at: new Date(form.ends_at).toISOString(),
+        prize_first: Number(form.prize_first),
+        prize_second: Number(form.prize_second),
+        prize_third: Number(form.prize_third),
+      })
+      .eq("id", sel);
+    setBusy(false);
+    if (error) toast.error(error.message);
+    else { toast.success("Challenge updated"); load(); }
+  }
+
+  return (
+    <div className="mt-4 space-y-3">
+      <Select value={sel} onValueChange={setSel}>
+        <SelectTrigger><SelectValue placeholder="Pick a challenge to edit" /></SelectTrigger>
+        <SelectContent>
+          {items.map((c) => (
+            <SelectItem key={c.id} value={c.id}>[{c.status}] {c.title}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {form && (
+        <div className="space-y-3 rounded-3xl border border-border bg-card p-5">
+          <p className="text-xs text-muted-foreground">
+            Editing details does not delete submissions, videos, or leaderboard entries.
+          </p>
+          <Field label="Title">
+            <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+          </Field>
+          <Field label="Description">
+            <Textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+          </Field>
+          <Field label="Safety note">
+            <Textarea rows={2} value={form.safety_note} onChange={(e) => setForm({ ...form, safety_note: e.target.value })} />
+          </Field>
+          <Field label="Unit label">
+            <Input value={form.unit_label} onChange={(e) => setForm({ ...form, unit_label: e.target.value })} />
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Starts at">
+              <Input type="datetime-local" value={form.starts_at} onChange={(e) => setForm({ ...form, starts_at: e.target.value })} />
+            </Field>
+            <Field label="Ends at">
+              <Input type="datetime-local" value={form.ends_at} onChange={(e) => setForm({ ...form, ends_at: e.target.value })} />
+            </Field>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <Field label="1st $">
+              <Input type="number" min="0" value={form.prize_first} onChange={(e) => setForm({ ...form, prize_first: e.target.value })} />
+            </Field>
+            <Field label="2nd $">
+              <Input type="number" min="0" value={form.prize_second} onChange={(e) => setForm({ ...form, prize_second: e.target.value })} />
+            </Field>
+            <Field label="3rd $">
+              <Input type="number" min="0" value={form.prize_third} onChange={(e) => setForm({ ...form, prize_third: e.target.value })} />
+            </Field>
+          </div>
+          <Button onClick={save} disabled={busy} className="tap-44 h-12 w-full rounded-full bg-koth-red text-koth-white">
+            {busy ? "…" : "Save changes"}
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SendNotification() {
+  const [mode, setMode] = useState<"user" | "all">("user");
+  const [username, setUsername] = useState("");
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function send() {
+    const msg = message.trim();
+    if (!msg) { toast.error("Enter a message"); return; }
+    setBusy(true);
+    try {
+      if (mode === "all") {
+        if (!window.confirm("Broadcast this message to every user?")) { setBusy(false); return; }
+        const { data, error } = await supabase.rpc("admin_broadcast_notification" as any, { p_message: msg });
+        if (error) throw error;
+        toast.success(`Sent to ${data ?? 0} users`);
+      } else {
+        const u = username.trim().toLowerCase().replace(/^@/, "");
+        if (!u) { toast.error("Enter a username"); setBusy(false); return; }
+        const { data: prof, error: pErr } = await supabase
+          .from("profiles").select("id").eq("username", u).maybeSingle();
+        if (pErr) throw pErr;
+        if (!prof) { toast.error(`No user @${u}`); setBusy(false); return; }
+        const { error } = await supabase.rpc("admin_send_notification" as any, {
+          p_user_id: prof.id, p_message: msg,
+        });
+        if (error) throw error;
+        toast.success(`Sent to @${u}`);
+      }
+      setMessage("");
+      setUsername("");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mt-4 space-y-3 rounded-3xl border border-border bg-card p-5">
+      <Tabs value={mode} onValueChange={(v) => setMode(v as any)}>
+        <TabsList className="w-full">
+          <TabsTrigger value="user" className="flex-1">To one user</TabsTrigger>
+          <TabsTrigger value="all" className="flex-1">Broadcast all</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      {mode === "user" && (
+        <Field label="Username">
+          <Input placeholder="username (no @)" value={username} onChange={(e) => setUsername(e.target.value)} />
+        </Field>
+      )}
+      <Field label="Message">
+        <Textarea rows={4} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Type your notification…" />
+      </Field>
+      <Button onClick={send} disabled={busy} className="tap-44 h-12 w-full rounded-full bg-koth-red text-koth-white">
+        {busy ? "…" : mode === "all" ? "Send to everyone" : "Send"}
+      </Button>
     </div>
   );
 }

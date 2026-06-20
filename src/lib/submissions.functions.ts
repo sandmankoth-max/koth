@@ -93,10 +93,13 @@ export const cleanupOldChallengeSubmissions = createServerFn({ method: "POST" })
     if (!isAdmin) throw new Error("Forbidden");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Keep each user's final/active submission per past challenge so they can
+    // view their history on their profile. Only purge intermediate takes.
     const { data: submissions, error: fetchError } = await context.supabase
       .from("submissions")
       .select("id, video_path")
-      .neq("challenge_id", data.keepChallengeId);
+      .neq("challenge_id", data.keepChallengeId)
+      .eq("is_active_entry", false);
     if (fetchError) throw new Error(fetchError.message);
 
     const oldSubmissions = submissions ?? [];
@@ -106,10 +109,11 @@ export const cleanupOldChallengeSubmissions = createServerFn({ method: "POST" })
     );
 
     if (oldSubmissions.length > 0) {
+      const ids = oldSubmissions.map((s) => s.id);
       const { error: deleteError } = await context.supabase
         .from("submissions")
         .delete()
-        .neq("challenge_id", data.keepChallengeId);
+        .in("id", ids);
       if (deleteError) throw new Error(deleteError.message);
     }
 

@@ -1,13 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Avatar } from "@/components/koth/avatar";
 import { RankBadge } from "@/components/koth/rank-badge";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, LogOut, Camera, FileText, ShieldCheck } from "lucide-react";
+import { ChevronRight, LogOut, Camera, FileText, ShieldCheck, Play } from "lucide-react";
 import { toast } from "sonner";
+import { formatValue, getVideoSignedUrl } from "@/lib/koth-utils";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({ meta: [{ title: "Profile — KOTH" }] }),
@@ -117,6 +118,9 @@ function Profile() {
         )}
       </section>
 
+      <PastSubmissions />
+
+
       <section className="rounded-3xl border border-border bg-card">
         <SettingRow to="/notifications" icon={<ShieldCheck className="h-4 w-4" aria-hidden />} label="Notifications" />
         <SettingRow to="/legal/rules" icon={<FileText className="h-4 w-4" aria-hidden />} label="Official Rules" />
@@ -158,5 +162,81 @@ function SettingRow({
       <span className="flex-1">{label}</span>
       <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden />
     </Link>
+  );
+}
+
+function PastSubmissions() {
+  const { user } = useAuth();
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [urls, setUrls] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+    (async () => {
+      const { data } = await supabase
+        .from("submissions")
+        .select("id, video_path, self_reported_value, admin_verified_value, submitted_at, status, challenges(id, title, unit_type, unit_label, status, ends_at)")
+        .eq("user_id", user.id)
+        .eq("is_active_entry", true)
+        .order("submitted_at", { ascending: false });
+      if (!active) return;
+      setItems((data ?? []).filter((s: any) => s.challenges));
+      setLoading(false);
+    })();
+    return () => { active = false; };
+  }, [user]);
+
+  async function toggle(s: any) {
+    if (openId === s.id) { setOpenId(null); return; }
+    setOpenId(s.id);
+    if (!urls[s.id]) {
+      const url = await getVideoSignedUrl(s.video_path);
+      if (url) setUrls((u) => ({ ...u, [s.id]: url }));
+    }
+  }
+
+  return (
+    <section className="rounded-3xl border border-border bg-card p-5">
+      <h2 className="label-broadcast text-muted-foreground">Your past submissions</h2>
+      <p className="mt-1 text-xs text-muted-foreground">Only you can see these — your final entry per challenge.</p>
+      {loading ? (
+        <p className="mt-3 text-sm text-muted-foreground">Loading…</p>
+      ) : items.length === 0 ? (
+        <p className="mt-3 text-sm text-muted-foreground">No submissions yet.</p>
+      ) : (
+        <ul className="mt-3 divide-y divide-border">
+          {items.map((s: any) => {
+            const c = s.challenges;
+            const value = s.admin_verified_value ?? s.self_reported_value;
+            return (
+              <li key={s.id} className="py-3">
+                <button
+                  onClick={() => toggle(s)}
+                  className="tap-44 flex w-full items-center gap-3 text-left"
+                >
+                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-muted">
+                    <Play className="h-4 w-4" aria-hidden />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-foreground">{c.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(s.submitted_at).toLocaleDateString()} · {formatValue(value, c.unit_type, c.unit_label)}
+                      {s.status === "disqualified" ? " · DQ" : ""}
+                    </p>
+                  </div>
+                  <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${openId === s.id ? "rotate-90" : ""}`} aria-hidden />
+                </button>
+                {openId === s.id && urls[s.id] && (
+                  <video src={urls[s.id]} controls playsInline className="mt-3 aspect-[9/16] w-full rounded-xl bg-black" />
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
   );
 }
