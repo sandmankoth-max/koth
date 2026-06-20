@@ -15,13 +15,8 @@ export function formatValue(value: number | null | undefined, unitType: string, 
   if (value == null) return "—";
   if (unitType === "time_seconds") {
     const total = Number(value);
-    const mins = Math.floor(total / 60);
-    const secs = total - mins * 60;
-    const isInt = secs % 1 === 0;
-    const secStr = secs.toFixed(isInt ? 0 : 2);
-    const padWidth = isInt ? 2 : 5;
-    if (mins > 0) return `${mins}:${secStr.padStart(padWidth, "0")}`;
-    return `${secs.toFixed(isInt ? 0 : 2)}s`;
+    const isInt = total % 1 === 0;
+    return `${total.toFixed(isInt ? 0 : 2)}s`;
   }
   if (unitType === "count_reps") return `${Math.round(Number(value))}`;
   return `${value} ${unitLabel}`;
