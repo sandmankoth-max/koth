@@ -231,19 +231,19 @@ function ChallengesTab() {
     queryKey: ["my-videos", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      // Show every saved video: the user's latest public attempt per
-      // challenge (older publics were deleted on upload) plus the full
-      // friends-only history (which never deletes prior attempts).
+      // Latest public attempt per challenge + full friends-only history.
+      // Suspended attempts still show so the user knows they were flagged.
       const { data } = await supabase
         .from("submissions")
         .select(
-          "id, video_path, self_reported_value, admin_verified_value, submitted_at, visibility, is_active_entry, challenges(id, title, unit_type, unit_label)",
+          "id, video_path, self_reported_value, admin_verified_value, submitted_at, visibility, is_active_entry, status, challenges(id, title, unit_type, unit_label)",
         )
         .eq("user_id", user!.id)
-        .neq("status", "disqualified")
         .order("submitted_at", { ascending: false });
       return (data ?? []).filter(
-        (s: any) => s.challenges && (s.visibility === "friends_only" || s.is_active_entry),
+        (s: any) =>
+          s.challenges &&
+          (s.visibility === "friends_only" || s.is_active_entry || s.status === "disqualified"),
       );
     },
   });
@@ -272,24 +272,42 @@ function ChallengesTab() {
           No videos yet. Your submissions will show up here.
         </div>
       ) : (
-        <div className="grid grid-cols-3 gap-1.5">
-          {items.map((it, i) => (
-            <VideoThumb
-              key={it.id}
-              videoPath={it.video_path}
-              onClick={() => {
-                setPlayerIndex(i);
-                setPlayerOpen(true);
-              }}
-              badge={
-                (videosQ.data?.[i] as any)?.visibility === "friends_only" ? (
-                  <span className="rounded-full bg-koth-black/70 px-1.5 py-0.5 text-[9px] font-bold uppercase text-koth-white">
-                    Friends
-                  </span>
-                ) : null
-              }
-            />
-          ))}
+        <div className="grid grid-cols-3 gap-3">
+          {items.map((it, i) => {
+            const s: any = videosQ.data?.[i];
+            const title = s?.challenges?.title as string | undefined;
+            return (
+              <div key={it.id} className="flex flex-col items-center">
+                <VideoThumb
+                  videoPath={it.video_path}
+                  onClick={() => {
+                    setPlayerIndex(i);
+                    setPlayerOpen(true);
+                  }}
+                  badge={
+                    s?.status === "disqualified" ? (
+                      <span className="rounded-full bg-koth-red px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
+                        Suspended
+                      </span>
+                    ) : s?.visibility === "friends_only" ? (
+                      <span className="rounded-full bg-koth-black/70 px-1.5 py-0.5 text-[9px] font-bold uppercase text-koth-white">
+                        Friends
+                      </span>
+                    ) : s?.status === "verified" ? (
+                      <span className="rounded-full bg-koth-pr-bg px-1.5 py-0.5 text-[9px] font-bold uppercase text-koth-pr-text">
+                        Verified
+                      </span>
+                    ) : null
+                  }
+                />
+                {title && (
+                  <p className="mt-1 w-full truncate text-center text-[11px] font-semibold text-foreground">
+                    {title}
+                  </p>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
       <TikTokPlayer
