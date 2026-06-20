@@ -109,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error("Username must be 3–20 chars: lowercase letters, numbers, underscore.");
     }
 
-    const { error } = await supabase.auth.signUp({
+    const { data: signUpData, error } = await supabase.auth.signUp({
       email: usernameToEmail(username),
       password: input.password,
       options: {
@@ -122,6 +122,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
     });
     if (error) throw new Error(error.message);
+
+    const newUserId = signUpData.user?.id;
+    if (input.avatar_file && newUserId) {
+      try {
+        const f = input.avatar_file;
+        const ext = (f.name.split(".").pop() || "jpg").toLowerCase();
+        const path = `${newUserId}/${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from("koth-avatars")
+          .upload(path, f, { contentType: f.type, upsert: true });
+        if (!upErr) {
+          await supabase.from("profiles").update({ avatar_url: path }).eq("id", newUserId);
+        }
+      } catch {
+        // non-fatal — user can set avatar later in profile
+      }
+    }
   }, []);
 
   const signOut = useCallback(async () => {
