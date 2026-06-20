@@ -37,6 +37,10 @@ const labelFor = (n: any) => {
       return `Your time was verified${n.payload?.value != null ? ` — ${n.payload.value}` : ""}`;
     case "time_disqualified":
       return `Your submission was disqualified`;
+    case "friend_request":
+      return `@${n.payload?.from_username ?? "someone"} sent you a friend request`;
+    case "friend_accepted":
+      return `@${n.payload?.from_username ?? "someone"} accepted your friend request`;
     default:
       return "Notification";
   }
