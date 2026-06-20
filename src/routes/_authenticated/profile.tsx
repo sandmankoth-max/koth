@@ -90,6 +90,8 @@ function Profile() {
         </div>
       </section>
 
+      <CareerStats />
+
       <section className="rounded-3xl border border-border bg-card p-5">
         <h2 className="label-broadcast text-muted-foreground">Past wins</h2>
         {winsQ.isLoading ? (
@@ -113,7 +115,7 @@ function Profile() {
           </ul>
         ) : (
           <p className="mt-3 text-sm text-muted-foreground">
-            No podiums yet. Make this week count.
+            No podium finishes yet. Your first win starts this week.
           </p>
         )}
       </section>
