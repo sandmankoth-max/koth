@@ -308,6 +308,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_restore_submission: {
+        Args: { p_submission_id: string }
+        Returns: undefined
+      }
       close_challenge: { Args: { p_challenge_id: string }; Returns: undefined }
       has_role: {
         Args: {
@@ -316,7 +320,7 @@ export type Database = {
         }
         Returns: boolean
       }
-      lifecycle_tick: { Args: never; Returns: undefined }
+      lifecycle_tick: { Args: never; Returns: Json }
       notify_rank_changes: {
         Args: { p_actor: string; p_challenge_id: string }
         Returns: undefined
