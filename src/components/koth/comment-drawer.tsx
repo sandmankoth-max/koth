@@ -115,8 +115,12 @@ export function CommentDrawer({ kind, targetId, ownerId, open, onOpenChange }: P
 
   const [replyTo, setReplyTo] = useState<CommentRow | null>(null);
 
-  async function deleteComment(id: string) {
-    if (!confirm("Delete this comment?")) return;
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+
+  async function confirmDelete() {
+    const id = pendingDelete;
+    if (!id) return;
+    setPendingDelete(null);
     const { error } = await (supabase.from(table) as any).delete().eq("id", id);
     if (error) toast.error(error.message);
     else qc.invalidateQueries({ queryKey: [`${kind}-comments`, targetId] });
