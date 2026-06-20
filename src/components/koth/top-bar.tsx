@@ -9,6 +9,7 @@ import { LogoMark } from "@/components/koth/logo-mark";
 export function TopBar() {
   const { user, isAdmin } = useAuth();
   const [unread, setUnread] = useState(0);
+  const [showHelp, setShowHelp] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => {
