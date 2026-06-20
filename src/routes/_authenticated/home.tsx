@@ -162,6 +162,10 @@ function Home() {
       {/* Live activity feed */}
       <LiveActivity challengeId={c.id} unitType={c.unit_type} unitLabel={c.unit_label} />
 
+      {/* Trash talk */}
+      <ChallengeChat challengeId={c.id} />
+
+
       {/* Your position */}
       {user && (
         <PositionCard
