@@ -319,3 +319,47 @@ function Record() {
     </div>
   );
 }
+
+function VisibilityExplainer({
+  kind,
+  onClose,
+  onConfirm,
+}: {
+  kind: Visibility | null;
+  onClose: () => void;
+  onConfirm: (v: Visibility) => void;
+}) {
+  if (!kind) return null;
+  const isPublic = kind === "public";
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 sm:items-center">
+      <div className="w-full max-w-md rounded-3xl bg-card p-5 shadow-xl">
+        <p className="label-broadcast text-muted-foreground">
+          {isPublic ? "Enter Prize Pool" : "Friends Feed Only"}
+        </p>
+        <h3 className="mt-1 text-lg font-bold text-foreground">
+          {isPublic ? "Heads up — this goes public" : "Heads up — friends only"}
+        </h3>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {isPublic
+            ? "Your video will appear on the public podium and is eligible for the prize pool. Anyone using KOTH can see and compare against your attempt."
+            : "Your video won't be eligible for the prize pool, but you'll still show up on your Friends Podium and friends can see, like, and comment on it."}
+        </p>
+        <div className="mt-4 flex gap-2">
+          <Button variant="outline" onClick={onClose} className="tap-44 h-11 flex-1 rounded-full">
+            Cancel
+          </Button>
+          <Button
+            onClick={() => onConfirm(kind)}
+            className="tap-44 h-11 flex-1 rounded-full bg-koth-red text-koth-white hover:bg-koth-red/90"
+          >
+            Got it, continue
+          </Button>
+        </div>
+        <p className="mt-3 text-center text-[11px] text-muted-foreground">
+          You won't see this message again.
+        </p>
+      </div>
+    </div>
+  );
+}
