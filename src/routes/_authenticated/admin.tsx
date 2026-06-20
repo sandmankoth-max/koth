@@ -218,6 +218,11 @@ function ReviewSubmissions() {
   }, [sel]);
 
   async function update(id: string, patch: any) {
+    if (patch.__local) {
+      const { __local, ...rest } = patch;
+      setSubs((cur) => cur.map((s) => (s.id === id ? { ...s, ...rest } : s)));
+      return;
+    }
     const { error } = await supabase.from("submissions").update(patch).eq("id", id);
     if (error) toast.error(error.message);
     else {
