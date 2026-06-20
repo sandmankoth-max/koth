@@ -145,13 +145,14 @@ function AuthPage() {
                 className="koth-input"
               />
             </Field>
-            <Field label="Password" hint="8+ characters">
+            <Field label="Password" hint="8–16 chars, include 1 uppercase letter and 1 number">
               <Input
                 type="password"
                 value={sp}
                 onChange={(e) => setSp(e.target.value)}
                 required
                 minLength={8}
+                maxLength={16}
                 className="koth-input"
               />
             </Field>
