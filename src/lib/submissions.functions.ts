@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 
 const chunk = <T,>(items: T[], size: number) => {
   const out: T[][] = [];
@@ -8,11 +10,10 @@ const chunk = <T,>(items: T[], size: number) => {
   return out;
 };
 
-async function removeVideoPaths(paths: string[]) {
+async function removeVideoPaths(supabaseAdmin: SupabaseClient<Database>, paths: string[]) {
   const uniquePaths = [...new Set(paths.filter(Boolean))];
   if (uniquePaths.length === 0) return 0;
 
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   for (const batch of chunk(uniquePaths, 500)) {
     const { error } = await supabaseAdmin.storage.from("koth-videos").remove(batch);
     if (error) throw new Error(error.message);
@@ -33,9 +34,9 @@ export const deleteOwnSubmission = createServerFn({ method: "POST" })
     if (fetchError) throw new Error(fetchError.message);
     if (!submission) throw new Error("Submission not found");
 
-    await removeVideoPaths([submission.video_path]);
-
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await removeVideoPaths(supabaseAdmin, [submission.video_path]);
+
     const { error: deleteError } = await supabaseAdmin
       .from("submissions")
       .delete()
@@ -61,10 +62,10 @@ export const deletePreviousSubmissionsForChallenge = createServerFn({ method: "P
     if (fetchError) throw new Error(fetchError.message);
 
     const oldSubmissions = submissions ?? [];
-    await removeVideoPaths(oldSubmissions.map((submission) => submission.video_path));
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await removeVideoPaths(supabaseAdmin, oldSubmissions.map((submission) => submission.video_path));
 
     if (oldSubmissions.length > 0) {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { error: deleteError } = await supabaseAdmin
         .from("submissions")
         .delete()
@@ -96,7 +97,7 @@ export const cleanupOldChallengeSubmissions = createServerFn({ method: "POST" })
     if (fetchError) throw new Error(fetchError.message);
 
     const oldSubmissions = submissions ?? [];
-    await removeVideoPaths(oldSubmissions.map((submission) => submission.video_path));
+    await removeVideoPaths(supabaseAdmin, oldSubmissions.map((submission) => submission.video_path));
 
     if (oldSubmissions.length > 0) {
       const { error: deleteError } = await supabaseAdmin
