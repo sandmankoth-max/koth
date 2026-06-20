@@ -159,9 +159,7 @@ function Home() {
           </div>
           <Countdown target={c.ends_at} />
         </div>
-        {c.description && (
-          <p className="mt-3 text-sm text-koth-white/80">{c.description}</p>
-        )}
+        {c.description && <p className="mt-3 text-sm text-koth-white/80">{c.description}</p>}
         {c.safety_note && (
           <div className="mt-3 flex items-start gap-2 rounded-xl bg-koth-pr-bg p-3 text-koth-pr-text">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
