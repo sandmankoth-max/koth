@@ -36,6 +36,7 @@ export function LiveActivity({ challengeId, unitType, unitLabel }: Props) {
           "id, self_reported_value, admin_verified_value, submitted_at, status, profiles!submissions_user_id_fkey(username, display_name, avatar_url)",
         )
         .eq("challenge_id", challengeId)
+        .eq("visibility", "public")
         .neq("status", "disqualified")
         .order("submitted_at", { ascending: false })
         .limit(8);
