@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Settings, LogOut, Camera, FileText, ShieldCheck, Pencil, Check,
-  Bell, Users, X,
+  Bell, Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { TikTokPlayer, type PlayerItem } from "@/components/koth/tiktok-player";
