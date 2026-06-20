@@ -104,13 +104,13 @@ function PlayerStage({
   const [burst, setBurst] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const lastTap = useRef(0);
   const touchStartY = useRef<number | null>(null);
   const isOwner = !!user && user.id === item.user.id;
 
   async function handleDelete() {
     if (!isOwner || deleting) return;
-    if (!confirm("Delete this video? This cannot be undone.")) return;
     setDeleting(true);
     try {
       await deleteSubmission({ data: { submissionId: item.id } });
@@ -121,6 +121,7 @@ function PlayerStage({
       qc.invalidateQueries({ queryKey: ["top3"] });
       qc.invalidateQueries({ queryKey: ["feed"] });
       qc.invalidateQueries({ queryKey: ["user-videos"] });
+      setDeleteOpen(false);
       onClose();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Delete failed");
