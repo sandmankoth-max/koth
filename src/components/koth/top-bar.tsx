@@ -72,17 +72,17 @@ export function TopBar() {
             >
               <div
                 onClick={(e) => e.stopPropagation()}
-                className="w-full max-w-sm rounded-3xl border border-border bg-card p-6 text-center shadow-2xl"
+                className="w-full max-w-[16rem] rounded-2xl border border-border bg-card p-5 text-center shadow-2xl"
               >
-                <HelpCircle className="mx-auto mb-3 h-8 w-8 text-koth-red" />
-                <h3 className="text-lg font-bold text-koth-white">Need help?</h3>
-                <p className="mt-2 text-sm text-muted-foreground">
+                <HelpCircle className="mx-auto mb-2 h-6 w-6 text-koth-red" />
+                <h3 className="text-base font-bold text-koth-white">Need help?</h3>
+                <p className="mt-1.5 text-xs text-muted-foreground">
                   For support questions or business contact:
                 </p>
-                <p className="mt-1 text-sm font-semibold text-koth-red">sandmankoth@gmail.com</p>
+                <p className="mt-1 text-xs font-semibold text-koth-red">sandmankoth@gmail.com</p>
                 <button
                   onClick={() => setShowHelp(false)}
-                  className="mt-5 inline-flex h-11 items-center justify-center rounded-full bg-koth-red px-6 text-sm font-semibold text-koth-white"
+                  className="mt-4 inline-flex h-9 items-center justify-center rounded-full bg-koth-red px-5 text-xs font-semibold text-koth-white"
                 >
                   Got it
                 </button>
