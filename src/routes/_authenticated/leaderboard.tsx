@@ -229,9 +229,11 @@ function Leaderboard() {
                           <div className="mono-stat text-base font-bold text-foreground">
                             {formatValue(r.val, c.unit_type, c.unit_label)}
                           </div>
-                          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                            {shortUnitLabel(c.unit_type, c.unit_label)}
-                          </div>
+                          {shortUnitLabel(c.unit_type, c.unit_label) && (
+                            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                              {shortUnitLabel(c.unit_type, c.unit_label)}
+                            </div>
+                          )}
                         </div>
                         <Play className="ml-1 h-4 w-4 text-muted-foreground" aria-hidden />
                         {r.status === "pending_review" && (
