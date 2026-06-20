@@ -123,7 +123,7 @@ function AuthPage() {
                 {avatarFile ? "Tap to change photo" : "Add a profile photo (optional)"}
               </p>
             </div>
-            <Field label="Username" hint="3–20 chars, lowercase letters / numbers / underscore">
+            <Field label="Username" hint="3–16 chars, lowercase letters / numbers / underscore">
               <Input
                 value={su}
                 onChange={(e) => setSu(e.target.value)}
@@ -132,7 +132,7 @@ function AuthPage() {
                 inputMode="text"
                 required
                 minLength={3}
-                maxLength={20}
+                maxLength={16}
                 className="koth-input"
               />
             </Field>
