@@ -84,6 +84,7 @@ function CreateChallenge() {
     prize_second: 20,
     prize_third: 10,
     status: "upcoming" as "upcoming" | "active",
+    max_video_seconds: 60,
   });
 
   async function submit(e: React.FormEvent) {
