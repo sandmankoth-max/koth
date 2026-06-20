@@ -112,8 +112,9 @@ function CreateChallenge() {
           prize_first: form.prize_first,
           prize_second: form.prize_second,
           prize_third: form.prize_third,
+          max_video_seconds: form.max_video_seconds || null,
           created_by: user.id,
-        })
+        } as any)
         .select("id")
         .single();
       if (error) throw error;
