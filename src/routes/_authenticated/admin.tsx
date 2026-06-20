@@ -365,11 +365,18 @@ function SubmissionRow({ s, onUpdate }: { s: any; onUpdate: (p: any) => Promise<
           size="sm"
           variant="outline"
           onClick={async () => {
-            if (!window.confirm("Disqualify this submission and remove it from all leaderboards?")) return;
-            const { error } = await supabase.rpc("admin_disqualify_submission" as any, { p_submission_id: s.id });
+            const reason = window.prompt(
+              "Why is this submission being suspended? This note will be sent to the user in their notification.",
+              "",
+            );
+            if (reason === null) return;
+            const { error } = await supabase.rpc("admin_disqualify_submission" as any, {
+              p_submission_id: s.id,
+              p_reason: reason.trim() || null,
+            });
             if (error) toast.error(error.message);
             else {
-              toast.success("Disqualified");
+              toast.success("Suspended");
               await onUpdate({ status: "disqualified", is_active_entry: false, __local: true });
             }
           }}
