@@ -295,9 +295,11 @@ function TopThreePreview({
                 </div>
                 <div className="mono-stat text-base font-bold text-foreground">
                   {formatValue(r.val, unitType, unitLabel)}
-                  <span className="ml-1 text-xs font-normal text-muted-foreground">
-                    {shortUnitLabel(unitType, unitLabel)}
-                  </span>
+                  {shortUnitLabel(unitType, unitLabel) && (
+                    <span className="ml-1 text-xs font-normal text-muted-foreground">
+                      {shortUnitLabel(unitType, unitLabel)}
+                    </span>
+                  )}
                 </div>
               </li>
             );
