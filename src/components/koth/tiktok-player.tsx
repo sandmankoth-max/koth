@@ -292,7 +292,7 @@ function PlayerStage({
 
 
       {/* Bottom-left info */}
-      <div className="absolute bottom-4 left-4 right-20 z-20 text-white">
+      <div className="absolute bottom-7 left-4 right-20 z-20 text-white">
         <Link
           to="/u/$username"
           params={{ username: item.user.username }}
