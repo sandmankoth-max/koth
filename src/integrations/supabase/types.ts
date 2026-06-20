@@ -425,6 +425,8 @@ export type Database = {
         | "time_verified"
         | "time_disqualified"
         | "deadline_reminder_24h"
+        | "friend_request"
+        | "friend_accepted"
       submission_status:
         | "pending_review"
         | "verified"
@@ -571,6 +573,8 @@ export const Constants = {
         "time_verified",
         "time_disqualified",
         "deadline_reminder_24h",
+        "friend_request",
+        "friend_accepted",
       ],
       submission_status: [
         "pending_review",

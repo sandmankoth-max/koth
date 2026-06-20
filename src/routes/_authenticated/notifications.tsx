@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { formatDistanceToNow } from "date-fns";
-import { Bell, Crown, ArrowDown, ArrowUp, Flag } from "lucide-react";
+import { Bell, Crown, ArrowDown, ArrowUp, Flag, UserPlus, UserCheck } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/notifications")({
   head: () => ({ meta: [{ title: "Notifications — KOTH" }] }),
@@ -15,6 +15,8 @@ const iconFor = (t: string) =>
   t === "podium_lost" ? <ArrowDown className="h-5 w-5 text-koth-red" /> :
   t === "overtaken" ? <ArrowUp className="h-5 w-5 text-koth-steel" /> :
   t === "deadline_reminder" || t === "deadline_reminder_24h" ? <Flag className="h-5 w-5 text-koth-pr-text" /> :
+  t === "friend_request" ? <UserPlus className="h-5 w-5 text-koth-red" /> :
+  t === "friend_accepted" ? <UserCheck className="h-5 w-5 text-koth-red" /> :
   <Bell className="h-5 w-5 text-foreground" />;
 
 const labelFor = (n: any) => {
@@ -35,6 +37,10 @@ const labelFor = (n: any) => {
       return `Your time was verified${n.payload?.value != null ? ` — ${n.payload.value}` : ""}`;
     case "time_disqualified":
       return `Your submission was disqualified`;
+    case "friend_request":
+      return `@${n.payload?.from_username ?? "someone"} sent you a friend request`;
+    case "friend_accepted":
+      return `@${n.payload?.from_username ?? "someone"} accepted your friend request`;
     default:
       return "Notification";
   }
