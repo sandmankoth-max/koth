@@ -95,6 +95,34 @@ function AuthPage() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {isSignup ? (
           <>
+            <div className="flex flex-col items-center gap-2">
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                className="tap-44 relative inline-flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-koth-white/20 bg-koth-white/5"
+                aria-label="Add profile photo"
+              >
+                {avatarPreview ? (
+                  <img src={avatarPreview} alt="Profile preview" className="h-full w-full object-cover" />
+                ) : (
+                  <Camera className="h-7 w-7 text-koth-white/60" aria-hidden />
+                )}
+                <span className="absolute -bottom-1 -right-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-koth-red text-[10px] font-bold text-koth-white">
+                  +
+                </span>
+              </button>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                capture="user"
+                className="hidden"
+                onChange={onPickAvatar}
+              />
+              <p className="text-xs text-koth-white/50">
+                {avatarFile ? "Tap to change photo" : "Add a profile photo (optional)"}
+              </p>
+            </div>
             <Field label="Username" hint="3–20 chars, lowercase letters / numbers / underscore">
               <Input
                 value={su}
