@@ -31,6 +31,7 @@ function Home() {
   const queryClient = useQueryClient();
   const deleteSubmission = useServerFn(deleteOwnSubmission);
   const [deletingEntry, setDeletingEntry] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const challengeQ = useQuery({
     queryKey: ["active-or-upcoming-challenge"],
