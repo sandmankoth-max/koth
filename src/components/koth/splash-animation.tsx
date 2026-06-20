@@ -190,13 +190,19 @@ export function SplashAnimation() {
   );
 }
 
-function StickFigure({ armsUp = false }: { armsUp?: boolean }) {
+function StickFigure({ armsUp = false, flying = false }: { armsUp?: boolean; flying?: boolean }) {
   const stroke = "#FFFFFF";
   return (
     <g fill="none" stroke={stroke} strokeWidth="2.5" strokeLinecap="round">
       <circle cx="0" cy="-36" r="5.5" fill={stroke} stroke="none" />
       <line x1="0" y1="-30" x2="0" y2="-14" />
-      {armsUp ? (
+      {flying ? (
+        <>
+          {/* arms forward like Superman */}
+          <line x1="0" y1="-28" x2="14" y2="-34" />
+          <line x1="0" y1="-28" x2="14" y2="-22" />
+        </>
+      ) : armsUp ? (
         <>
           <line x1="0" y1="-30" x2="-7" y2="-46" />
           <line x1="0" y1="-30" x2="7" y2="-46" />
@@ -207,8 +213,42 @@ function StickFigure({ armsUp = false }: { armsUp?: boolean }) {
           <line x1="0" y1="-25" x2="10" y2="-17" />
         </>
       )}
-      <line x1="0" y1="-14" x2="-7" y2="-1" />
-      <line x1="0" y1="-14" x2="7" y2="-1" />
+      {flying ? (
+        <>
+          {/* legs straight back */}
+          <line x1="0" y1="-14" x2="-10" y2="-10" />
+          <line x1="0" y1="-14" x2="-10" y2="-4" />
+        </>
+      ) : (
+        <>
+          <line x1="0" y1="-14" x2="-7" y2="-1" />
+          <line x1="0" y1="-14" x2="7" y2="-1" />
+        </>
+      )}
+    </g>
+  );
+}
+
+function GroundBurst() {
+  const stroke = "#FFFFFF";
+  const rays = [
+    { x1: 0, y1: 0, x2: -28, y2: -4 },
+    { x1: 0, y1: 0, x2: -20, y2: -10 },
+    { x1: 0, y1: 0, x2: -8, y2: -14 },
+    { x1: 0, y1: 0, x2: 8, y2: -14 },
+    { x1: 0, y1: 0, x2: 20, y2: -10 },
+    { x1: 0, y1: 0, x2: 28, y2: -4 },
+    { x1: 0, y1: 0, x2: 0, y2: -8 },
+  ];
+  return (
+    <g stroke={stroke} strokeWidth="1.6" strokeLinecap="round" fill="none">
+      {rays.map((r, i) => (
+        <line key={i} x1={r.x1} y1={r.y1} x2={r.x2} y2={r.y2} />
+      ))}
+      {/* dust puffs */}
+      <ellipse cx="-18" cy="-2" rx="6" ry="2" fill="#FFFFFF" fillOpacity="0.3" stroke="none" />
+      <ellipse cx="18" cy="-2" rx="5" ry="2" fill="#FFFFFF" fillOpacity="0.25" stroke="none" />
+      <ellipse cx="0" cy="-4" rx="4" ry="2" fill="#FFFFFF" fillOpacity="0.35" stroke="none" />
     </g>
   );
 }
