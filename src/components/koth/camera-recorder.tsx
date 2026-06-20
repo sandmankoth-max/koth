@@ -26,7 +26,7 @@ type Props = {
   maxSeconds?: number | null;
 };
 
-export function CameraRecorder({ onCancel, onCapture }: Props) {
+export function CameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
