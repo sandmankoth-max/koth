@@ -88,6 +88,7 @@ function Record() {
           challenge_id: challenge.id,
           video_path: path,
           self_reported_value: Number(reportedValue),
+          visibility: visibility ?? "public",
         })
         .select("id")
         .single();
