@@ -124,37 +124,118 @@ function FeedTab({ tab, setTab, onAdd }: { tab: Tab; setTab: (t: Tab) => void; o
     return Array.from(byUser.values()).sort((a, b) => b.val - a.val).slice(0, 3);
   })();
 
-  return (
-    <div className="space-y-4">
-      <section className="koth-stripe overflow-hidden rounded-3xl bg-koth-black p-4 text-koth-white">
-        <p className="label-broadcast text-koth-white/60">Friends feed</p>
-        <h1 className="mt-0.5 text-lg font-bold">{c?.title ?? "No active challenge"}</h1>
-      </section>
+  const [podiumOpen, setPodiumOpen] = useState(false);
+  const hasFeed = !!c && (feedQ.data?.length ?? 0) > 0;
 
-      {noFriends && (
-        <div className="rounded-3xl border border-dashed border-border bg-card p-8 text-center">
-          <Users className="mx-auto h-8 w-8 text-koth-red" aria-hidden />
-          <p className="mt-3 text-base font-bold text-foreground">No friends yet</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Add competitors and track their progress through every challenge.
-          </p>
+  if (!hasFeed) {
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-2 rounded-full border border-border bg-card p-1">
+          <button className="tap-44 rounded-full bg-koth-red py-2 text-sm font-bold text-koth-white">
+            Friends Feed
+          </button>
           <button
-            onClick={onAdd}
-            className="tap-44 mt-4 inline-flex items-center rounded-full bg-koth-red px-4 py-2 text-sm font-bold text-koth-white"
+            onClick={() => setTab("add")}
+            className="tap-44 rounded-full py-2 text-sm font-bold text-muted-foreground"
           >
-            <UserPlus className="mr-2 h-4 w-4" aria-hidden /> Find friends
+            Add Friends
           </button>
         </div>
+
+        <section className="koth-stripe overflow-hidden rounded-3xl bg-koth-black p-4 text-koth-white">
+          <p className="label-broadcast text-koth-white/60">Friends feed</p>
+          <h1 className="mt-0.5 text-lg font-bold">{c?.title ?? "No active challenge"}</h1>
+        </section>
+
+        {noFriends ? (
+          <div className="rounded-3xl border border-dashed border-border bg-card p-8 text-center">
+            <Users className="mx-auto h-8 w-8 text-koth-red" aria-hidden />
+            <p className="mt-3 text-base font-bold text-foreground">No friends yet</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Add competitors and track their progress through every challenge.
+            </p>
+            <button
+              onClick={onAdd}
+              className="tap-44 mt-4 inline-flex items-center rounded-full bg-koth-red px-4 py-2 text-sm font-bold text-koth-white"
+            >
+              <UserPlus className="mr-2 h-4 w-4" aria-hidden /> Find friends
+            </button>
+          </div>
+        ) : (
+          <div className="rounded-3xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
+            No videos yet from your friends in this challenge.
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {/* Fullscreen TikTok-style scroller — escapes the padded shell. */}
+      <FeedScroller rows={feedQ.data!} c={c!} />
+
+      {/* Floating tab switcher */}
+      <div className="fixed left-1/2 top-16 z-40 -translate-x-1/2">
+        <div className="flex items-center gap-1 rounded-full bg-black/50 p-1 backdrop-blur">
+          <button
+            onClick={() => {}}
+            className="tap-44 rounded-full bg-koth-red px-4 py-1.5 text-xs font-bold text-koth-white"
+          >
+            Feed
+          </button>
+          <button
+            onClick={() => setTab("add")}
+            className="tap-44 rounded-full px-4 py-1.5 text-xs font-bold text-white/80"
+          >
+            Add
+          </button>
+        </div>
+      </div>
+
+      {/* Floating podium button */}
+      {podium.length > 0 && (
+        <button
+          onClick={() => setPodiumOpen(true)}
+          className="tap-44 fixed right-3 top-16 z-40 inline-flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-2 text-xs font-bold text-white backdrop-blur"
+        >
+          <Crown className="h-4 w-4 text-koth-red" aria-hidden /> Podium
+        </button>
       )}
 
-      {c && podium.length > 0 && (
+      <PodiumDialog
+        open={podiumOpen}
+        onOpenChange={setPodiumOpen}
+        podium={podium}
+        c={c!}
+      />
+    </>
+  );
+}
+
+function PodiumDialog({
+  open,
+  onOpenChange,
+  podium,
+  c,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  podium: any[];
+  c: any;
+}) {
+  // Lazy import to avoid restructuring imports.
+  const { Dialog, DialogContent, DialogTitle } = require("@/components/ui/dialog");
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm">
+        <DialogTitle>Friends podium</DialogTitle>
+        <p className="text-xs text-muted-foreground">
+          Best time per friend for <span className="font-semibold text-foreground">{c.title}</span>.
+        </p>
         <FriendsPodium podium={podium} c={c} />
-      )}
-
-      {c && (feedQ.data?.length ?? 0) > 0 && (
-        <FeedScroller rows={feedQ.data!} c={c} />
-      )}
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
