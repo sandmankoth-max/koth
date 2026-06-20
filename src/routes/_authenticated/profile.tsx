@@ -226,16 +226,20 @@ function ChallengesTab() {
     queryKey: ["my-videos", user?.id],
     enabled: !!user,
     queryFn: async () => {
+      // Show every saved video: the user's latest public attempt per
+      // challenge (older publics were deleted on upload) plus the full
+      // friends-only history (which never deletes prior attempts).
       const { data } = await supabase
         .from("submissions")
         .select(
-          "id, video_path, self_reported_value, admin_verified_value, submitted_at, visibility, challenges(id, title, unit_type, unit_label)",
+          "id, video_path, self_reported_value, admin_verified_value, submitted_at, visibility, is_active_entry, challenges(id, title, unit_type, unit_label)",
         )
         .eq("user_id", user!.id)
-        .eq("is_active_entry", true)
         .neq("status", "disqualified")
         .order("submitted_at", { ascending: false });
-      return (data ?? []).filter((s: any) => s.challenges);
+      return (data ?? []).filter(
+        (s: any) => s.challenges && (s.visibility === "friends_only" || s.is_active_entry),
+      );
     },
   });
 

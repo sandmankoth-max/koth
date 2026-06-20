@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNowStrict } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
-import { Avatar } from "@/components/koth/avatar";
+import { ProfileAvatar } from "@/components/koth/profile-avatar";
 import { formatValue } from "@/lib/koth-utils";
 import { Activity } from "lucide-react";
 
@@ -68,7 +68,8 @@ export function LiveActivity({ challengeId, unitType, unitLabel }: Props) {
             const val = Number(s.admin_verified_value ?? s.self_reported_value);
             return (
               <li key={s.id} className="flex items-center gap-3 py-2">
-                <Avatar
+                <ProfileAvatar
+                  username={p?.username}
                   name={p?.display_name ?? p?.username ?? "?"}
                   avatarPath={p?.avatar_url}
                   size={32}

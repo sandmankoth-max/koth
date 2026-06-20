@@ -1,14 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Heart, MessageCircle, Share2, X, Play, ChevronUp, ChevronDown } from "lucide-react";
+import { Heart, MessageCircle, Share2, X, Play, ChevronUp, ChevronDown, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Avatar } from "@/components/koth/avatar";
 import { getVideoSignedUrl, formatValue } from "@/lib/koth-utils";
 import { cn } from "@/lib/utils";
+import { CommentDrawer } from "@/components/koth/comment-drawer";
+import { deleteOwnSubmission } from "@/lib/submissions.functions";
 
 export type PlayerItem = {
   id: string; // submission id
@@ -84,12 +87,37 @@ function PlayerStage({
 }) {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const deleteSubmission = useServerFn(deleteOwnSubmission);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [url, setUrl] = useState<string | null>(null);
   const [paused, setPaused] = useState(false);
   const [burst, setBurst] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const lastTap = useRef(0);
   const touchStartY = useRef<number | null>(null);
+  const isOwner = !!user && user.id === item.user.id;
+
+  async function handleDelete() {
+    if (!isOwner || deleting) return;
+    if (!confirm("Delete this video? This cannot be undone.")) return;
+    setDeleting(true);
+    try {
+      await deleteSubmission({ data: { submissionId: item.id } });
+      toast.success("Video deleted");
+      qc.invalidateQueries({ queryKey: ["my-videos"] });
+      qc.invalidateQueries({ queryKey: ["my-entry"] });
+      qc.invalidateQueries({ queryKey: ["leaderboard"] });
+      qc.invalidateQueries({ queryKey: ["top3"] });
+      qc.invalidateQueries({ queryKey: ["feed"] });
+      qc.invalidateQueries({ queryKey: ["user-videos"] });
+      onClose();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Delete failed");
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   useEffect(() => {
     let active = true;
@@ -297,7 +325,7 @@ function PlayerStage({
           label="like"
         />
         <RailButton
-          onClick={() => toast.message("Comments coming soon", { description: "Phase B." })}
+          onClick={() => setCommentsOpen(true)}
           icon={<MessageCircle className="h-7 w-7" />}
           count={commentCountQ.data ?? 0}
           label="comments"
@@ -308,7 +336,24 @@ function PlayerStage({
           count={0}
           label="share"
         />
+        {isOwner && (
+          <RailButton
+            onClick={handleDelete}
+            icon={<Trash2 className="h-6 w-6" />}
+            count={0}
+            label="delete"
+          />
+        )}
       </div>
+
+      <CommentDrawer
+        kind="video"
+        targetId={item.id}
+        ownerId={item.user.id}
+        open={commentsOpen}
+        onOpenChange={setCommentsOpen}
+      />
+
 
       {/* Up/down navigation */}
       {canPrev && (

@@ -7,13 +7,14 @@ import { useAuth } from "@/lib/auth-context";
 import { deleteOwnSubmission } from "@/lib/submissions.functions";
 import { Countdown } from "@/components/koth/countdown";
 import { RankBadge } from "@/components/koth/rank-badge";
-import { Avatar } from "@/components/koth/avatar";
+import { ProfileAvatar } from "@/components/koth/profile-avatar";
 import { AlertTriangle, X, Trash2 } from "lucide-react";
 import { formatValue, shortUnitLabel } from "@/lib/koth-utils";
 import { Button } from "@/components/ui/button";
 import { WelcomeDialog } from "@/components/koth/welcome-dialog";
 import { LiveActivity } from "@/components/koth/live-activity";
 import { PositionCard } from "@/components/koth/position-card";
+import { ChallengeChat } from "@/components/koth/challenge-chat";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/home")({
@@ -160,6 +161,10 @@ function Home() {
       {/* Live activity feed */}
       <LiveActivity challengeId={c.id} unitType={c.unit_type} unitLabel={c.unit_label} />
 
+      {/* Trash talk */}
+      <ChallengeChat challengeId={c.id} />
+
+
       {/* Your position */}
       {user && (
         <PositionCard
@@ -280,7 +285,12 @@ function TopThreePreview({
             return (
               <li key={r.id} className="flex items-center gap-3">
                 <RankBadge rank={i + 1} size="md" />
-                <Avatar name={p?.display_name ?? p?.username ?? "?"} avatarPath={p?.avatar_url} size={36} />
+                <ProfileAvatar
+                  username={p?.username}
+                  name={p?.display_name ?? p?.username ?? "?"}
+                  avatarPath={p?.avatar_url}
+                  size={36}
+                />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-foreground">{p?.display_name}</p>
                   <p className="truncate text-xs text-muted-foreground">@{p?.username}</p>

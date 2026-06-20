@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { formatValue } from "@/lib/koth-utils";
 import { RankBadge } from "@/components/koth/rank-badge";
-import { TrendingUp, Video } from "lucide-react";
+import { Video } from "lucide-react";
 
 type Props = {
   challengeId: string;
@@ -50,10 +50,8 @@ export function PositionCard({
   }
 
   const total = data.length;
-  const leader = data[0];
   const myIdx = data.findIndex((r) => r.user_id === userId);
   const myRank = myIdx >= 0 ? myIdx + 1 : null;
-  const podiumThreshold = data[2]?.val;
 
   if (!hasEntry || myRank == null) {
     return (
@@ -80,9 +78,10 @@ export function PositionCard({
     );
   }
 
-  const behindLeader = myRank > 1 ? leader.val - (myValue ?? 0) : null;
-  const podiumGap =
-    myRank > 3 && podiumThreshold != null ? podiumThreshold - (myValue ?? 0) + 0.01 : null;
+  // Gap to the next rank up.
+  const above = myRank > 1 ? data[myRank - 2] : null;
+  const gapToAbove =
+    above && myValue != null ? Math.max(0, above.val - myValue) + (above.val === myValue ? 0 : 0.01) : null;
 
   return (
     <section className="rounded-3xl border border-border bg-card p-4">
@@ -97,17 +96,13 @@ export function PositionCard({
             <p className="mt-0.5 text-sm font-bold text-koth-red">
               You're on top. Defend the hill.
             </p>
+          ) : gapToAbove != null && gapToAbove > 0 ? (
+            <p className="mt-0.5 text-sm font-semibold text-foreground">
+              {formatValue(gapToAbove, unitType, unitLabel)} behind #{myRank - 1}
+            </p>
           ) : (
             <p className="mt-0.5 text-sm font-semibold text-foreground">
-              {behindLeader != null && behindLeader > 0
-                ? `${formatValue(behindLeader, unitType, unitLabel)} behind 1st`
-                : "Tied for 1st"}
-            </p>
-          )}
-          {podiumGap != null && podiumGap > 0 && (
-            <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-              <TrendingUp className="h-3 w-3" aria-hidden />
-              {formatValue(podiumGap, unitType, unitLabel)} from the podium
+              Tied with #{myRank - 1}
             </p>
           )}
         </div>

@@ -50,33 +50,48 @@ export const deleteOwnSubmission = createServerFn({ method: "POST" })
 export const deletePreviousSubmissionsForChallenge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
-    z.object({ challengeId: z.string().uuid(), keepSubmissionId: z.string().uuid() }).parse(input),
+    z
+      .object({
+        challengeId: z.string().uuid(),
+        keepSubmissionId: z.string().uuid(),
+        // When omitted we default to "public" for back-compat.
+        visibility: z.enum(["public", "friends_only"]).optional(),
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
+    // Friends-only uploads should NEVER delete a user's prior attempts —
+    // they accumulate on the profile / friends feed forever.
+    if (data.visibility === "friends_only") {
+      return { deleted: 0 };
+    }
+
+    // Public uploads replace earlier public attempts only. Keep friends-only
+    // history intact.
     const { data: submissions, error: fetchError } = await context.supabase
       .from("submissions")
       .select("id, video_path")
       .eq("user_id", context.userId)
       .eq("challenge_id", data.challengeId)
+      .eq("visibility", "public")
       .neq("id", data.keepSubmissionId);
     if (fetchError) throw new Error(fetchError.message);
 
     const oldSubmissions = submissions ?? [];
+    if (oldSubmissions.length === 0) return { deleted: 0 };
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await removeVideoPaths(
       supabaseAdmin,
       oldSubmissions.map((submission) => submission.video_path),
     );
 
-    if (oldSubmissions.length > 0) {
-      const { error: deleteError } = await context.supabase
-        .from("submissions")
-        .delete()
-        .eq("user_id", context.userId)
-        .eq("challenge_id", data.challengeId)
-        .neq("id", data.keepSubmissionId);
-      if (deleteError) throw new Error(deleteError.message);
-    }
+    const ids = oldSubmissions.map((s) => s.id);
+    const { error: deleteError } = await context.supabase
+      .from("submissions")
+      .delete()
+      .in("id", ids);
+    if (deleteError) throw new Error(deleteError.message);
 
     return { deleted: oldSubmissions.length };
   });
@@ -93,13 +108,15 @@ export const cleanupOldChallengeSubmissions = createServerFn({ method: "POST" })
     if (!isAdmin) throw new Error("Forbidden");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    // Keep each user's final/active submission per past challenge so they can
-    // view their history on their profile. Only purge intermediate takes.
+    // Keep each user's final/active PUBLIC submission per past challenge plus
+    // every friends-only submission (those live on the user's profile forever).
+    // Only purge intermediate public takes.
     const { data: submissions, error: fetchError } = await context.supabase
       .from("submissions")
       .select("id, video_path")
       .neq("challenge_id", data.keepChallengeId)
-      .eq("is_active_entry", false);
+      .eq("is_active_entry", false)
+      .eq("visibility", "public");
     if (fetchError) throw new Error(fetchError.message);
 
     const oldSubmissions = submissions ?? [];
