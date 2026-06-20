@@ -87,12 +87,37 @@ function PlayerStage({
 }) {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const deleteSubmission = useServerFn(deleteOwnSubmission);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [url, setUrl] = useState<string | null>(null);
   const [paused, setPaused] = useState(false);
   const [burst, setBurst] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const lastTap = useRef(0);
   const touchStartY = useRef<number | null>(null);
+  const isOwner = !!user && user.id === item.user.id;
+
+  async function handleDelete() {
+    if (!isOwner || deleting) return;
+    if (!confirm("Delete this video? This cannot be undone.")) return;
+    setDeleting(true);
+    try {
+      await deleteSubmission({ data: { submissionId: item.id } });
+      toast.success("Video deleted");
+      qc.invalidateQueries({ queryKey: ["my-videos"] });
+      qc.invalidateQueries({ queryKey: ["my-entry"] });
+      qc.invalidateQueries({ queryKey: ["leaderboard"] });
+      qc.invalidateQueries({ queryKey: ["top3"] });
+      qc.invalidateQueries({ queryKey: ["feed"] });
+      qc.invalidateQueries({ queryKey: ["user-videos"] });
+      onClose();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Delete failed");
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   useEffect(() => {
     let active = true;
