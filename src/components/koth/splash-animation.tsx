@@ -93,6 +93,17 @@ export function SplashAnimation() {
           90%, 100% { transform: translate(520px, -120px); }       /* blast into space */
         }
 
+        /* ===== Blastoff rotation — turns figure into superhero flight pose ===== */
+        .koth-blast-rotate {
+          transform-origin: 0 0;
+          animation: koth-blast-rotate 8s ease-in-out infinite;
+        }
+        @keyframes koth-blast-rotate {
+          0%, 74%   { transform: rotate(0deg); }
+          78%       { transform: rotate(-55deg); }
+          82%, 100% { transform: rotate(-55deg); }
+        }
+
         /* ===== Crouch squash ===== */
         .koth-crouch {
           transform-origin: 0 0;
@@ -107,21 +118,27 @@ export function SplashAnimation() {
           38%       { transform: scaleY(0.5) scaleX(1.3); }
           44%       { transform: scaleY(0.5) scaleX(1.3); }
           46%       { transform: scaleY(1.35) scaleX(0.8); }       /* blastoff stretch */
-          52%, 100% { transform: scaleY(1) scaleX(1); }
+          52%, 74%  { transform: scaleY(1) scaleX(1); }
+          78%       { transform: scaleY(1.15) scaleX(0.85); }       /* flight stretch */
+          82%, 100% { transform: scaleY(1.15) scaleX(0.85); }
         }
 
-        /* ===== Arms up swap (while reaching for / slamming the crown) ===== */
+        /* ===== Pose swaps: normal → arms-up → flying superhero ===== */
         .koth-arms-down { opacity: 1; animation: koth-arms-down 8s steps(1, end) infinite; }
         .koth-arms-up   { opacity: 0; animation: koth-arms-up   8s steps(1, end) infinite; }
+        .koth-arms-fly  { opacity: 0; animation: koth-arms-fly  8s steps(1, end) infinite; }
         @keyframes koth-arms-down {
           0%, 51% { opacity: 1; }
-          52%, 67% { opacity: 0; }
-          68%, 100% { opacity: 1; }
+          52%, 100% { opacity: 0; }
         }
         @keyframes koth-arms-up {
           0%, 51% { opacity: 0; }
-          52%, 67% { opacity: 1; }
-          68%, 100% { opacity: 0; }
+          52%, 74% { opacity: 1; }
+          75%, 100% { opacity: 0; }
+        }
+        @keyframes koth-arms-fly {
+          0%, 74% { opacity: 0; }
+          75%, 100% { opacity: 1; }
         }
 
         /* ===== Charge rings at (60,240) ===== */
