@@ -17,7 +17,14 @@ import type { Session, User } from "@supabase/supabase-js";
  */
 const SYNTH_EMAIL_DOMAIN = "koth.local";
 export const usernameToEmail = (username: string) =>
+export const usernameToEmail = (username: string) =>
   `${username.trim().toLowerCase()}@${SYNTH_EMAIL_DOMAIN}`;
+
+const PROFANITY = [
+  "fuck","shit","bitch","cunt","nigger","nigga","faggot","fag","retard",
+  "rape","rapist","slut","whore","dick","pussy","cock","asshole","kike",
+  "chink","spic","tranny","pedo","pedophile","molest",
+] as const;
 
 export type Profile = {
   id: string;
