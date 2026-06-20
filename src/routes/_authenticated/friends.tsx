@@ -323,7 +323,7 @@ function FeedScroller({ rows, c }: { rows: any[]; c: any }) {
   );
 }
 
-function FeedVideo({ row, c, scrollRoot }: { row: any; c: any; scrollRoot: React.RefObject<HTMLDivElement> }) {
+function FeedVideo({ row, c, scrollRoot }: { row: any; c: any; scrollRoot: React.RefObject<HTMLDivElement | null> }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const videoRef = useRef<HTMLVideoElement>(null);
