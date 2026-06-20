@@ -387,12 +387,20 @@ export type Database = {
         Args: { p_reason: string; p_user_id: string }
         Returns: undefined
       }
+      admin_broadcast_notification: {
+        Args: { p_message: string }
+        Returns: number
+      }
       admin_disqualify_submission: {
         Args: { p_submission_id: string }
         Returns: undefined
       }
       admin_restore_submission: {
         Args: { p_submission_id: string }
+        Returns: undefined
+      }
+      admin_send_notification: {
+        Args: { p_message: string; p_user_id: string }
         Returns: undefined
       }
       close_challenge: { Args: { p_challenge_id: string }; Returns: undefined }
