@@ -14,13 +14,15 @@ const iconFor = (t: string) =>
   t === "podium_gained" ? <Crown className="h-5 w-5 text-koth-red" /> :
   t === "podium_lost" ? <ArrowDown className="h-5 w-5 text-koth-red" /> :
   t === "overtaken" ? <ArrowUp className="h-5 w-5 text-koth-steel" /> :
-  t === "deadline_reminder" ? <Flag className="h-5 w-5 text-koth-pr-text" /> :
+  t === "deadline_reminder" || t === "deadline_reminder_24h" ? <Flag className="h-5 w-5 text-koth-pr-text" /> :
   <Bell className="h-5 w-5 text-foreground" />;
 
 const labelFor = (n: any) => {
   switch (n.type) {
     case "new_challenge":
-      return `New challenge: ${n.payload?.title ?? "this week's challenge is live"}`;
+      return `New challenge is live: ${n.payload?.title ?? "this week's challenge"}`;
+    case "deadline_reminder_24h":
+      return `1 day left to submit — ${n.payload?.title ?? "today's challenge"}`;
     case "deadline_reminder":
       return `1 hour left to submit — ${n.payload?.title ?? "today's challenge closes soon"}`;
     case "overtaken":
@@ -29,6 +31,10 @@ const labelFor = (n: any) => {
       return `@${n.payload?.overtaken_by_username} knocked you off the podium`;
     case "podium_gained":
       return `You're on the podium — #${n.payload?.new_rank}`;
+    case "time_verified":
+      return `Your time was verified${n.payload?.value != null ? ` — ${n.payload.value}` : ""}`;
+    case "time_disqualified":
+      return `Your submission was disqualified`;
     default:
       return "Notification";
   }
