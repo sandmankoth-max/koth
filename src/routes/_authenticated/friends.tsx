@@ -38,7 +38,7 @@ function Friends() {
           onClick={() => setTab("feed")}
           className={cn(
             "tap-44 rounded-full py-2 text-sm font-bold transition-colors",
-            tab === "feed" ? "bg-koth-red text-koth-white" : "text-muted-foreground",
+            "text-muted-foreground",
           )}
         >
           Friends Feed
@@ -47,7 +47,7 @@ function Friends() {
           onClick={() => setTab("add")}
           className={cn(
             "tap-44 rounded-full py-2 text-sm font-bold transition-colors",
-            tab === "add" ? "bg-koth-red text-koth-white" : "text-muted-foreground",
+            "bg-koth-red text-koth-white",
           )}
         >
           Add Friends
@@ -59,7 +59,7 @@ function Friends() {
   );
 }
 
-function FeedTab({ onAdd }: { onAdd: () => void }) {
+function FeedTab({ tab, setTab, onAdd }: { tab: Tab; setTab: (t: Tab) => void; onAdd: () => void }) {
   const { user } = useAuth();
 
   const challengeQ = useQuery({
