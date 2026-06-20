@@ -4,7 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
-const chunk = <T,>(items: T[], size: number) => {
+const chunk = <T>(items: T[], size: number) => {
   const out: T[][] = [];
   for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
   return out;
@@ -63,7 +63,10 @@ export const deletePreviousSubmissionsForChallenge = createServerFn({ method: "P
 
     const oldSubmissions = submissions ?? [];
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await removeVideoPaths(supabaseAdmin, oldSubmissions.map((submission) => submission.video_path));
+    await removeVideoPaths(
+      supabaseAdmin,
+      oldSubmissions.map((submission) => submission.video_path),
+    );
 
     if (oldSubmissions.length > 0) {
       const { error: deleteError } = await supabaseAdmin
@@ -97,7 +100,10 @@ export const cleanupOldChallengeSubmissions = createServerFn({ method: "POST" })
     if (fetchError) throw new Error(fetchError.message);
 
     const oldSubmissions = submissions ?? [];
-    await removeVideoPaths(supabaseAdmin, oldSubmissions.map((submission) => submission.video_path));
+    await removeVideoPaths(
+      supabaseAdmin,
+      oldSubmissions.map((submission) => submission.video_path),
+    );
 
     if (oldSubmissions.length > 0) {
       const { error: deleteError } = await supabaseAdmin
