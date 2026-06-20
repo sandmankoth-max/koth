@@ -10,6 +10,8 @@ type Props = {
   userId: string;
   hasEntry: boolean;
   myValue?: number | null;
+  /** True when the user has submitted but admin hasn't verified yet. */
+  pendingVerification?: boolean;
   unitType: string;
   unitLabel: string;
 };
@@ -19,6 +21,7 @@ export function PositionCard({
   userId,
   hasEntry,
   myValue,
+  pendingVerification,
   unitType,
   unitLabel,
 }: Props) {
