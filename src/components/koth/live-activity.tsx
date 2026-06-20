@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNowStrict } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
-import { Avatar } from "@/components/koth/avatar";
+import { ProfileAvatar } from "@/components/koth/profile-avatar";
 import { formatValue } from "@/lib/koth-utils";
 import { Activity } from "lucide-react";
 
