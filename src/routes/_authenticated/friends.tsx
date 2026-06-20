@@ -302,19 +302,28 @@ function FriendsPodium({ podium, c }: { podium: any[]; c: any }) {
 }
 
 function FeedScroller({ rows, c }: { rows: any[]; c: any }) {
+  // Fixed overlay between top bar (~56px) and bottom nav (~64px). The IO
+  // root is the scroller itself so autoplay decisions don't depend on
+  // viewport scroll position.
+  const scrollerRef = useRef<HTMLDivElement>(null);
   return (
     <div
-      className="-mx-4 h-[calc(100vh-260px)] snap-y snap-mandatory overflow-y-auto overscroll-y-contain rounded-none bg-black sm:mx-0 sm:rounded-3xl"
-      style={{ scrollSnapType: "y mandatory" }}
+      ref={scrollerRef}
+      className="fixed inset-x-0 top-14 bottom-16 z-20 snap-y snap-mandatory overflow-y-auto overscroll-y-contain bg-black"
+      style={{
+        scrollSnapType: "y mandatory",
+        WebkitOverflowScrolling: "touch",
+        scrollbarWidth: "none",
+      }}
     >
       {rows.map((r) => (
-        <FeedVideo key={r.id} row={r} c={c} />
+        <FeedVideo key={r.id} row={r} c={c} scrollRoot={scrollerRef} />
       ))}
     </div>
   );
 }
 
-function FeedVideo({ row, c }: { row: any; c: any }) {
+function FeedVideo({ row, c, scrollRoot }: { row: any; c: any; scrollRoot: React.RefObject<HTMLDivElement> }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -333,11 +342,11 @@ function FeedVideo({ row, c }: { row: any; c: any }) {
     if (!el) return;
     const io = new IntersectionObserver(
       (entries) => entries.forEach((e) => setVisible(e.intersectionRatio > 0.6)),
-      { threshold: [0, 0.6, 1] },
+      { root: scrollRoot.current, threshold: [0, 0.6, 1] },
     );
     io.observe(el);
     return () => io.disconnect();
-  }, []);
+  }, [scrollRoot]);
 
   useEffect(() => {
     if (!visible || url) return;
