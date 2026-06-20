@@ -41,6 +41,7 @@ interface AuthState {
     display_name: string;
     date_of_birth: string;
     age_consent: boolean;
+    avatar_file?: File | null;
   }) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
