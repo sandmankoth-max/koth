@@ -226,7 +226,7 @@ function PodiumDialog({
   c: any;
 }) {
   // Lazy import to avoid restructuring imports.
-  const { Dialog, DialogContent, DialogTitle } = require("@/components/ui/dialog");
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
