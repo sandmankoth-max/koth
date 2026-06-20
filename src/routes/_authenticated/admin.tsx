@@ -82,24 +82,57 @@ function CreateChallenge() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!user) return;
+    if (
+      !window.confirm(
+        "Creating a new challenge will permanently delete every video and leaderboard entry from previous challenges to free up storage. Continue?",
+      )
+    )
+      return;
     setBusy(true);
     try {
-      const { error } = await supabase.from("challenges").insert({
-        title: form.title,
-        description: form.description || null,
-        unit_type: form.unit_type,
-        unit_label: form.unit_label,
-        safety_note: form.safety_note || null,
-        starts_at: new Date(form.starts_at).toISOString(),
-        ends_at: new Date(form.ends_at).toISOString(),
-        status: form.status,
-        prize_first: form.prize_first,
-        prize_second: form.prize_second,
-        prize_third: form.prize_third,
-        created_by: user.id,
-      });
+      const { data: created, error } = await supabase
+        .from("challenges")
+        .insert({
+          title: form.title,
+          description: form.description || null,
+          unit_type: form.unit_type,
+          unit_label: form.unit_label,
+          safety_note: form.safety_note || null,
+          starts_at: new Date(form.starts_at).toISOString(),
+          ends_at: new Date(form.ends_at).toISOString(),
+          status: form.status,
+          prize_first: form.prize_first,
+          prize_second: form.prize_second,
+          prize_third: form.prize_third,
+          created_by: user.id,
+        })
+        .select("id")
+        .single();
       if (error) throw error;
-      toast.success("Challenge created");
+
+      // Wipe every submission + video file from every OTHER challenge.
+      const { data: oldSubs } = await supabase
+        .from("submissions")
+        .select("id, video_path")
+        .neq("challenge_id", created.id);
+      const paths = (oldSubs ?? []).map((s) => s.video_path).filter(Boolean);
+      if (paths.length > 0) {
+        // Storage remove accepts up to ~1000 paths per call; chunk to be safe.
+        for (let i = 0; i < paths.length; i += 500) {
+          await supabase.storage.from("koth-videos").remove(paths.slice(i, i + 500));
+        }
+      }
+      if (oldSubs && oldSubs.length > 0) {
+        await supabase
+          .from("submissions")
+          .delete()
+          .in(
+            "id",
+            oldSubs.map((s) => s.id),
+          );
+      }
+
+      toast.success("Challenge created. Previous videos and leaderboards wiped.");
       setForm((f) => ({ ...f, title: "", description: "", safety_note: "" }));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed");
