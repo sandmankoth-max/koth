@@ -37,7 +37,7 @@ export const deleteOwnSubmission = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await removeVideoPaths(supabaseAdmin, [submission.video_path]);
 
-    const { error: deleteError } = await supabaseAdmin
+    const { error: deleteError } = await context.supabase
       .from("submissions")
       .delete()
       .eq("id", submission.id)
@@ -69,7 +69,7 @@ export const deletePreviousSubmissionsForChallenge = createServerFn({ method: "P
     );
 
     if (oldSubmissions.length > 0) {
-      const { error: deleteError } = await supabaseAdmin
+      const { error: deleteError } = await context.supabase
         .from("submissions")
         .delete()
         .eq("user_id", context.userId)
@@ -93,7 +93,7 @@ export const cleanupOldChallengeSubmissions = createServerFn({ method: "POST" })
     if (!isAdmin) throw new Error("Forbidden");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: submissions, error: fetchError } = await supabaseAdmin
+    const { data: submissions, error: fetchError } = await context.supabase
       .from("submissions")
       .select("id, video_path")
       .neq("challenge_id", data.keepChallengeId);
@@ -106,7 +106,7 @@ export const cleanupOldChallengeSubmissions = createServerFn({ method: "POST" })
     );
 
     if (oldSubmissions.length > 0) {
-      const { error: deleteError } = await supabaseAdmin
+      const { error: deleteError } = await context.supabase
         .from("submissions")
         .delete()
         .neq("challenge_id", data.keepChallengeId);
