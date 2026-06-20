@@ -6,8 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Countdown } from "@/components/koth/countdown";
 import { RankBadge } from "@/components/koth/rank-badge";
 import { Avatar } from "@/components/koth/avatar";
-import { formatValue, shortUnitLabel, getVideoSignedUrl } from "@/lib/koth-utils";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { formatValue, shortUnitLabel } from "@/lib/koth-utils";
+import { TikTokPlayer, type PlayerItem } from "@/components/koth/tiktok-player";
 import { Crown, Play, Sparkles, Trophy } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/leaderboard")({
