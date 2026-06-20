@@ -1,7 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { cleanupOldChallengeSubmissions } from "@/lib/submissions.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -61,6 +63,7 @@ function Admin() {
 
 function CreateChallenge() {
   const { user } = useAuth();
+  const cleanupOldSubmissions = useServerFn(cleanupOldChallengeSubmissions);
   const [busy, setBusy] = useState(false);
   const nextMonday = nextMondayAt10();
   const nextSunday = nextSundayAt20(nextMonday);
@@ -110,27 +113,7 @@ function CreateChallenge() {
         .single();
       if (error) throw error;
 
-      // Wipe every submission + video file from every OTHER challenge.
-      const { data: oldSubs } = await supabase
-        .from("submissions")
-        .select("id, video_path")
-        .neq("challenge_id", created.id);
-      const paths = (oldSubs ?? []).map((s) => s.video_path).filter(Boolean);
-      if (paths.length > 0) {
-        // Storage remove accepts up to ~1000 paths per call; chunk to be safe.
-        for (let i = 0; i < paths.length; i += 500) {
-          await supabase.storage.from("koth-videos").remove(paths.slice(i, i + 500));
-        }
-      }
-      if (oldSubs && oldSubs.length > 0) {
-        await supabase
-          .from("submissions")
-          .delete()
-          .in(
-            "id",
-            oldSubs.map((s) => s.id),
-          );
-      }
+      await cleanupOldSubmissions({ data: { keepChallengeId: created.id } });
 
       toast.success("Challenge created. Previous videos and leaderboards wiped.");
       setForm((f) => ({ ...f, title: "", description: "", safety_note: "" }));
@@ -364,12 +347,12 @@ function SubmissionRow({ s, onUpdate }: { s: any; onUpdate: (p: any) => Promise<
           size="sm"
           variant="outline"
           onClick={async () => {
-            if (!window.confirm("Disqualify this submission? The video will be deleted and removed from all leaderboards.")) return;
+            if (!window.confirm("Disqualify this submission and remove it from all leaderboards?")) return;
             const { error } = await supabase.rpc("admin_disqualify_submission" as any, { p_submission_id: s.id });
             if (error) toast.error(error.message);
             else {
               toast.success("Disqualified");
-              await onUpdate({ status: "disqualified", is_active_entry: false, video_path: null, __local: true });
+              await onUpdate({ status: "disqualified", is_active_entry: false, __local: true });
             }
           }}
           className="rounded-full border-koth-red text-koth-red hover:bg-koth-red hover:text-koth-white"
