@@ -349,13 +349,37 @@ function PlayerStage({
         />
         {isOwner && (
           <RailButton
-            onClick={handleDelete}
+            onClick={() => setDeleteOpen(true)}
             icon={<Trash2 className="h-6 w-6" />}
             count={0}
             label="delete"
           />
         )}
       </div>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this video?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This cannot be undone. Your entry will be removed from the leaderboard.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDelete();
+              }}
+              disabled={deleting}
+              className="bg-koth-red text-koth-white hover:bg-koth-red/90"
+            >
+              {deleting ? "Deleting…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <CommentDrawer
         kind="video"
