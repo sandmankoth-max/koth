@@ -54,11 +54,14 @@ function Home() {
     queryKey: ["my-entry", challengeQ.data?.id, user?.id],
     enabled: !!challengeQ.data?.id && !!user?.id,
     queryFn: async () => {
+      // Home shows the user's PUBLIC (prize-pool) entry only. Friends-only
+      // uploads live on the profile / friends feed and don't affect rank.
       const { data } = await supabase
         .from("submissions")
         .select("*")
         .eq("challenge_id", challengeQ.data!.id)
         .eq("user_id", user!.id)
+        .eq("visibility", "public")
         .order("submitted_at", { ascending: false })
         .limit(1)
         .maybeSingle();
