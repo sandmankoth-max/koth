@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      banned_usernames: {
+        Row: {
+          banned_at: string
+          banned_by: string | null
+          reason: string | null
+          username: string
+        }
+        Insert: {
+          banned_at?: string
+          banned_by?: string | null
+          reason?: string | null
+          username: string
+        }
+        Update: {
+          banned_at?: string
+          banned_by?: string | null
+          reason?: string | null
+          username?: string
+        }
+        Relationships: []
+      }
       challenges: {
         Row: {
           created_at: string
@@ -151,6 +172,9 @@ export type Database = {
         Row: {
           age_consent_ack_at: string
           avatar_url: string | null
+          banned: boolean
+          banned_at: string | null
+          banned_reason: string | null
           created_at: string
           date_of_birth: string
           display_name: string
@@ -160,6 +184,9 @@ export type Database = {
         Insert: {
           age_consent_ack_at?: string
           avatar_url?: string | null
+          banned?: boolean
+          banned_at?: string | null
+          banned_reason?: string | null
           created_at?: string
           date_of_birth: string
           display_name: string
@@ -169,6 +196,9 @@ export type Database = {
         Update: {
           age_consent_ack_at?: string
           avatar_url?: string | null
+          banned?: boolean
+          banned_at?: string | null
+          banned_reason?: string | null
           created_at?: string
           date_of_birth?: string
           display_name?: string
@@ -308,6 +338,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_ban_user: {
+        Args: { p_reason: string; p_user_id: string }
+        Returns: undefined
+      }
       admin_restore_submission: {
         Args: { p_submission_id: string }
         Returns: undefined
@@ -320,6 +354,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_profane: { Args: { _text: string }; Returns: boolean }
       lifecycle_tick: { Args: never; Returns: Json }
       notify_rank_changes: {
         Args: { p_actor: string; p_challenge_id: string }
