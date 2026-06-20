@@ -56,6 +56,57 @@ export type Database = {
         }
         Relationships: []
       }
+      challenge_comments: {
+        Row: {
+          author_id: string
+          body: string
+          challenge_id: string
+          created_at: string
+          id: string
+          like_count: number
+          parent_id: string | null
+          reply_count: number
+          tagged_user_ids: string[]
+        }
+        Insert: {
+          author_id: string
+          body: string
+          challenge_id: string
+          created_at?: string
+          id?: string
+          like_count?: number
+          parent_id?: string | null
+          reply_count?: number
+          tagged_user_ids?: string[]
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          challenge_id?: string
+          created_at?: string
+          id?: string
+          like_count?: number
+          parent_id?: string | null
+          reply_count?: number
+          tagged_user_ids?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_comments_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenge_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "challenge_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       challenges: {
         Row: {
           created_at: string
@@ -114,6 +165,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      comment_likes: {
+        Row: {
+          comment_id: string
+          created_at: string
+          kind: Database["public"]["Enums"]["comment_kind"]
+          user_id: string
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string
+          kind: Database["public"]["Enums"]["comment_kind"]
+          user_id: string
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string
+          kind?: Database["public"]["Enums"]["comment_kind"]
+          user_id?: string
+        }
+        Relationships: []
       }
       device_fingerprints: {
         Row: {
@@ -220,6 +292,7 @@ export type Database = {
           banned: boolean
           banned_at: string | null
           banned_reason: string | null
+          bio: string | null
           created_at: string
           date_of_birth: string
           display_name: string
@@ -232,6 +305,7 @@ export type Database = {
           banned?: boolean
           banned_at?: string | null
           banned_reason?: string | null
+          bio?: string | null
           created_at?: string
           date_of_birth: string
           display_name: string
@@ -244,6 +318,7 @@ export type Database = {
           banned?: boolean
           banned_at?: string | null
           banned_reason?: string | null
+          bio?: string | null
           created_at?: string
           date_of_birth?: string
           display_name?: string
@@ -313,35 +388,44 @@ export type Database = {
         Row: {
           admin_verified_value: number | null
           challenge_id: string
+          comment_count: number
           id: string
           is_active_entry: boolean
+          like_count: number
           self_reported_value: number
           status: Database["public"]["Enums"]["submission_status"]
           submitted_at: string
           user_id: string
           video_path: string
+          visibility: Database["public"]["Enums"]["submission_visibility"]
         }
         Insert: {
           admin_verified_value?: number | null
           challenge_id: string
+          comment_count?: number
           id?: string
           is_active_entry?: boolean
+          like_count?: number
           self_reported_value: number
           status?: Database["public"]["Enums"]["submission_status"]
           submitted_at?: string
           user_id: string
           video_path: string
+          visibility?: Database["public"]["Enums"]["submission_visibility"]
         }
         Update: {
           admin_verified_value?: number | null
           challenge_id?: string
+          comment_count?: number
           id?: string
           is_active_entry?: boolean
+          like_count?: number
           self_reported_value?: number
           status?: Database["public"]["Enums"]["submission_status"]
           submitted_at?: string
           user_id?: string
           video_path?: string
+          visibility?: Database["public"]["Enums"]["submission_visibility"]
         }
         Relationships: [
           {
@@ -378,6 +462,83 @@ export type Database = {
         }
         Relationships: []
       }
+      video_comments: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          like_count: number
+          parent_id: string | null
+          reply_count: number
+          submission_id: string
+          tagged_user_ids: string[]
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          id?: string
+          like_count?: number
+          parent_id?: string | null
+          reply_count?: number
+          submission_id: string
+          tagged_user_ids?: string[]
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          like_count?: number
+          parent_id?: string | null
+          reply_count?: number
+          submission_id?: string
+          tagged_user_ids?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "video_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_comments_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_likes: {
+        Row: {
+          created_at: string
+          submission_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          submission_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          submission_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_likes_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -403,6 +564,11 @@ export type Database = {
         Args: { p_message: string; p_user_id: string }
         Returns: undefined
       }
+      are_friends: { Args: { _a: string; _b: string }; Returns: boolean }
+      can_view_submission: {
+        Args: { _submission_id: string; _viewer: string }
+        Returns: boolean
+      }
       close_challenge: { Args: { p_challenge_id: string }; Returns: undefined }
       get_my_profile: {
         Args: never
@@ -412,6 +578,7 @@ export type Database = {
           banned: boolean
           banned_at: string | null
           banned_reason: string | null
+          bio: string | null
           created_at: string
           date_of_birth: string
           display_name: string
@@ -445,6 +612,7 @@ export type Database = {
       app_role: "member" | "admin"
       challenge_status: "upcoming" | "active" | "closed" | "archived"
       challenge_unit: "time_seconds" | "count_reps" | "custom"
+      comment_kind: "video" | "challenge"
       friendship_status: "pending" | "accepted"
       notification_type:
         | "new_challenge"
@@ -462,6 +630,7 @@ export type Database = {
         | "verified"
         | "flagged"
         | "disqualified"
+      submission_visibility: "public" | "friends_only"
       tie_resolution_kind: "none" | "admin_broke_tie" | "split"
     }
     CompositeTypes: {
@@ -593,6 +762,7 @@ export const Constants = {
       app_role: ["member", "admin"],
       challenge_status: ["upcoming", "active", "closed", "archived"],
       challenge_unit: ["time_seconds", "count_reps", "custom"],
+      comment_kind: ["video", "challenge"],
       friendship_status: ["pending", "accepted"],
       notification_type: [
         "new_challenge",
@@ -612,6 +782,7 @@ export const Constants = {
         "flagged",
         "disqualified",
       ],
+      submission_visibility: ["public", "friends_only"],
       tie_resolution_kind: ["none", "admin_broke_tie", "split"],
     },
   },
