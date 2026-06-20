@@ -64,12 +64,22 @@ export function CommentDrawer({ kind, targetId, ownerId, open, onOpenChange }: P
     queryFn: async () => {
       const { data, error } = await (supabase.from(table) as any)
         .select(
-          "id, author_id, body, parent_id, reply_count, like_count, created_at, tagged_user_ids, profiles!inner(username, display_name, avatar_url)",
+          "id, author_id, body, parent_id, reply_count, like_count, created_at, tagged_user_ids",
         )
         .eq(col, targetId)
         .order("created_at", { ascending: true });
       if (error) throw error;
-      return (data ?? []) as unknown as CommentRow[];
+      const rows = (data ?? []) as any[];
+      const authorIds = Array.from(new Set(rows.map((r) => r.author_id)));
+      let profilesById = new Map<string, any>();
+      if (authorIds.length > 0) {
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("id, username, display_name, avatar_url")
+          .in("id", authorIds);
+        profilesById = new Map((profs ?? []).map((p) => [p.id, p]));
+      }
+      return rows.map((r) => ({ ...r, profiles: profilesById.get(r.author_id) ?? null })) as CommentRow[];
     },
   });
 
