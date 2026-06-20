@@ -108,13 +108,15 @@ export const cleanupOldChallengeSubmissions = createServerFn({ method: "POST" })
     if (!isAdmin) throw new Error("Forbidden");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    // Keep each user's final/active submission per past challenge so they can
-    // view their history on their profile. Only purge intermediate takes.
+    // Keep each user's final/active PUBLIC submission per past challenge plus
+    // every friends-only submission (those live on the user's profile forever).
+    // Only purge intermediate public takes.
     const { data: submissions, error: fetchError } = await context.supabase
       .from("submissions")
       .select("id, video_path")
       .neq("challenge_id", data.keepChallengeId)
-      .eq("is_active_entry", false);
+      .eq("is_active_entry", false)
+      .eq("visibility", "public");
     if (fetchError) throw new Error(fetchError.message);
 
     const oldSubmissions = submissions ?? [];
