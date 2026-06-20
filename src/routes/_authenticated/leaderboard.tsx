@@ -154,6 +154,7 @@ function Leaderboard() {
                   </div>
                 );
               }
+              const p = r.profiles;
               const idx = rows.findIndex((x: any) => x.id === r.id);
               return (
                 <button
