@@ -396,6 +396,27 @@ export type Database = {
         Returns: undefined
       }
       close_challenge: { Args: { p_challenge_id: string }; Returns: undefined }
+      get_my_profile: {
+        Args: never
+        Returns: {
+          age_consent_ack_at: string
+          avatar_url: string | null
+          banned: boolean
+          banned_at: string | null
+          banned_reason: string | null
+          created_at: string
+          date_of_birth: string
+          display_name: string
+          id: string
+          username: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -410,6 +431,7 @@ export type Database = {
         Args: { p_actor: string; p_challenge_id: string }
         Returns: undefined
       }
+      username_exists: { Args: { _username: string }; Returns: boolean }
     }
     Enums: {
       app_role: "member" | "admin"
