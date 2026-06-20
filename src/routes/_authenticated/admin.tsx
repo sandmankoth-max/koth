@@ -585,6 +585,7 @@ function EditChallenge() {
       prize_first: c.prize_first ?? 0,
       prize_second: c.prize_second ?? 0,
       prize_third: c.prize_third ?? 0,
+      max_video_seconds: c.max_video_seconds ?? "",
     });
   }, [sel, items]);
 
