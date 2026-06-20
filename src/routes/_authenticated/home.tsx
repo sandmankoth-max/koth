@@ -1,15 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { deleteOwnSubmission } from "@/lib/submissions.functions";
 import { Countdown } from "@/components/koth/countdown";
 import { RankBadge } from "@/components/koth/rank-badge";
 import { Avatar } from "@/components/koth/avatar";
-import { Video, AlertTriangle, X } from "lucide-react";
+import { Video, AlertTriangle, X, Trash2 } from "lucide-react";
 import { formatValue, shortUnitLabel } from "@/lib/koth-utils";
 import { Button } from "@/components/ui/button";
 import { WelcomeDialog } from "@/components/koth/welcome-dialog";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/home")({
   head: () => ({ meta: [{ title: "KOTH — This week's challenge" }] }),
@@ -18,6 +22,9 @@ export const Route = createFileRoute("/_authenticated/home")({
 
 function Home() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const deleteSubmission = useServerFn(deleteOwnSubmission);
+  const [deletingEntry, setDeletingEntry] = useState(false);
 
   const challengeQ = useQuery({
     queryKey: ["active-or-upcoming-challenge"],
@@ -79,6 +86,23 @@ function Home() {
   });
 
   const c = challengeQ.data;
+
+  async function deleteMyEntry() {
+    if (!myEntryQ.data) return;
+    if (!window.confirm("Delete your video and remove it from the leaderboard?")) return;
+    setDeletingEntry(true);
+    try {
+      await deleteSubmission({ data: { submissionId: myEntryQ.data.id } });
+      toast.success("Video deleted");
+      await queryClient.invalidateQueries({ queryKey: ["my-entry", c?.id, user?.id] });
+      await queryClient.invalidateQueries({ queryKey: ["my-rank", c?.id, user?.id] });
+      await queryClient.invalidateQueries({ queryKey: ["top3", c?.id] });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Delete failed");
+    } finally {
+      setDeletingEntry(false);
+    }
+  }
 
   if (challengeQ.isLoading) return <Skeleton />;
 
@@ -173,13 +197,25 @@ function Home() {
                 {myEntryQ.data.status === "disqualified" && "Disqualified"}
               </p>
             </div>
-            <Link
-              to="/record"
-              className="tap-44 inline-flex items-center gap-1.5 rounded-full bg-koth-red px-4 py-2 text-sm font-bold text-koth-white"
-            >
-              <Video className="h-4 w-4" aria-hidden />
-              Try again
-            </Link>
+            <div className="flex shrink-0 flex-col gap-2">
+              <Link
+                to="/record"
+                className="tap-44 inline-flex items-center justify-center gap-1.5 rounded-full bg-koth-red px-4 py-2 text-sm font-bold text-koth-white"
+              >
+                <Video className="h-4 w-4" aria-hidden />
+                Try again
+              </Link>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={deletingEntry}
+                onClick={deleteMyEntry}
+                className="tap-44 rounded-full border-koth-red text-koth-red hover:bg-koth-red hover:text-koth-white"
+              >
+                <Trash2 className="mr-1.5 h-4 w-4" aria-hidden />
+                Delete video
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="flex items-center justify-between gap-3">
