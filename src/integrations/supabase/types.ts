@@ -619,7 +619,12 @@ export type Database = {
     }
     Enums: {
       app_role: "member" | "admin"
-      challenge_status: "upcoming" | "active" | "closed" | "archived"
+      challenge_status:
+        | "upcoming"
+        | "active"
+        | "closed"
+        | "archived"
+        | "inactive"
       challenge_unit: "time_seconds" | "count_reps" | "custom"
       comment_kind: "video" | "challenge"
       friendship_status: "pending" | "accepted"
@@ -777,7 +782,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["member", "admin"],
-      challenge_status: ["upcoming", "active", "closed", "archived"],
+      challenge_status: [
+        "upcoming",
+        "active",
+        "closed",
+        "archived",
+        "inactive",
+      ],
       challenge_unit: ["time_seconds", "count_reps", "custom"],
       comment_kind: ["video", "challenge"],
       friendship_status: ["pending", "accepted"],
