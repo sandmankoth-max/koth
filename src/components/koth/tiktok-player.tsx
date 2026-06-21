@@ -83,9 +83,9 @@ export function TikTokPlayer({ items, startIndex = 0, open, onOpenChange }: Prop
       <button
         onClick={() => onOpenChange(false)}
         aria-label="Back"
-        className="tap-44 absolute left-3 top-3 z-50 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur"
+        className="tap-44 absolute left-3 top-3 z-50 text-white"
       >
-        <ArrowLeft className="h-5 w-5" />
+        <ArrowLeft className="h-6 w-6" />
       </button>
       <div
         ref={scrollerRef}
