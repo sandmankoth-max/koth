@@ -176,7 +176,7 @@ function FeedTab({ tab, setTab, onAdd }: { tab: Tab; setTab: (t: Tab) => void; o
   return (
     <>
       {/* Fullscreen TikTok-style scroller — escapes the padded shell. */}
-      <FeedScroller rows={feedQ.data!} c={c!} />
+      <FeedScroller rows={feedQ.data!} />
 
       {/* Floating tab switcher */}
       <div className="fixed left-1/2 top-16 z-40 -translate-x-1/2">
@@ -197,7 +197,7 @@ function FeedTab({ tab, setTab, onAdd }: { tab: Tab; setTab: (t: Tab) => void; o
       </div>
 
       {/* Floating podium button */}
-      {podium.length > 0 && (
+      {c && podium.length > 0 && (
         <button
           onClick={() => setPodiumOpen(true)}
           className="tap-44 fixed right-3 top-16 z-40 inline-flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-2 text-xs font-bold text-white backdrop-blur"
@@ -206,12 +206,14 @@ function FeedTab({ tab, setTab, onAdd }: { tab: Tab; setTab: (t: Tab) => void; o
         </button>
       )}
 
-      <PodiumDialog
-        open={podiumOpen}
-        onOpenChange={setPodiumOpen}
-        podium={podium}
-        c={c!}
-      />
+      {c && (
+        <PodiumDialog
+          open={podiumOpen}
+          onOpenChange={setPodiumOpen}
+          podium={podium}
+          c={c}
+        />
+      )}
     </>
   );
 }
