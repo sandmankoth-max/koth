@@ -7,6 +7,8 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { RefreshCcw, X, Zap, ZapOff } from "lucide-react";
+import { Capacitor } from "@capacitor/core";
+import { NativeCameraRecorder } from "./native-camera-recorder";
 
 export type CapturedVideo = {
   blob: Blob;
@@ -21,7 +23,19 @@ type Props = {
   maxSeconds?: number | null;
 };
 
-export function CameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
+/**
+ * Dispatches to a native AVFoundation/Camera2 recorder when running inside the
+ * Capacitor iOS/Android app (Snapchat/TikTok-quality preview & recording).
+ * Falls back to the browser MediaRecorder implementation on the web.
+ */
+export function CameraRecorder(props: Props) {
+  if (typeof Capacitor !== "undefined" && Capacitor.isNativePlatform?.()) {
+    return <NativeCameraRecorder {...props} />;
+  }
+  return <WebCameraRecorder {...props} />;
+}
+
+function WebCameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);

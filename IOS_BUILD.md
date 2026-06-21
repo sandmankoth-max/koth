@@ -28,7 +28,9 @@ This creates an `ios/` folder.
 
 When a user signs in on the device, the app asks for push permission and saves their APNs/FCM token to the `device_tokens` table. To send a push, your backend reads that table and posts to FCM with the user's token.
 
-## Camera
+## Camera (native Snapchat/TikTok-style preview)
+
+The app uses `@capacitor-community/camera-preview` so recordings use the real iPhone camera pipeline (full resolution, smooth, correct aspect ratio) instead of the laggy web `getUserMedia` fallback.
 
 Add to `ios/App/App/Info.plist` (Xcode → right-click Info.plist → Open As Source Code) inside the top-level `<dict>`:
 
@@ -40,6 +42,9 @@ Add to `ios/App/App/Info.plist` (Xcode → right-click Info.plist → Open As So
 <key>NSPhotoLibraryAddUsageDescription</key>
 <string>Free Throw saves your challenge videos to your photo library.</string>
 ```
+
+The native camera renders BEHIND the WebView. The recorder screen's background is automatically set to transparent while active — no extra Xcode setup needed. On the web, it falls back to the existing `MediaRecorder` implementation automatically.
+
 
 ## Dev loop (live reload on a real iPhone)
 
