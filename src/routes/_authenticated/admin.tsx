@@ -205,15 +205,9 @@ function CreateChallenge() {
           onChange={(e) => setForm({ ...form, max_video_seconds: Number(e.target.value) })}
         />
       </Field>
-      <Field label="Initial status">
-        <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as any })}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="upcoming">Upcoming (activates at start)</SelectItem>
-            <SelectItem value="active">Active now</SelectItem>
-          </SelectContent>
-        </Select>
-      </Field>
+      <p className="rounded-2xl bg-muted/40 p-3 text-xs text-muted-foreground">
+        The challenge auto-activates at its start time. When it does, any previous challenge is moved to inactive so only one is active at a time.
+      </p>
       <Button type="submit" disabled={busy} className="tap-44 h-12 w-full rounded-full bg-koth-red text-koth-white">
         {busy ? "…" : "Create challenge"}
       </Button>
