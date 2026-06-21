@@ -1,9 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
-import { cleanupOldChallengeSubmissions } from "@/lib/submissions.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -72,7 +70,6 @@ function Admin() {
 
 function CreateChallenge() {
   const { user } = useAuth();
-  const cleanupOldSubmissions = useServerFn(cleanupOldChallengeSubmissions);
   const [busy, setBusy] = useState(false);
   const nextMonday = nextMondayAt10();
   const nextSunday = nextSundayAt20(nextMonday);
@@ -95,15 +92,9 @@ function CreateChallenge() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!user) return;
-    if (
-      !window.confirm(
-        "Creating a new challenge will permanently delete every intermediate take from previous challenges to free up storage. Each user's final submission for past challenges is kept so they can view it on their profile. Continue?",
-      )
-    )
-      return;
     setBusy(true);
     try {
-      const { data: created, error } = await supabase
+      const { error } = await supabase
         .from("challenges")
         .insert({
           title: form.title,
@@ -124,9 +115,7 @@ function CreateChallenge() {
         .single();
       if (error) throw error;
 
-      await cleanupOldSubmissions({ data: { keepChallengeId: created.id } });
-
-      toast.success("Challenge created. Old intermediate takes wiped; each user's final entries kept.");
+      toast.success("Challenge created.");
       setForm((f) => ({ ...f, title: "", description: "", safety_note: "" }));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed");

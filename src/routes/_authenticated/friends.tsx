@@ -95,15 +95,14 @@ function FeedTab({ tab, setTab, onAdd }: { tab: Tab; setTab: (t: Tab) => void; o
   const visibleUserIds = [...(friendsQ.data ?? []), ...(user ? [user.id] : [])];
 
   const feedQ = useQuery({
-    queryKey: ["feed", challengeQ.data?.id, visibleUserIds.sort().join(",")],
-    enabled: !!challengeQ.data && visibleUserIds.length > 0,
+    queryKey: ["feed", visibleUserIds.sort().join(",")],
+    enabled: visibleUserIds.length > 0,
     queryFn: async () => {
       const { data } = await supabase
         .from("submissions")
         .select(
-          "id, user_id, self_reported_value, admin_verified_value, video_path, submitted_at, visibility, status, profiles!submissions_user_id_fkey(username, display_name, avatar_url)",
+          "id, user_id, challenge_id, self_reported_value, admin_verified_value, video_path, submitted_at, visibility, status, profiles!submissions_user_id_fkey(username, display_name, avatar_url), challenges!submissions_challenge_id_fkey(id, title, unit_type, unit_label)",
         )
-        .eq("challenge_id", challengeQ.data!.id)
         .in("user_id", visibleUserIds)
         .order("submitted_at", { ascending: false });
       return data ?? [];
@@ -113,9 +112,12 @@ function FeedTab({ tab, setTab, onAdd }: { tab: Tab; setTab: (t: Tab) => void; o
   const c = challengeQ.data;
   const noFriends = friendsQ.data && friendsQ.data.length === 0;
 
-  // Friends podium: best entry per user (excluding suspended attempts).
+  // Friends podium: best entry per user for the ACTIVE challenge (verified only).
   const podium = (() => {
-    const rows = (feedQ.data ?? []).filter((r: any) => r.status !== "disqualified");
+    if (!c) return [] as any[];
+    const rows = (feedQ.data ?? []).filter(
+      (r: any) => r.challenge_id === c.id && r.status === "verified",
+    );
     const byUser = new Map<string, any>();
     for (const r of rows) {
       const val = Number(r.admin_verified_value ?? r.self_reported_value);
@@ -126,7 +128,7 @@ function FeedTab({ tab, setTab, onAdd }: { tab: Tab; setTab: (t: Tab) => void; o
   })();
 
   const [podiumOpen, setPodiumOpen] = useState(false);
-  const hasFeed = !!c && (feedQ.data?.length ?? 0) > 0;
+  const hasFeed = (feedQ.data?.length ?? 0) > 0;
 
   if (!hasFeed) {
     return (
@@ -164,7 +166,7 @@ function FeedTab({ tab, setTab, onAdd }: { tab: Tab; setTab: (t: Tab) => void; o
           </div>
         ) : (
           <div className="rounded-3xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
-            No videos yet from your friends in this challenge.
+            No videos yet from your friends.
           </div>
         )}
       </div>
@@ -174,7 +176,7 @@ function FeedTab({ tab, setTab, onAdd }: { tab: Tab; setTab: (t: Tab) => void; o
   return (
     <>
       {/* Fullscreen TikTok-style scroller — escapes the padded shell. */}
-      <FeedScroller rows={feedQ.data!} c={c!} />
+      <FeedScroller rows={feedQ.data!} />
 
       {/* Floating tab switcher */}
       <div className="fixed left-1/2 top-16 z-40 -translate-x-1/2">
@@ -195,7 +197,7 @@ function FeedTab({ tab, setTab, onAdd }: { tab: Tab; setTab: (t: Tab) => void; o
       </div>
 
       {/* Floating podium button */}
-      {podium.length > 0 && (
+      {c && podium.length > 0 && (
         <button
           onClick={() => setPodiumOpen(true)}
           className="tap-44 fixed right-3 top-16 z-40 inline-flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-2 text-xs font-bold text-white backdrop-blur"
@@ -204,12 +206,14 @@ function FeedTab({ tab, setTab, onAdd }: { tab: Tab; setTab: (t: Tab) => void; o
         </button>
       )}
 
-      <PodiumDialog
-        open={podiumOpen}
-        onOpenChange={setPodiumOpen}
-        podium={podium}
-        c={c!}
-      />
+      {c && (
+        <PodiumDialog
+          open={podiumOpen}
+          onOpenChange={setPodiumOpen}
+          podium={podium}
+          c={c}
+        />
+      )}
     </>
   );
 }
@@ -324,7 +328,7 @@ function FriendsPodium({ podium, c }: { podium: any[]; c: any }) {
   );
 }
 
-function FeedScroller({ rows, c }: { rows: any[]; c: any }) {
+function FeedScroller({ rows }: { rows: any[] }) {
   // Fixed overlay between top bar (~56px) and bottom nav (~64px). The IO
   // root is the scroller itself so autoplay decisions don't depend on
   // viewport scroll position.
@@ -340,13 +344,13 @@ function FeedScroller({ rows, c }: { rows: any[]; c: any }) {
       }}
     >
       {rows.map((r) => (
-        <FeedVideo key={r.id} row={r} c={c} scrollRoot={scrollerRef} />
+        <FeedVideo key={r.id} row={r} scrollRoot={scrollerRef} />
       ))}
     </div>
   );
 }
 
-function FeedVideo({ row, c, scrollRoot }: { row: any; c: any; scrollRoot: React.RefObject<HTMLDivElement | null> }) {
+function FeedVideo({ row, scrollRoot }: { row: any; scrollRoot: React.RefObject<HTMLDivElement | null> }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -496,10 +500,10 @@ function FeedVideo({ row, c, scrollRoot }: { row: any; c: any; scrollRoot: React
         </Link>
         <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-white/80">
           <span className="rounded-full bg-koth-red px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
-            {c.title}
+            {row.challenges?.title ?? "Challenge"}
           </span>
           <span className="mono-stat font-bold">
-            {formatValue(val, c.unit_type, c.unit_label)}
+            {formatValue(val, row.challenges?.unit_type ?? "custom", row.challenges?.unit_label ?? "")}
           </span>
           {row.status !== "verified" && row.status !== "disqualified" && row.visibility !== "friends_only" && (
             <span className="rounded-full bg-koth-red/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
