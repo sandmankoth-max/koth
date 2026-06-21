@@ -55,13 +55,10 @@ function Admin() {
           <TabsTrigger value="results" className="flex-1">Results</TabsTrigger>
           <TabsTrigger value="notify" className="flex-1">Notify</TabsTrigger>
         </TabsList>
-        <TabsContent value="create">
-          <CreateChallenge />
-          <ManageChallenges />
-        </TabsContent>
+        <TabsContent value="create"><CreateChallenge /></TabsContent>
         <TabsContent value="edit"><EditChallenge /></TabsContent>
         <TabsContent value="review"><AdminSubmissions /></TabsContent>
-        <TabsContent value="results"><MarkPaid /></TabsContent>
+        <TabsContent value="results"><AnnounceWinners /></TabsContent>
         <TabsContent value="notify"><SendNotification /></TabsContent>
       </Tabs>
     </div>
