@@ -95,15 +95,14 @@ function FeedTab({ tab, setTab, onAdd }: { tab: Tab; setTab: (t: Tab) => void; o
   const visibleUserIds = [...(friendsQ.data ?? []), ...(user ? [user.id] : [])];
 
   const feedQ = useQuery({
-    queryKey: ["feed", challengeQ.data?.id, visibleUserIds.sort().join(",")],
-    enabled: !!challengeQ.data && visibleUserIds.length > 0,
+    queryKey: ["feed", visibleUserIds.sort().join(",")],
+    enabled: visibleUserIds.length > 0,
     queryFn: async () => {
       const { data } = await supabase
         .from("submissions")
         .select(
-          "id, user_id, self_reported_value, admin_verified_value, video_path, submitted_at, visibility, status, profiles!submissions_user_id_fkey(username, display_name, avatar_url)",
+          "id, user_id, challenge_id, self_reported_value, admin_verified_value, video_path, submitted_at, visibility, status, profiles!submissions_user_id_fkey(username, display_name, avatar_url), challenges!submissions_challenge_id_fkey(id, title, unit_type, unit_label)",
         )
-        .eq("challenge_id", challengeQ.data!.id)
         .in("user_id", visibleUserIds)
         .order("submitted_at", { ascending: false });
       return data ?? [];
@@ -113,9 +112,12 @@ function FeedTab({ tab, setTab, onAdd }: { tab: Tab; setTab: (t: Tab) => void; o
   const c = challengeQ.data;
   const noFriends = friendsQ.data && friendsQ.data.length === 0;
 
-  // Friends podium: best entry per user (excluding suspended attempts).
+  // Friends podium: best entry per user for the ACTIVE challenge (verified only).
   const podium = (() => {
-    const rows = (feedQ.data ?? []).filter((r: any) => r.status !== "disqualified");
+    if (!c) return [] as any[];
+    const rows = (feedQ.data ?? []).filter(
+      (r: any) => r.challenge_id === c.id && r.status === "verified",
+    );
     const byUser = new Map<string, any>();
     for (const r of rows) {
       const val = Number(r.admin_verified_value ?? r.self_reported_value);
@@ -126,7 +128,7 @@ function FeedTab({ tab, setTab, onAdd }: { tab: Tab; setTab: (t: Tab) => void; o
   })();
 
   const [podiumOpen, setPodiumOpen] = useState(false);
-  const hasFeed = !!c && (feedQ.data?.length ?? 0) > 0;
+  const hasFeed = (feedQ.data?.length ?? 0) > 0;
 
   if (!hasFeed) {
     return (
