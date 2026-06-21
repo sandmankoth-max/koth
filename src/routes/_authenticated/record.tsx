@@ -49,11 +49,16 @@ function Record() {
     };
   }, [captured]);
 
-  if (!challenge) {
+  const challengeEnded =
+    !!challenge && new Date(challenge.ends_at).getTime() <= Date.now();
+
+  if (!challenge || challengeEnded) {
     return (
       <div className="rounded-3xl border border-border bg-card p-8 text-center">
         <p className="label-broadcast text-muted-foreground">No active challenge</p>
-        <p className="mt-2 text-sm text-muted-foreground">Check back Monday at 10am.</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          New challenge drops Monday at 10am.
+        </p>
       </div>
     );
   }
