@@ -66,7 +66,7 @@ export function TikTokPlayer({ items, startIndex = 0, open, onOpenChange }: Prop
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md gap-0 border-0 bg-black p-0 sm:rounded-3xl [&>button]:hidden">
+      <DialogContent className="h-[100dvh] w-screen max-w-none gap-0 border-0 bg-black p-0 sm:rounded-none [&>button]:hidden">
         <DialogTitle className="sr-only">@{current.user.username}</DialogTitle>
         <PlayerStage
           item={current}
