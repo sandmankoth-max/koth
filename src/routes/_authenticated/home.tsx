@@ -8,7 +8,7 @@ import { deleteOwnSubmission } from "@/lib/submissions.functions";
 import { Countdown } from "@/components/koth/countdown";
 import { RankBadge } from "@/components/koth/rank-badge";
 import { ProfileAvatar } from "@/components/koth/profile-avatar";
-import { AlertTriangle, X, Trash2 } from "lucide-react";
+import { AlertTriangle, X, Trash2, Trophy } from "lucide-react";
 import { formatValue, shortUnitLabel } from "@/lib/koth-utils";
 import { Button } from "@/components/ui/button";
 import {
