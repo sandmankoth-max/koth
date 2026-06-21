@@ -36,10 +36,8 @@ const labelFor = (n: any) => {
       return `1 day left to submit — ${n.payload?.title ?? "today's challenge"}`;
     case "deadline_reminder":
       return `1 hour left to submit — ${n.payload?.title ?? "today's challenge closes soon"}`;
-    case "overtaken":
-      return `@${n.payload?.overtaken_by_username} passed you — you're #${n.payload?.new_rank}`;
     case "podium_lost":
-      return `@${n.payload?.overtaken_by_username} knocked you off the podium`;
+      return `You were kicked off the podium${n.payload?.overtaken_by_username ? ` by @${n.payload.overtaken_by_username}` : ""}`;
     case "podium_gained":
       return `You're on the podium — #${n.payload?.new_rank}`;
     case "time_verified":
