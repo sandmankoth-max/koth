@@ -30,16 +30,25 @@ function shortRel(ts: string) {
 
 function Leaderboard() {
   const challengeQ = useQuery({
-    queryKey: ["active-challenge"],
+    queryKey: ["leaderboard-challenge"],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data: active } = await supabase
         .from("challenges")
         .select("*")
         .eq("status", "active")
         .order("starts_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      return data;
+      if (active) return active;
+      // Fall back to the most recently closed challenge so the board stays viewable.
+      const { data: closed } = await supabase
+        .from("challenges")
+        .select("*")
+        .eq("status", "closed")
+        .order("ends_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return closed;
     },
   });
 

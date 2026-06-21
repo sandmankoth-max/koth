@@ -19,11 +19,14 @@ export function formatValue(value: number | null | undefined, unitType: string, 
     return `${total.toFixed(isInt ? 0 : 2)}s`;
   }
   if (unitType === "count_reps") {
-    const n = Math.round(Number(value));
+    const n = Number(value);
+    const isInt = n % 1 === 0;
     const label = (unitLabel || "reps").trim();
-    return `${n} ${label}`;
+    return `${isInt ? n.toFixed(0) : (Math.round(n * 10) / 10).toFixed(1)} ${label}`;
   }
-  return `${value} ${unitLabel}`;
+  const n = Number(value);
+  const isInt = Number.isFinite(n) && n % 1 === 0;
+  return `${isInt ? n : (Math.round(n * 10) / 10).toFixed(1)} ${unitLabel}`;
 }
 
 export function shortUnitLabel(unitType: string, unitLabel: string) {

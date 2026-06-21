@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { formatDistanceToNow } from "date-fns";
-import { Bell, Crown, ArrowDown, Flag, UserPlus, UserCheck, Check, X, Heart, MessageCircle, AtSign, Megaphone, ShieldAlert, BadgeCheck } from "lucide-react";
+import { Bell, Crown, ArrowDown, Flag, UserPlus, UserCheck, Check, X, Heart, MessageCircle, AtSign, Megaphone, ShieldAlert, BadgeCheck, Trophy } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/notifications")({
@@ -23,6 +23,7 @@ const iconFor = (t: string) =>
   t === "admin_message" ? <Megaphone className="h-5 w-5 text-koth-red" /> :
   t === "time_verified" ? <BadgeCheck className="h-5 w-5 text-koth-pr-text" /> :
   t === "time_disqualified" ? <ShieldAlert className="h-5 w-5 text-koth-red" /> :
+  t === "challenge_closed" ? <Trophy className="h-5 w-5 text-koth-pr-text" /> :
   <Bell className="h-5 w-5 text-foreground" />;
 
 const preview = (s?: string) => (s ? `: "${s.length > 60 ? s.slice(0, 60) + "…" : s}"` : "");
@@ -32,6 +33,8 @@ const labelFor = (n: any) => {
   switch (n.type) {
     case "new_challenge":
       return `New challenge is live: ${n.payload?.title ?? "this week's challenge"}`;
+    case "challenge_closed":
+      return `Challenge closed — ${n.payload?.title ?? "this week's challenge"}. New one drops Monday at 10am.`;
     case "deadline_reminder_24h":
       return `1 day left to submit — ${n.payload?.title ?? "today's challenge"}`;
     case "deadline_reminder":
