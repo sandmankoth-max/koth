@@ -23,6 +23,7 @@ const iconFor = (t: string) =>
   t === "admin_message" ? <Megaphone className="h-5 w-5 text-koth-red" /> :
   t === "time_verified" ? <BadgeCheck className="h-5 w-5 text-koth-pr-text" /> :
   t === "time_disqualified" ? <ShieldAlert className="h-5 w-5 text-koth-red" /> :
+  t === "challenge_closed" ? <Trophy className="h-5 w-5 text-koth-pr-text" /> :
   <Bell className="h-5 w-5 text-foreground" />;
 
 const preview = (s?: string) => (s ? `: "${s.length > 60 ? s.slice(0, 60) + "…" : s}"` : "");
