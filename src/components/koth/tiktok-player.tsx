@@ -13,7 +13,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Heart, MessageCircle, Share2, X, Play, ChevronUp, ChevronDown, Trash2 } from "lucide-react";
+import { Heart, MessageCircle, Share2, X, Play, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -25,7 +25,7 @@ import { VideoScrubber } from "@/components/koth/video-scrubber";
 import { deleteOwnSubmission } from "@/lib/submissions.functions";
 
 export type PlayerItem = {
-  id: string; // submission id
+  id: string;
   video_path: string;
   caption?: string | null;
   value?: number | null;
@@ -48,67 +48,156 @@ type Props = {
 };
 
 /**
- * Shared full-screen TikTok-style vertical video player.
- * - Tap video to pause/play
- * - Double-tap to like
- * - Up/down arrows or swipe to switch videos
- * - Action rail: avatar (tap → profile), like, comment, share
+ * Full-screen TikTok-style vertical video player.
+ * Renders all items in a snap-scroll list (same UX as the friends feed),
+ * with IntersectionObserver driving play / load per slide.
  */
 export function TikTokPlayer({ items, startIndex = 0, open, onOpenChange }: Props) {
-  const [index, setIndex] = useState(startIndex);
+  const scrollerRef = useRef<HTMLDivElement>(null);
+
+  // Jump to startIndex when the player opens.
   useEffect(() => {
-    if (open) setIndex(startIndex);
+    if (!open) return;
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+    const el = scroller.children?.[startIndex] as HTMLElement | undefined;
+    // Wait a tick so the dialog has mounted.
+    const id = window.setTimeout(() => {
+      el?.scrollIntoView({ block: "start" });
+    }, 0);
+    return () => window.clearTimeout(id);
   }, [open, startIndex]);
 
   if (!items.length) return null;
-  const safeIndex = Math.min(Math.max(0, index), items.length - 1);
-  const current = items[safeIndex];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="h-[100dvh] w-screen max-w-none gap-0 border-0 bg-black p-0 sm:rounded-none [&>button]:hidden">
-        <DialogTitle className="sr-only">@{current.user.username}</DialogTitle>
-        <PlayerStage
-          item={current}
-          canPrev={safeIndex > 0}
-          canNext={safeIndex < items.length - 1}
-          onPrev={() => setIndex((i) => Math.max(0, i - 1))}
-          onNext={() => setIndex((i) => Math.min(items.length - 1, i + 1))}
-          onClose={() => onOpenChange(false)}
-        />
+        <DialogTitle className="sr-only">Videos</DialogTitle>
+        <button
+          onClick={() => onOpenChange(false)}
+          aria-label="Close"
+          className="tap-44 absolute right-3 top-3 z-50 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur"
+        >
+          <X className="h-5 w-5" />
+        </button>
+        <div
+          ref={scrollerRef}
+          className="h-[100dvh] w-full snap-y snap-mandatory overflow-y-auto overscroll-y-contain bg-black"
+          style={{
+            scrollSnapType: "y mandatory",
+            WebkitOverflowScrolling: "touch",
+            scrollbarWidth: "none",
+          }}
+        >
+          {items.map((it) => (
+            <PlayerSlide key={it.id} item={it} scrollRoot={scrollerRef} onClose={() => onOpenChange(false)} />
+          ))}
+        </div>
       </DialogContent>
     </Dialog>
   );
 }
 
-function PlayerStage({
+function PlayerSlide({
   item,
-  canPrev,
-  canNext,
-  onPrev,
-  onNext,
+  scrollRoot,
   onClose,
 }: {
   item: PlayerItem;
-  canPrev: boolean;
-  canNext: boolean;
-  onPrev: () => void;
-  onNext: () => void;
+  scrollRoot: React.RefObject<HTMLDivElement | null>;
   onClose: () => void;
 }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const deleteSubmission = useServerFn(deleteOwnSubmission);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [url, setUrl] = useState<string | null>(null);
+  const [visible, setVisible] = useState(false);
   const [paused, setPaused] = useState(false);
   const [burst, setBurst] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const lastTap = useRef(0);
-  const touchStartY = useRef<number | null>(null);
   const isOwner = !!user && user.id === item.user.id;
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => setVisible(e.intersectionRatio > 0.6)),
+      { root: scrollRoot.current, threshold: [0, 0.6, 1] },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [scrollRoot]);
+
+  useEffect(() => {
+    if (!visible || url) return;
+    let active = true;
+    getVideoSignedUrl(item.video_path).then((u) => active && setUrl(u));
+    return () => { active = false; };
+  }, [visible, url, item.video_path]);
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (visible && !paused) v.play().catch(() => {});
+    else v.pause();
+  }, [visible, paused, url]);
+
+  const likeQ = useQuery({
+    queryKey: ["video-likes", item.id],
+    queryFn: async () => {
+      const [{ count }, mine] = await Promise.all([
+        supabase.from("video_likes").select("*", { count: "exact", head: true }).eq("submission_id", item.id),
+        user
+          ? supabase.from("video_likes").select("submission_id")
+              .eq("submission_id", item.id).eq("user_id", user.id).maybeSingle()
+          : Promise.resolve({ data: null } as any),
+      ]);
+      return { count: count ?? 0, liked: !!mine.data };
+    },
+  });
+
+  const commentCountQ = useQuery({
+    queryKey: ["video-comment-count", item.id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("video_comments").select("*", { count: "exact", head: true }).eq("submission_id", item.id);
+      return count ?? 0;
+    },
+  });
+
+  async function toggleLike() {
+    if (!user) { toast.error("Sign in to like"); return; }
+    const liked = likeQ.data?.liked;
+    qc.setQueryData(["video-likes", item.id], (old: any) => ({
+      count: (old?.count ?? 0) + (liked ? -1 : 1),
+      liked: !liked,
+    }));
+    if (liked) {
+      await supabase.from("video_likes").delete().eq("submission_id", item.id).eq("user_id", user.id);
+    } else {
+      await supabase.from("video_likes").insert({ submission_id: item.id, user_id: user.id });
+    }
+    qc.invalidateQueries({ queryKey: ["video-likes", item.id] });
+  }
+
+  function handleTap() {
+    const now = Date.now();
+    if (now - lastTap.current < 300) {
+      if (!likeQ.data?.liked) toggleLike();
+      setBurst(true);
+      window.setTimeout(() => setBurst(false), 700);
+      lastTap.current = 0;
+      return;
+    }
+    lastTap.current = now;
+    setPaused((p) => !p);
+  }
 
   async function handleDelete() {
     if (!isOwner || deleting) return;
@@ -131,127 +220,12 @@ function PlayerStage({
     }
   }
 
-  useEffect(() => {
-    let active = true;
-    setUrl(null);
-    getVideoSignedUrl(item.video_path).then((u) => {
-      if (active) setUrl(u);
-    });
-    return () => {
-      active = false;
-    };
-  }, [item.video_path]);
-
-  // like state
-  const likeQ = useQuery({
-    queryKey: ["video-likes", item.id],
-    queryFn: async () => {
-      const [{ count }, mine] = await Promise.all([
-        supabase
-          .from("video_likes")
-          .select("*", { count: "exact", head: true })
-          .eq("submission_id", item.id),
-        user
-          ? supabase
-              .from("video_likes")
-              .select("submission_id")
-              .eq("submission_id", item.id)
-              .eq("user_id", user.id)
-              .maybeSingle()
-          : Promise.resolve({ data: null } as any),
-      ]);
-      return { count: count ?? 0, liked: !!mine.data };
-    },
-  });
-
-  const commentCountQ = useQuery({
-    queryKey: ["video-comment-count", item.id],
-    queryFn: async () => {
-      const { count } = await supabase
-        .from("video_comments")
-        .select("*", { count: "exact", head: true })
-        .eq("submission_id", item.id);
-      return count ?? 0;
-    },
-  });
-
-  async function toggleLike() {
-    if (!user) {
-      toast.error("Sign in to like");
-      return;
-    }
-    const liked = likeQ.data?.liked;
-    qc.setQueryData(["video-likes", item.id], (old: any) => ({
-      count: (old?.count ?? 0) + (liked ? -1 : 1),
-      liked: !liked,
-    }));
-    if (liked) {
-      await supabase
-        .from("video_likes")
-        .delete()
-        .eq("submission_id", item.id)
-        .eq("user_id", user.id);
-    } else {
-      await supabase
-        .from("video_likes")
-        .insert({ submission_id: item.id, user_id: user.id });
-    }
-    qc.invalidateQueries({ queryKey: ["video-likes", item.id] });
-  }
-
-  function handleTap() {
-    const now = Date.now();
-    if (now - lastTap.current < 300) {
-      // double-tap → like
-      if (!likeQ.data?.liked) toggleLike();
-      setBurst(true);
-      window.setTimeout(() => setBurst(false), 700);
-      lastTap.current = 0;
-      return;
-    }
-    lastTap.current = now;
-    const v = videoRef.current;
-    if (!v) return;
-    if (v.paused) {
-      v.play().catch(() => {});
-      setPaused(false);
-    } else {
-      v.pause();
-      setPaused(true);
-    }
-  }
-
-  function handleTouchStart(e: React.TouchEvent) {
-    touchStartY.current = e.touches[0].clientY;
-  }
-  function handleTouchEnd(e: React.TouchEvent) {
-    if (touchStartY.current == null) return;
-    const dy = e.changedTouches[0].clientY - touchStartY.current;
-    touchStartY.current = null;
-    if (Math.abs(dy) < 60) return;
-    if (dy < 0 && canNext) onNext();
-    else if (dy > 0 && canPrev) onPrev();
-  }
-
   return (
     <div
-      className="relative h-[100dvh] w-full overflow-hidden bg-black"
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
+      ref={containerRef}
+      className="relative w-full snap-start snap-always bg-black"
+      style={{ height: "100dvh", minHeight: "100dvh", scrollSnapStop: "always" }}
     >
-      {/* Close */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onClose();
-        }}
-        className="tap-44 absolute right-3 top-3 z-30 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur"
-        aria-label="Close"
-      >
-        <X className="h-5 w-5" />
-      </button>
-
-      {/* Video */}
       <button
         type="button"
         onClick={handleTap}
@@ -259,14 +233,7 @@ function PlayerStage({
         aria-label="Tap to pause or play"
       >
         {url ? (
-          <video
-            ref={videoRef}
-            src={url}
-            autoPlay
-            loop
-            playsInline
-            className="h-full w-full object-contain"
-          />
+          <video ref={videoRef} src={url} loop playsInline className="h-full w-full object-contain" />
         ) : (
           <div className="h-full w-full animate-pulse bg-neutral-900" />
         )}
@@ -278,18 +245,14 @@ function PlayerStage({
           </span>
         )}
         {burst && (
-          <Heart
-            className="pointer-events-none absolute z-20 h-32 w-32 animate-ping text-koth-red"
-            fill="currentColor"
-          />
+          <Heart className="pointer-events-none absolute z-20 h-32 w-32 animate-ping text-koth-red" fill="currentColor" />
         )}
       </button>
 
-      {/* Scrubber — pinned to bottom edge */}
+      {/* Scrubber pinned to bottom */}
       <div className="absolute inset-x-3 bottom-1 z-30">
         <VideoScrubber videoRef={videoRef} />
       </div>
-
 
       {/* Bottom-left info */}
       <div className="absolute bottom-7 left-4 right-20 z-20 text-white">
@@ -316,7 +279,7 @@ function PlayerStage({
         {item.caption && <p className="mt-2 text-sm text-white/90">{item.caption}</p>}
       </div>
 
-      {/* Right action rail */}
+      {/* Right rail */}
       <div className="absolute right-2 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center gap-5 text-white">
         <Link
           to="/u/$username"
@@ -334,11 +297,7 @@ function PlayerStage({
 
         <RailButton
           onClick={toggleLike}
-          icon={
-            <Heart
-              className={cn("h-7 w-7", likeQ.data?.liked && "fill-koth-red text-koth-red")}
-            />
-          }
+          icon={<Heart className={cn("h-7 w-7", likeQ.data?.liked && "fill-koth-red text-koth-red")} />}
           count={likeQ.data?.count ?? 0}
           label="like"
         />
@@ -375,10 +334,7 @@ function PlayerStage({
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault();
-                handleDelete();
-              }}
+              onClick={(e) => { e.preventDefault(); handleDelete(); }}
               disabled={deleting}
               className="bg-koth-red text-koth-white hover:bg-koth-red/90"
             >
@@ -395,61 +351,21 @@ function PlayerStage({
         open={commentsOpen}
         onOpenChange={setCommentsOpen}
       />
-
-
-      {/* Up/down navigation */}
-      {canPrev && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onPrev();
-          }}
-          className="tap-44 absolute left-1/2 top-3 z-20 -translate-x-1/2 rounded-full bg-black/40 p-1.5 text-white backdrop-blur"
-          aria-label="Previous video"
-        >
-          <ChevronUp className="h-4 w-4" />
-        </button>
-      )}
-      {canNext && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onNext();
-          }}
-          className="tap-44 absolute bottom-3 left-1/2 z-20 -translate-x-1/2 rounded-full bg-black/40 p-1.5 text-white backdrop-blur"
-          aria-label="Next video"
-        >
-          <ChevronDown className="h-4 w-4" />
-        </button>
-      )}
     </div>
   );
 }
 
 function RailButton({
-  onClick,
-  icon,
-  count,
-  label,
-}: {
-  onClick: () => void;
-  icon: React.ReactNode;
-  count: number;
-  label: string;
-}) {
+  onClick, icon, count, label,
+}: { onClick: () => void; icon: React.ReactNode; count: number; label: string }) {
   return (
     <button
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick();
-      }}
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
       className="tap-44 flex flex-col items-center gap-0.5"
       aria-label={label}
     >
       {icon}
-      <span className="mono-stat text-[11px] font-bold leading-none">
-        {formatCount(count)}
-      </span>
+      <span className="mono-stat text-[11px] font-bold leading-none">{formatCount(count)}</span>
     </button>
   );
 }
