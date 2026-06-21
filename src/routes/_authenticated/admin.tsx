@@ -494,6 +494,9 @@ function AnnounceWinners() {
           </Field>
         </div>
       ))}
+      <Field label="Headline (optional)">
+        <Input value={form.headline} onChange={(e) => setForm({ ...form, headline: e.target.value })} placeholder="e.g. Congrats to the podium" />
+      </Field>
       <Field label="Note (optional)">
         <Textarea rows={2} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="e.g. Congrats — prizes sent." />
       </Field>
