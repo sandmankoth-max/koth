@@ -547,18 +547,32 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      admin_announce_winners: {
-        Args: {
-          p_first_amount: number
-          p_first_username: string
-          p_note?: string
-          p_second_amount: number
-          p_second_username: string
-          p_third_amount: number
-          p_third_username: string
-        }
-        Returns: number
-      }
+      admin_announce_winners:
+        | {
+            Args: {
+              p_first_amount: number
+              p_first_username: string
+              p_note?: string
+              p_second_amount: number
+              p_second_username: string
+              p_third_amount: number
+              p_third_username: string
+            }
+            Returns: number
+          }
+        | {
+            Args: {
+              p_first_amount: number
+              p_first_username: string
+              p_headline?: string
+              p_note?: string
+              p_second_amount: number
+              p_second_username: string
+              p_third_amount: number
+              p_third_username: string
+            }
+            Returns: number
+          }
       admin_ban_user: {
         Args: { p_reason: string; p_user_id: string }
         Returns: undefined
