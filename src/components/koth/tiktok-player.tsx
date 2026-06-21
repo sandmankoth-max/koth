@@ -13,7 +13,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Heart, MessageCircle, Share2, X, Play, Trash2 } from "lucide-react";
+import { Heart, MessageCircle, Share2, X, Play, Trash2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -76,10 +76,10 @@ export function TikTokPlayer({ items, startIndex = 0, open, onOpenChange }: Prop
         <DialogTitle className="sr-only">Videos</DialogTitle>
         <button
           onClick={() => onOpenChange(false)}
-          aria-label="Close"
-          className="tap-44 absolute right-3 top-3 z-50 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur"
+          aria-label="Back"
+          className="tap-44 absolute left-3 top-3 z-50 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur"
         >
-          <X className="h-5 w-5" />
+          <ArrowLeft className="h-5 w-5" />
         </button>
         <div
           ref={scrollerRef}
