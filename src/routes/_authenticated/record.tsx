@@ -190,20 +190,26 @@ function Record() {
               const raw = e.target.value.replace(",", ".");
               if (raw === "") { setReportedValue(""); return; }
               if (!/^\d*\.?\d*$/.test(raw)) return;
-              // Cap at < 1000 (three integer digits) to block 99999999 nonsense.
+              const [intPart, decPart] = raw.split(".");
+              if (intPart.length > 3) return;
+              if (decPart !== undefined && decPart.length > 1) return;
               const n = Number(raw);
               if (Number.isFinite(n) && n >= 1000) return;
-              // Limit integer part to 3 digits even mid-type.
-              const [intPart] = raw.split(".");
-              if (intPart.length > 3) return;
               setReportedValue(raw);
+            }}
+            onBlur={() => {
+              if (!reportedValue) return;
+              const n = Number(reportedValue);
+              if (!Number.isFinite(n)) return;
+              const rounded = Math.round(n * 10) / 10;
+              setReportedValue(rounded % 1 === 0 ? String(rounded) : rounded.toFixed(1));
             }}
             autoFocus
             placeholder="0"
             className="mono-stat h-20 rounded-2xl text-center text-4xl font-bold"
           />
           <p className="text-center text-xs text-muted-foreground">
-            {challenge.unit_label} · max 999
+            {challenge.unit_label}
           </p>
           <div className="grid grid-cols-2 gap-3">
             <Button
