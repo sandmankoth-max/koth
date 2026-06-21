@@ -70,7 +70,6 @@ function Admin() {
 
 function CreateChallenge() {
   const { user } = useAuth();
-  const cleanupOldSubmissions = useServerFn(cleanupOldChallengeSubmissions);
   const [busy, setBusy] = useState(false);
   const nextMonday = nextMondayAt10();
   const nextSunday = nextSundayAt20(nextMonday);
