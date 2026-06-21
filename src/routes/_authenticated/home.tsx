@@ -489,7 +489,7 @@ function WinnersBanner() {
                 <X className="h-4 w-4" aria-hidden />
               </button>
             </div>
-            <h2 className="mt-1 text-lg font-bold leading-tight">Congrats to the podium</h2>
+            <h2 className="mt-1 text-lg font-bold leading-tight">{p.headline || "Congrats to the podium"}</h2>
             <div className="mt-3 grid grid-cols-3 gap-1.5">
               {podium.map((r) => (
                 <div key={r.label} className={`rounded-xl px-2.5 py-2 ${r.tone}`}>

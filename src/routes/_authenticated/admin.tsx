@@ -421,6 +421,7 @@ function AnnounceWinners() {
     third_username: "",
     third_amount: "" as string,
     note: "",
+    headline: "",
   });
   const [busy, setBusy] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -436,6 +437,7 @@ function AnnounceWinners() {
         p_third_username: form.third_username.trim().replace(/^@/, ""),
         p_third_amount: Number(form.third_amount || 0),
         p_note: form.note || null,
+        p_headline: form.headline.trim() || null,
       });
       if (error) throw error;
       toast.success(`Winners announced to ${data ?? 0} users`);
@@ -443,7 +445,7 @@ function AnnounceWinners() {
         first_username: "", first_amount: "",
         second_username: "", second_amount: "",
         third_username: "", third_amount: "",
-        note: "",
+        note: "", headline: "",
       });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed");
@@ -492,6 +494,9 @@ function AnnounceWinners() {
           </Field>
         </div>
       ))}
+      <Field label="Headline (optional)">
+        <Input value={form.headline} onChange={(e) => setForm({ ...form, headline: e.target.value })} placeholder="e.g. Congrats to the podium" />
+      </Field>
       <Field label="Note (optional)">
         <Textarea rows={2} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="e.g. Congrats — prizes sent." />
       </Field>
