@@ -18,7 +18,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { RankBadge } from "@/components/koth/rank-badge";
+
 import { Avatar } from "@/components/koth/avatar";
 import { formatValue, getVideoSignedUrl } from "@/lib/koth-utils";
 import { toast } from "sonner";
