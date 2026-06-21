@@ -547,6 +547,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_announce_winners: {
+        Args: {
+          p_first_amount: number
+          p_first_username: string
+          p_note?: string
+          p_second_amount: number
+          p_second_username: string
+          p_third_amount: number
+          p_third_username: string
+        }
+        Returns: number
+      }
       admin_ban_user: {
         Args: { p_reason: string; p_user_id: string }
         Returns: undefined
@@ -619,7 +631,12 @@ export type Database = {
     }
     Enums: {
       app_role: "member" | "admin"
-      challenge_status: "upcoming" | "active" | "closed" | "archived"
+      challenge_status:
+        | "upcoming"
+        | "active"
+        | "closed"
+        | "archived"
+        | "inactive"
       challenge_unit: "time_seconds" | "count_reps" | "custom"
       comment_kind: "video" | "challenge"
       friendship_status: "pending" | "accepted"
@@ -642,6 +659,7 @@ export type Database = {
         | "reply_challenge_comment"
         | "tag_challenge_comment"
         | "admin_message"
+        | "winners_announcement"
       submission_status:
         | "pending_review"
         | "verified"
@@ -777,7 +795,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["member", "admin"],
-      challenge_status: ["upcoming", "active", "closed", "archived"],
+      challenge_status: [
+        "upcoming",
+        "active",
+        "closed",
+        "archived",
+        "inactive",
+      ],
       challenge_unit: ["time_seconds", "count_reps", "custom"],
       comment_kind: ["video", "challenge"],
       friendship_status: ["pending", "accepted"],
@@ -800,6 +824,7 @@ export const Constants = {
         "reply_challenge_comment",
         "tag_challenge_comment",
         "admin_message",
+        "winners_announcement",
       ],
       submission_status: [
         "pending_review",

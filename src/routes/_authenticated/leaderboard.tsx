@@ -40,15 +40,16 @@ function Leaderboard() {
         .limit(1)
         .maybeSingle();
       if (active) return active;
-      // Fall back to the most recently closed challenge so the board stays viewable.
-      const { data: closed } = await supabase
+      // Fall back to the most recent past challenge so the board stays viewable
+      // during the gap between challenges.
+      const { data: past } = await supabase
         .from("challenges")
         .select("*")
-        .eq("status", "closed")
+        .in("status", ["inactive", "closed"])
         .order("ends_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      return closed;
+      return past;
     },
   });
 
