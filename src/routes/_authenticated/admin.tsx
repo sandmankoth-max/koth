@@ -23,6 +23,7 @@ import { Avatar } from "@/components/koth/avatar";
 import { formatValue, getVideoSignedUrl } from "@/lib/koth-utils";
 import { toast } from "sonner";
 import { AdminSubmissions } from "@/components/koth/admin-submissions";
+import { PromptDialog } from "@/components/koth/prompt-dialog";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Admin — KOTH" }] }),
@@ -289,6 +290,8 @@ function ReviewSubmissions() {
 function SubmissionRow({ s, onUpdate }: { s: any; onUpdate: (p: any) => Promise<void> | void }) {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [verified, setVerified] = useState<string>(s.admin_verified_value?.toString() ?? "");
+  const [suspendOpen, setSuspendOpen] = useState(false);
+  const [banOpen, setBanOpen] = useState(false);
   useEffect(() => {
     getVideoSignedUrl(s.video_path).then(setVideoUrl);
   }, [s.video_path]);
@@ -361,22 +364,7 @@ function SubmissionRow({ s, onUpdate }: { s: any; onUpdate: (p: any) => Promise<
         <Button
           size="sm"
           variant="outline"
-          onClick={async () => {
-            const reason = window.prompt(
-              "Why is this submission being suspended? This note will be sent to the user in their notification.",
-              "",
-            );
-            if (reason === null) return;
-            const { error } = await supabase.rpc("admin_disqualify_submission" as any, {
-              p_submission_id: s.id,
-              p_reason: reason.trim() || null,
-            });
-            if (error) toast.error(error.message);
-            else {
-              toast.success("Suspended");
-              await onUpdate({ status: "disqualified", is_active_entry: false, __local: true });
-            }
-          }}
+          onClick={() => setSuspendOpen(true)}
           className="rounded-full border-koth-red text-koth-red hover:bg-koth-red hover:text-koth-white"
         >
           Suspend
@@ -387,27 +375,57 @@ function SubmissionRow({ s, onUpdate }: { s: any; onUpdate: (p: any) => Promise<
         <Button
           size="sm"
           variant="outline"
-          onClick={async () => {
-            const reason = window.prompt(
-              `Ban @${s.profiles?.username}? This disqualifies their entries and permanently blocks the username from being reused. Reason:`,
-              "Inappropriate content",
-            );
-            if (!reason) return;
-            const { error } = await supabase.rpc("admin_ban_user" as any, {
-              p_user_id: s.user_id,
-              p_reason: reason,
-            });
-            if (error) toast.error(error.message);
-            else {
-              toast.success(`Banned @${s.profiles?.username}`);
-              await onUpdate({ status: "disqualified", is_active_entry: false, __local: true });
-            }
-          }}
+          onClick={() => setBanOpen(true)}
           className="rounded-full border-koth-red text-koth-red hover:bg-koth-red hover:text-koth-white"
         >
           Ban user
         </Button>
       </div>
+      <PromptDialog
+        open={suspendOpen}
+        onOpenChange={setSuspendOpen}
+        title="Suspend submission"
+        description="Why is this submission being suspended? This note will be sent to the user in their notification."
+        placeholder="Reason (optional)"
+        confirmLabel="Suspend"
+        destructive
+        onConfirm={async (reason) => {
+          setSuspendOpen(false);
+          const { error } = await supabase.rpc("admin_disqualify_submission" as any, {
+            p_submission_id: s.id,
+            p_reason: reason.trim() || null,
+          });
+          if (error) toast.error(error.message);
+          else {
+            toast.success("Suspended");
+            await onUpdate({ status: "disqualified", is_active_entry: false, __local: true });
+          }
+        }}
+      />
+      <PromptDialog
+        open={banOpen}
+        onOpenChange={setBanOpen}
+        title={`Ban @${s.profiles?.username}?`}
+        description="This disqualifies their entries and permanently blocks the username from being reused."
+        placeholder="Reason"
+        defaultValue="Inappropriate content"
+        confirmLabel="Ban user"
+        destructive
+        required
+        onConfirm={async (reason) => {
+          if (!reason.trim()) return;
+          setBanOpen(false);
+          const { error } = await supabase.rpc("admin_ban_user" as any, {
+            p_user_id: s.user_id,
+            p_reason: reason,
+          });
+          if (error) toast.error(error.message);
+          else {
+            toast.success(`Banned @${s.profiles?.username}`);
+            await onUpdate({ status: "disqualified", is_active_entry: false, __local: true });
+          }
+        }}
+      />
     </div>
   );
 }

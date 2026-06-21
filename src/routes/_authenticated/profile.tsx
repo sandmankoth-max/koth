@@ -8,13 +8,19 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Settings, LogOut, Camera, FileText, ShieldCheck, Pencil, Check,
-  Bell, Users,
+  Bell, Users, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { TikTokPlayer, type PlayerItem } from "@/components/koth/tiktok-player";
 import { VideoThumb } from "@/components/koth/video-thumb";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useServerFn } from "@tanstack/react-start";
+import { deleteOwnAccount } from "@/lib/account.functions";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({ meta: [{ title: "Profile — KOTH" }] }),
@@ -30,6 +36,9 @@ function Profile() {
   const [bioDraft, setBioDraft] = useState(profile?.bio ?? "");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [friendsOpen, setFriendsOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const callDeleteAccount = useServerFn(deleteOwnAccount);
 
   useEffect(() => { setBioDraft(profile?.bio ?? ""); }, [profile?.bio]);
 
@@ -172,9 +181,50 @@ function Profile() {
             >
               <LogOut className="h-4 w-4" /> Log out
             </button>
+            <button
+              onClick={() => { setSettingsOpen(false); setDeleteOpen(true); }}
+              className="tap-44 flex w-full items-center gap-3 border-t border-border px-5 py-4 text-left text-sm font-semibold text-koth-red"
+            >
+              <Trash2 className="h-4 w-4" /> Delete account
+            </button>
           </div>
         </SheetContent>
       </Sheet>
+
+      <AlertDialog open={deleteOpen} onOpenChange={(o) => !deleting && setDeleteOpen(o)}>
+        <AlertDialogContent className="max-w-sm rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete your account?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes your profile, videos, submissions, friendships, and
+              notifications. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting} className="rounded-full">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleting}
+              onClick={async (e) => {
+                e.preventDefault();
+                setDeleting(true);
+                try {
+                  await callDeleteAccount();
+                  await signOut();
+                  setDeleteOpen(false);
+                  toast.success("Account deleted");
+                  navigate({ to: "/" });
+                } catch (err) {
+                  toast.error(err instanceof Error ? err.message : "Failed to delete account");
+                  setDeleting(false);
+                }
+              }}
+              className="rounded-full bg-koth-red text-koth-white hover:bg-koth-red/90"
+            >
+              {deleting ? "Deleting…" : "Delete account"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <FriendsDialog open={friendsOpen} onOpenChange={setFriendsOpen} userId={user?.id ?? null} canView={true} />
     </div>

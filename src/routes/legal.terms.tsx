@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { LegalNotice } from "@/components/koth/legal-notice";
 
 export const Route = createFileRoute("/legal/terms")({
   head: () => ({ meta: [{ title: "Terms of Service — KOTH" }] }),
@@ -7,7 +6,6 @@ export const Route = createFileRoute("/legal/terms")({
     <article className="mt-4 space-y-4">
       <header>
         <h1 className="text-2xl font-bold text-foreground">Terms of Service</h1>
-        <LegalNotice />
       </header>
       <Section title="Your content">
         You confirm that you own all content you submit, including video recordings, and that no third party
