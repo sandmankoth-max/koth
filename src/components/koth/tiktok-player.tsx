@@ -235,7 +235,7 @@ function PlayerStage({
 
   return (
     <div
-      className="relative h-[80vh] w-full overflow-hidden bg-black sm:rounded-3xl"
+      className="relative h-[100dvh] w-full overflow-hidden bg-black"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
