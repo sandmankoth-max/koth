@@ -147,7 +147,7 @@ function FeedTab({ tab, setTab, onAdd }: { tab: Tab; setTab: (t: Tab) => void; o
 
         <section className="koth-stripe overflow-hidden rounded-3xl bg-koth-black p-4 text-koth-white">
           <p className="label-broadcast text-koth-white/60">Friends feed</p>
-          <h1 className="mt-0.5 text-lg font-bold">{c?.title ?? "No active challenge"}</h1>
+          <h1 className="mt-0.5 text-lg font-bold">Latest from your friends</h1>
         </section>
 
         {noFriends ? (
