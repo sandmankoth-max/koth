@@ -500,10 +500,10 @@ function FeedVideo({ row, scrollRoot }: { row: any; scrollRoot: React.RefObject<
         </Link>
         <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-white/80">
           <span className="rounded-full bg-koth-red px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
-            {c.title}
+            {row.challenges?.title ?? "Challenge"}
           </span>
           <span className="mono-stat font-bold">
-            {formatValue(val, c.unit_type, c.unit_label)}
+            {formatValue(val, row.challenges?.unit_type ?? "custom", row.challenges?.unit_label ?? "")}
           </span>
           {row.status !== "verified" && row.status !== "disqualified" && row.visibility !== "friends_only" && (
             <span className="rounded-full bg-koth-red/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
