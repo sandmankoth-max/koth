@@ -75,19 +75,19 @@ function Profile() {
   });
 
   return (
-    <div className="space-y-5">
-      {/* Settings gear */}
+    <div className="space-y-3">
+      {/* Settings gear (icon only, no border) */}
       <div className="flex justify-end">
         <button
           onClick={() => setSettingsOpen(true)}
           aria-label="Settings"
-          className="tap-44 inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-foreground"
+          className="tap-44 inline-flex h-8 w-8 items-center justify-center text-foreground"
         >
           <Settings className="h-5 w-5" />
         </button>
       </div>
 
-      {/* Centered identity */}
+      {/* Centered identity — compact */}
       <section className="flex flex-col items-center text-center">
         <button
           onClick={() => fileRef.current?.click()}
@@ -97,30 +97,30 @@ function Profile() {
           <Avatar
             name={profile?.display_name ?? profile?.username ?? "?"}
             avatarPath={profile?.avatar_url}
-            size={104}
+            size={72}
           />
-          <span className="absolute -bottom-1 -right-1 inline-flex h-8 w-8 items-center justify-center rounded-full bg-koth-red text-koth-white ring-2 ring-background">
-            <Camera className="h-4 w-4" aria-hidden />
+          <span className="absolute -bottom-1 -right-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-koth-red text-koth-white ring-2 ring-background">
+            <Camera className="h-3 w-3" aria-hidden />
           </span>
         </button>
         <input ref={fileRef} type="file" accept="image/*" capture="user" className="hidden" onChange={onPickAvatar} />
 
-        <h1 className="mt-3 text-lg font-bold text-foreground">{profile?.display_name}</h1>
-        <p className="text-sm text-muted-foreground">@{profile?.username}</p>
-        {uploading && <p className="mt-1 text-[11px] text-muted-foreground">Uploading…</p>}
+        <h1 className="mt-2 text-base font-bold text-foreground">{profile?.display_name}</h1>
+        <p className="text-xs text-muted-foreground">@{profile?.username}</p>
+        {uploading && <p className="mt-1 text-[10px] text-muted-foreground">Uploading…</p>}
 
         {/* Friends count */}
         <button
           onClick={() => setFriendsOpen(true)}
-          className="tap-44 mt-3 inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-1.5 text-sm font-semibold text-foreground"
+          className="tap-44 mt-2 inline-flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-foreground"
         >
-          <Users className="h-4 w-4 text-koth-red" />
+          <Users className="h-3.5 w-3.5 text-koth-red" />
           <span className="mono-stat font-bold">{friendCountQ.data ?? 0}</span>
           <span className="text-muted-foreground">friends</span>
         </button>
 
-        {/* Bio */}
-        <div className="mt-4 w-full max-w-xs">
+        {/* Bio — narrower, smaller */}
+        <div className="mt-2 w-full max-w-[240px]">
           {editingBio ? (
             <div className="space-y-2">
               <Textarea
@@ -128,22 +128,22 @@ function Profile() {
                 onChange={(e) => setBioDraft(e.target.value)}
                 placeholder="Tell people what you're about…"
                 maxLength={160}
-                rows={3}
-                className="resize-none rounded-2xl text-sm"
+                rows={2}
+                className="resize-none rounded-2xl text-xs"
               />
               <div className="flex justify-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => { setBioDraft(profile?.bio ?? ""); setEditingBio(false); }} className="rounded-full">
+                <Button variant="outline" size="sm" onClick={() => { setBioDraft(profile?.bio ?? ""); setEditingBio(false); }} className="h-7 rounded-full text-xs">
                   Cancel
                 </Button>
-                <Button size="sm" onClick={saveBio} className="rounded-full bg-koth-red text-koth-white hover:bg-koth-red/90">
-                  <Check className="mr-1 h-3.5 w-3.5" /> Save
+                <Button size="sm" onClick={saveBio} className="h-7 rounded-full bg-koth-red text-koth-white hover:bg-koth-red/90 text-xs">
+                  <Check className="mr-1 h-3 w-3" /> Save
                 </Button>
               </div>
             </div>
           ) : (
-            <button onClick={() => setEditingBio(true)} className="tap-44 flex w-full items-center justify-center gap-2 text-center text-sm text-foreground/85">
-              <span>{profile?.bio || <span className="text-muted-foreground">Add a bio…</span>}</span>
-              <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+            <button onClick={() => setEditingBio(true)} className="tap-44 flex w-full items-center justify-center gap-2 text-center text-xs text-foreground/85">
+              <span className="line-clamp-2">{profile?.bio || <span className="text-muted-foreground">Add a bio…</span>}</span>
+              <Pencil className="h-3 w-3 text-muted-foreground" />
             </button>
           )}
         </div>
