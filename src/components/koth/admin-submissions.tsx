@@ -2,19 +2,24 @@
  * Admin Submissions gallery + scrolling grading feed.
  * - Pick a challenge, filter by Pending / Verified / Suspended.
  * - Grid of public submissions (friends-only excluded) with username caption.
- * - Click a thumb to enter a vertical TikTok-style grading scroller for that filter.
- *   In-feed actions: enter value + Verify, Suspend (with reason), Ban user.
+ * - Click a thumb → vertical snap-scroll grading feed (same UX as friends feed).
+ *   In-feed actions: enter adjusted value + Verify, Suspend (in-app dialog), Ban user.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar } from "@/components/koth/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { VideoThumb } from "@/components/koth/video-thumb";
 import { getVideoSignedUrl, formatValue } from "@/lib/koth-utils";
-import { X } from "lucide-react";
+import { X, CheckCircle2, Ban, ShieldX } from "lucide-react";
 import { toast } from "sonner";
 
 type Status = "pending_review" | "verified" | "disqualified";
@@ -139,19 +144,19 @@ function AdminGradingFeed({
   onClose: () => void;
   onChanged: () => void;
 }) {
-  const [index, setIndex] = useState(startIndex);
   const scrollerRef = useRef<HTMLDivElement>(null);
 
-  // Scroll to the starting index on mount.
   useEffect(() => {
-    const el = scrollerRef.current?.children?.[startIndex] as HTMLElement | undefined;
-    el?.scrollIntoView({ block: "start" });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const id = window.setTimeout(() => {
+      const el = scrollerRef.current?.children?.[startIndex] as HTMLElement | undefined;
+      el?.scrollIntoView({ block: "start" });
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [startIndex]);
 
   return (
     <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent className="h-[100dvh] w-screen max-w-none gap-0 border-0 bg-black p-0 sm:rounded-none [&>button]:hidden">
+      <DialogContent className="fixed left-1/2 top-1/2 h-[100dvh] w-screen max-w-md -translate-x-1/2 -translate-y-1/2 gap-0 border-0 bg-black p-0 sm:rounded-none [&>button]:hidden">
         <DialogTitle className="sr-only">Admin grading — {challenge.title}</DialogTitle>
         <button
           onClick={onClose}
@@ -165,14 +170,12 @@ function AdminGradingFeed({
           className="h-[100dvh] w-full snap-y snap-mandatory overflow-y-auto overscroll-y-contain bg-black"
           style={{ scrollSnapType: "y mandatory", WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}
         >
-          {subs.map((s, i) => (
+          {subs.map((s) => (
             <AdminGradeSlide
               key={s.id}
               s={s}
               challenge={challenge}
-              active={i === index}
               scrollRoot={scrollerRef}
-              onVisible={() => setIndex(i)}
               onChanged={onChanged}
             />
           ))}
@@ -183,13 +186,11 @@ function AdminGradingFeed({
 }
 
 function AdminGradeSlide({
-  s, challenge, active, scrollRoot, onVisible, onChanged,
+  s, challenge, scrollRoot, onChanged,
 }: {
   s: any;
   challenge: any;
-  active: boolean;
   scrollRoot: React.RefObject<HTMLDivElement | null>;
-  onVisible: () => void;
   onChanged: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -200,21 +201,20 @@ function AdminGradeSlide({
     s.admin_verified_value?.toString() ?? s.self_reported_value?.toString() ?? "",
   );
   const [busy, setBusy] = useState(false);
+  const [suspendOpen, setSuspendOpen] = useState(false);
+  const [banOpen, setBanOpen] = useState(false);
+  const [reason, setReason] = useState("");
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
     const io = new IntersectionObserver(
-      (entries) => entries.forEach((e) => {
-        const vis = e.intersectionRatio > 0.6;
-        setVisible(vis);
-        if (vis) onVisible();
-      }),
+      (entries) => entries.forEach((e) => setVisible(e.intersectionRatio > 0.6)),
       { root: scrollRoot.current, threshold: [0, 0.6, 1] },
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [scrollRoot, onVisible]);
+  }, [scrollRoot]);
 
   useEffect(() => {
     if (!visible || url) return;
@@ -243,31 +243,29 @@ function AdminGradeSlide({
     else { toast.success("Verified"); onChanged(); }
   }
 
-  async function suspend() {
-    const reason = window.prompt("Reason for suspending? (sent to user)", "") ?? "";
-    if (reason === null) return;
+  async function confirmSuspend() {
     setBusy(true);
     const { error } = await supabase.rpc("admin_disqualify_submission" as any, {
       p_submission_id: s.id,
       p_reason: reason.trim() || null,
     });
     setBusy(false);
+    setSuspendOpen(false);
+    setReason("");
     if (error) toast.error(error.message);
     else { toast.success("Suspended"); onChanged(); }
   }
 
-  async function ban() {
-    const reason = window.prompt(
-      `Ban @${s.profiles?.username}? Reason:`,
-      "Inappropriate content",
-    );
-    if (!reason) return;
+  async function confirmBan() {
+    if (!reason.trim()) { toast.error("Enter a reason"); return; }
     setBusy(true);
     const { error } = await supabase.rpc("admin_ban_user" as any, {
       p_user_id: s.user_id,
-      p_reason: reason,
+      p_reason: reason.trim(),
     });
     setBusy(false);
+    setBanOpen(false);
+    setReason("");
     if (error) toast.error(error.message);
     else { toast.success(`Banned @${s.profiles?.username}`); onChanged(); }
   }
@@ -285,59 +283,128 @@ function AdminGradeSlide({
       )}
 
       {/* Top: status + user */}
-      <div className="absolute inset-x-0 top-0 z-10 flex items-center gap-2 bg-gradient-to-b from-black/70 to-transparent px-4 pt-12 pb-3 text-white">
-        <Avatar name={s.profiles?.display_name ?? s.profiles?.username} avatarPath={s.profiles?.avatar_url} size={32} />
+      <div className="absolute inset-x-0 top-0 z-10 flex items-center gap-2 bg-gradient-to-b from-black/75 to-transparent px-4 pt-12 pb-4 text-white">
+        <Avatar name={s.profiles?.display_name ?? s.profiles?.username} avatarPath={s.profiles?.avatar_url} size={36} />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold">@{s.profiles?.username}</p>
+          <p className="truncate text-sm font-bold">@{s.profiles?.username}</p>
           <p className="text-[11px] text-white/70">
-            Reported: <span className="mono-stat font-bold">{formatValue(Number(s.self_reported_value ?? 0), challenge.unit_type, challenge.unit_label)}</span>
+            Reported{" "}
+            <span className="mono-stat font-bold text-white">
+              {formatValue(Number(s.self_reported_value ?? 0), challenge.unit_type, challenge.unit_label)}
+            </span>
           </p>
         </div>
         <span className={`pill ${
           s.status === "verified" ? "bg-koth-pr-bg text-koth-pr-text" :
           s.status === "disqualified" ? "bg-koth-red text-white" :
           "bg-white/20 text-white"
-        }`}>{s.status === "pending_review" ? "Pending" : s.status === "verified" ? "Verified" : "Suspended"}</span>
+        }`}>
+          {s.status === "pending_review" ? "Pending" : s.status === "verified" ? "Verified" : "Suspended"}
+        </span>
       </div>
 
       {/* Bottom: actions */}
-      <div className="absolute inset-x-0 bottom-0 z-10 space-y-2 bg-gradient-to-t from-black/85 to-transparent px-3 pb-6 pt-4">
-        <div className="flex items-center gap-2">
+      <div className="absolute inset-x-0 bottom-0 z-10 space-y-3 bg-gradient-to-t from-black/90 via-black/70 to-transparent px-4 pb-7 pt-6">
+        <div className="flex items-center gap-2 rounded-2xl border border-white/15 bg-white/5 p-2 backdrop-blur">
           <Input
             type="number"
             step="any"
             value={value}
             onChange={(e) => setValue(e.target.value)}
             placeholder="Adjusted value"
-            className="h-10 flex-1 rounded-full bg-white/10 text-white placeholder:text-white/50 border-white/20"
+            className="h-10 flex-1 rounded-full border-0 bg-transparent px-3 text-white placeholder:text-white/50 focus-visible:ring-0"
           />
           <Button
             onClick={verify}
             disabled={busy}
-            className="h-10 rounded-full bg-koth-pr-bg text-koth-pr-text hover:bg-koth-pr-bg/90"
+            className="h-10 rounded-full bg-koth-pr-bg px-4 text-koth-pr-text hover:bg-koth-pr-bg/90"
           >
-            Verify
+            <CheckCircle2 className="mr-1.5 h-4 w-4" /> Verify
           </Button>
         </div>
-        <div className="flex gap-2">
-          <Button
-            onClick={suspend}
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => { setReason(""); setSuspendOpen(true); }}
             disabled={busy}
-            variant="outline"
-            className="h-10 flex-1 rounded-full border-koth-red bg-transparent text-koth-red hover:bg-koth-red hover:text-white"
+            className="tap-44 flex items-center justify-center gap-1.5 rounded-full border border-koth-red bg-koth-red/15 py-2.5 text-sm font-bold text-koth-red backdrop-blur hover:bg-koth-red hover:text-white"
           >
-            Suspend
-          </Button>
-          <Button
-            onClick={ban}
+            <ShieldX className="h-4 w-4" /> Suspend
+          </button>
+          <button
+            onClick={() => { setReason("Inappropriate content"); setBanOpen(true); }}
             disabled={busy}
-            variant="outline"
-            className="h-10 flex-1 rounded-full border-koth-red bg-transparent text-koth-red hover:bg-koth-red hover:text-white"
+            className="tap-44 flex items-center justify-center gap-1.5 rounded-full border border-white/30 bg-white/5 py-2.5 text-sm font-bold text-white backdrop-blur hover:bg-koth-red hover:border-koth-red"
           >
-            Ban user
-          </Button>
+            <Ban className="h-4 w-4" /> Ban user
+          </button>
         </div>
       </div>
+
+      <ReasonDialog
+        open={suspendOpen}
+        onOpenChange={setSuspendOpen}
+        title="Suspend this submission?"
+        description="The reason you enter will be sent to the user in their notification center."
+        confirmLabel="Suspend"
+        reason={reason}
+        setReason={setReason}
+        onConfirm={confirmSuspend}
+        busy={busy}
+      />
+      <ReasonDialog
+        open={banOpen}
+        onOpenChange={setBanOpen}
+        title={`Ban @${s.profiles?.username}?`}
+        description="This disqualifies their entries and permanently blocks the username from being reused."
+        confirmLabel="Ban user"
+        reason={reason}
+        setReason={setReason}
+        onConfirm={confirmBan}
+        busy={busy}
+      />
     </div>
+  );
+}
+
+export function ReasonDialog({
+  open, onOpenChange, title, description, confirmLabel, reason, setReason, onConfirm, busy,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  title: string;
+  description: string;
+  confirmLabel: string;
+  reason: string;
+  setReason: (r: string) => void;
+  onConfirm: () => void;
+  busy?: boolean;
+}) {
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <Textarea
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          placeholder="Reason (sent to user)"
+          rows={3}
+          className="resize-none rounded-xl"
+          autoFocus
+        />
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={busy}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={(e) => { e.preventDefault(); onConfirm(); }}
+            disabled={busy}
+            className="bg-koth-red text-koth-white hover:bg-koth-red/90"
+          >
+            {busy ? "…" : confirmLabel}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

@@ -16,6 +16,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { RankBadge } from "@/components/koth/rank-badge";
 import { Avatar } from "@/components/koth/avatar";
 import { formatValue, getVideoSignedUrl } from "@/lib/koth-utils";
@@ -687,61 +691,150 @@ function EditChallenge() {
 
 function SendNotification() {
   const [mode, setMode] = useState<"user" | "all">("user");
-  const [username, setUsername] = useState("");
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<any[]>([]);
+  const [picked, setPicked] = useState<{ id: string; username: string; display_name: string | null; avatar_url: string | null } | null>(null);
+  const [showResults, setShowResults] = useState(false);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [broadcastOpen, setBroadcastOpen] = useState(false);
 
-  async function send() {
+  // Username autocomplete (debounced) — same shape as the friends search.
+  useEffect(() => {
+    if (mode !== "user") return;
+    const q = query.trim().toLowerCase().replace(/^@/, "");
+    if (q.length < 1) { setResults([]); return; }
+    const t = setTimeout(async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, username, display_name, avatar_url")
+        .ilike("username", `%${q}%`)
+        .limit(8);
+      setResults(data ?? []);
+    }, 150);
+    return () => clearTimeout(t);
+  }, [query, mode]);
+
+  async function sendToUser() {
+    const msg = message.trim();
+    if (!msg) { toast.error("Enter a message"); return; }
+    if (!picked) { toast.error("Pick a user from the list"); return; }
+    setBusy(true);
+    try {
+      const { error } = await supabase.rpc("admin_send_notification" as any, {
+        p_user_id: picked.id, p_message: msg,
+      });
+      if (error) throw error;
+      toast.success(`Sent to @${picked.username}`);
+      setMessage(""); setQuery(""); setPicked(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed");
+    } finally { setBusy(false); }
+  }
+
+  async function sendBroadcast() {
     const msg = message.trim();
     if (!msg) { toast.error("Enter a message"); return; }
     setBusy(true);
     try {
-      if (mode === "all") {
-        if (!window.confirm("Broadcast this message to every user?")) { setBusy(false); return; }
-        const { data, error } = await supabase.rpc("admin_broadcast_notification" as any, { p_message: msg });
-        if (error) throw error;
-        toast.success(`Sent to ${data ?? 0} users`);
-      } else {
-        const u = username.trim().toLowerCase().replace(/^@/, "");
-        if (!u) { toast.error("Enter a username"); setBusy(false); return; }
-        const { data: prof, error: pErr } = await supabase
-          .from("profiles").select("id").eq("username", u).maybeSingle();
-        if (pErr) throw pErr;
-        if (!prof) { toast.error(`No user @${u}`); setBusy(false); return; }
-        const { error } = await supabase.rpc("admin_send_notification" as any, {
-          p_user_id: prof.id, p_message: msg,
-        });
-        if (error) throw error;
-        toast.success(`Sent to @${u}`);
-      }
+      const { data, error } = await supabase.rpc("admin_broadcast_notification" as any, { p_message: msg });
+      if (error) throw error;
+      toast.success(`Sent to ${data ?? 0} users`);
       setMessage("");
-      setUsername("");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed");
-    } finally {
-      setBusy(false);
-    }
+    } finally { setBusy(false); setBroadcastOpen(false); }
   }
 
   return (
     <div className="mt-4 space-y-3 rounded-3xl border border-border bg-card p-5">
-      <Tabs value={mode} onValueChange={(v) => setMode(v as any)}>
+      <Tabs value={mode} onValueChange={(v) => { setMode(v as any); setResults([]); setPicked(null); setQuery(""); }}>
         <TabsList className="w-full">
           <TabsTrigger value="user" className="flex-1">To one user</TabsTrigger>
           <TabsTrigger value="all" className="flex-1">Broadcast all</TabsTrigger>
         </TabsList>
       </Tabs>
+
       {mode === "user" && (
-        <Field label="Username">
-          <Input placeholder="username (no @)" value={username} onChange={(e) => setUsername(e.target.value)} />
+        <Field label="Recipient">
+          {picked ? (
+            <div className="flex items-center gap-3 rounded-2xl border border-border bg-background p-2">
+              <Avatar name={picked.display_name ?? picked.username} avatarPath={picked.avatar_url} size={32} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-foreground">{picked.display_name}</p>
+                <p className="truncate text-xs text-muted-foreground">@{picked.username}</p>
+              </div>
+              <Button variant="ghost" size="sm" className="rounded-full" onClick={() => { setPicked(null); setQuery(""); }}>
+                Change
+              </Button>
+            </div>
+          ) : (
+            <div className="relative">
+              <Input
+                placeholder="Search username…"
+                autoCapitalize="none"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onFocus={() => setShowResults(true)}
+                onBlur={() => setTimeout(() => setShowResults(false), 150)}
+                className="h-11 rounded-full"
+              />
+              {showResults && results.length > 0 && (
+                <div className="absolute inset-x-0 top-full z-20 mt-1 max-h-64 overflow-y-auto rounded-2xl border border-border bg-popover p-1 shadow-lg">
+                  {results.map((u) => (
+                    <button
+                      key={u.id}
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => { setPicked(u); setQuery(""); setResults([]); }}
+                      className="tap-44 flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-muted"
+                    >
+                      <Avatar name={u.display_name ?? u.username} avatarPath={u.avatar_url} size={32} />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-foreground">{u.display_name}</p>
+                        <p className="truncate text-xs text-muted-foreground">@{u.username}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </Field>
       )}
+
       <Field label="Message">
         <Textarea rows={4} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Type your notification…" />
       </Field>
-      <Button onClick={send} disabled={busy} className="tap-44 h-12 w-full rounded-full bg-koth-red text-koth-white">
+
+      <Button
+        onClick={mode === "all" ? () => setBroadcastOpen(true) : sendToUser}
+        disabled={busy}
+        className="tap-44 h-12 w-full rounded-full bg-koth-red text-koth-white"
+      >
         {busy ? "…" : mode === "all" ? "Send to everyone" : "Send"}
       </Button>
+
+      <AlertDialog open={broadcastOpen} onOpenChange={setBroadcastOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Broadcast to every user?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will deliver the notification to every account on the platform. Make sure the message is correct.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); sendBroadcast(); }}
+              disabled={busy}
+              className="bg-koth-red text-koth-white hover:bg-koth-red/90"
+            >
+              {busy ? "…" : "Send to everyone"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
