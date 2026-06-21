@@ -15,20 +15,6 @@ export const Route = createFileRoute("/_authenticated/feed")({
 function Feed() {
   const { user } = useAuth();
 
-  const challengeQ = useQuery({
-    queryKey: ["active-challenge"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("challenges")
-        .select("*")
-        .eq("status", "active")
-        .order("starts_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      return data;
-    },
-  });
-
   const friendsQ = useQuery({
     queryKey: ["friends", user?.id],
     enabled: !!user?.id,
@@ -43,15 +29,14 @@ function Feed() {
   });
 
   const feedQ = useQuery({
-    queryKey: ["feed", challengeQ.data?.id, friendsQ.data],
-    enabled: !!challengeQ.data && !!friendsQ.data && friendsQ.data.length > 0,
+    queryKey: ["feed", friendsQ.data],
+    enabled: !!friendsQ.data && friendsQ.data.length > 0,
     queryFn: async () => {
       const { data } = await supabase
         .from("submissions")
         .select(
-          "id, self_reported_value, admin_verified_value, video_path, submitted_at, profiles!submissions_user_id_fkey(username, display_name, avatar_url)",
+          "id, self_reported_value, admin_verified_value, video_path, submitted_at, challenge_id, profiles!submissions_user_id_fkey(username, display_name, avatar_url), challenges!submissions_challenge_id_fkey(title, unit_type, unit_label)",
         )
-        .eq("challenge_id", challengeQ.data!.id)
         .neq("status", "disqualified")
         .in("visibility", ["public", "friends_only"])
         .in("user_id", friendsQ.data!)
@@ -60,13 +45,11 @@ function Feed() {
     },
   });
 
-  const c = challengeQ.data;
-
   return (
     <div className="space-y-4">
       <section className="koth-stripe overflow-hidden rounded-3xl bg-koth-black p-5 text-koth-white">
         <p className="label-broadcast text-koth-white/60">Friends feed</p>
-        <h1 className="mt-1 text-xl font-bold">{c?.title ?? "No active challenge"}</h1>
+        <h1 className="mt-1 text-xl font-bold">Latest from your friends</h1>
         <Link
           to="/friends"
           className="tap-44 mt-3 inline-flex items-center rounded-full bg-koth-white/10 px-4 py-2 text-sm font-bold text-koth-white"
@@ -85,6 +68,7 @@ function Feed() {
 
       {feedQ.data?.map((s) => {
         const p = (s as any).profiles;
+        const ch = (s as any).challenges;
         return (
           <article key={s.id} className="overflow-hidden rounded-3xl border border-border bg-card">
             <div className="flex items-center gap-3 p-4">
@@ -92,10 +76,15 @@ function Feed() {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-foreground">{p?.display_name}</p>
                 <p className="truncate text-xs text-muted-foreground">@{p?.username}</p>
+                {ch?.title && (
+                  <p className="mt-1 inline-block rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    {ch.title}
+                  </p>
+                )}
               </div>
-              {c && (
+              {ch && (
                 <div className="mono-stat text-lg font-bold text-foreground">
-                  {formatValue(Number(s.admin_verified_value ?? s.self_reported_value), c.unit_type, c.unit_label)}
+                  {formatValue(Number(s.admin_verified_value ?? s.self_reported_value), ch.unit_type, ch.unit_label)}
                 </div>
               )}
             </div>
