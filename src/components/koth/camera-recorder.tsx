@@ -156,8 +156,8 @@ export function CameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
         </>
       )}
 
-      {/* Top overlay */}
-      <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-4 py-3">
+      {/* Top overlay: close left, timer centered, flip+flash stacked right */}
+      <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-between px-4 py-3">
         <button
           onClick={() => { stop(); onCancel(); }}
           className="tap-44 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur"
@@ -165,25 +165,19 @@ export function CameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
         >
           <X className="h-6 w-6" aria-hidden />
         </button>
-        {recording ? (
-          <span className="pill mono-stat bg-koth-red text-koth-white">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-koth-white" />
-            {mm}:{ss}{maxSeconds ? ` / ${String(Math.floor(maxSeconds/60)).padStart(2,"0")}:${String(maxSeconds%60).padStart(2,"0")}` : ""}
-          </span>
-        ) : maxSeconds ? (
-          <span className="pill mono-stat bg-black/40 text-koth-white backdrop-blur">
-            Max {Math.floor(maxSeconds/60)}:{String(maxSeconds%60).padStart(2,"0")}
-          </span>
-        ) : <span />}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setFlashOn((v) => !v)}
-            className={`tap-44 inline-flex h-10 w-10 items-center justify-center rounded-full backdrop-blur ${flashOn ? "bg-koth-white text-koth-black" : "bg-black/40 text-koth-white"}`}
-            aria-label={flashOn ? "Turn flash off" : "Turn flash on"}
-            aria-pressed={flashOn}
-          >
-            {flashOn ? <Zap className="h-5 w-5" fill="currentColor" /> : <ZapOff className="h-5 w-5" />}
-          </button>
+        <div className="pointer-events-none absolute inset-x-0 top-3 flex justify-center">
+          {recording ? (
+            <span className="pill mono-stat bg-koth-red text-koth-white">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-koth-white" />
+              {mm}:{ss}{maxSeconds ? ` / ${String(Math.floor(maxSeconds/60)).padStart(2,"0")}:${String(maxSeconds%60).padStart(2,"0")}` : ""}
+            </span>
+          ) : maxSeconds ? (
+            <span className="pill mono-stat bg-black/40 text-koth-white backdrop-blur">
+              Max {Math.floor(maxSeconds/60)}:{String(maxSeconds%60).padStart(2,"0")}
+            </span>
+          ) : null}
+        </div>
+        <div className="flex flex-col items-center gap-2">
           <button
             onClick={() => setFacing((f) => (f === "user" ? "environment" : "user"))}
             className="tap-44 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur disabled:opacity-50"
@@ -191,6 +185,14 @@ export function CameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
             disabled={recording}
           >
             <RefreshCcw className="h-6 w-6" aria-hidden />
+          </button>
+          <button
+            onClick={() => setFlashOn((v) => !v)}
+            className={`tap-44 inline-flex h-10 w-10 items-center justify-center rounded-full backdrop-blur ${flashOn ? "bg-koth-white text-koth-black" : "bg-black/40 text-koth-white"}`}
+            aria-label={flashOn ? "Turn flash off" : "Turn flash on"}
+            aria-pressed={flashOn}
+          >
+            {flashOn ? <Zap className="h-5 w-5" fill="currentColor" /> : <ZapOff className="h-5 w-5" />}
           </button>
         </div>
       </div>

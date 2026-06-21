@@ -501,25 +501,11 @@ function FeedVideo({ row, c, scrollRoot }: { row: any; c: any; scrollRoot: React
           <span className="mono-stat font-bold">
             {formatValue(val, c.unit_type, c.unit_label)}
           </span>
-          {row.status === "verified" && (
-            <span className="rounded-full bg-koth-pr-bg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-koth-pr-text">
-              Verified
-            </span>
-          )}
-          {row.status === "disqualified" && (
-            <span className="rounded-full bg-koth-red/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
-              Suspended
-            </span>
-          )}
-          {row.visibility === "friends_only" ? (
-            <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
-              Friends
-            </span>
-          ) : row.status !== "verified" && row.status !== "disqualified" ? (
+          {row.status !== "verified" && row.status !== "disqualified" && row.visibility !== "friends_only" && (
             <span className="rounded-full bg-koth-red/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
               Attempt
             </span>
-          ) : null}
+          )}
         </p>
       </div>
 

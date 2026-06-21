@@ -20,6 +20,7 @@ import { RankBadge } from "@/components/koth/rank-badge";
 import { Avatar } from "@/components/koth/avatar";
 import { formatValue, getVideoSignedUrl } from "@/lib/koth-utils";
 import { toast } from "sonner";
+import { AdminSubmissions } from "@/components/koth/admin-submissions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Admin — KOTH" }] }),
@@ -48,7 +49,7 @@ function Admin() {
         <TabsList className="w-full flex-wrap">
           <TabsTrigger value="create" className="flex-1">Create</TabsTrigger>
           <TabsTrigger value="edit" className="flex-1">Edit</TabsTrigger>
-          <TabsTrigger value="review" className="flex-1">Review</TabsTrigger>
+          <TabsTrigger value="review" className="flex-1">Submissions</TabsTrigger>
           <TabsTrigger value="results" className="flex-1">Results</TabsTrigger>
           <TabsTrigger value="notify" className="flex-1">Notify</TabsTrigger>
         </TabsList>
@@ -57,7 +58,7 @@ function Admin() {
           <ManageChallenges />
         </TabsContent>
         <TabsContent value="edit"><EditChallenge /></TabsContent>
-        <TabsContent value="review"><ReviewSubmissions /></TabsContent>
+        <TabsContent value="review"><AdminSubmissions /></TabsContent>
         <TabsContent value="results"><MarkPaid /></TabsContent>
         <TabsContent value="notify"><SendNotification /></TabsContent>
       </Tabs>
