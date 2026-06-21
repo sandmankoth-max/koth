@@ -19,7 +19,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { VideoThumb } from "@/components/koth/video-thumb";
 import { getVideoSignedUrl, formatValue } from "@/lib/koth-utils";
-import { X, CheckCircle2, Ban, ShieldX } from "lucide-react";
+import { X, CheckCircle2, Ban, ShieldX, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 type Status = "pending_review" | "verified" | "disqualified";
