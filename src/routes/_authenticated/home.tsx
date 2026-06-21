@@ -375,7 +375,7 @@ function RankNotifications() {
       .select("id, type, payload")
       .eq("user_id", user.id)
       .eq("read", false)
-      .in("type", ["overtaken", "podium_lost", "podium_gained"])
+      .in("type", ["podium_lost", "podium_gained"])
       .order("created_at", { ascending: false })
       .limit(3)
       .then(({ data }) => {
