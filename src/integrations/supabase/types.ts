@@ -555,6 +555,10 @@ export type Database = {
         Args: { p_message: string }
         Returns: number
       }
+      admin_delete_submission: {
+        Args: { p_submission_id: string }
+        Returns: undefined
+      }
       admin_disqualify_submission:
         | { Args: { p_submission_id: string }; Returns: undefined }
         | {
