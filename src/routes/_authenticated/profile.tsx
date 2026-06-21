@@ -8,13 +8,19 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Settings, LogOut, Camera, FileText, ShieldCheck, Pencil, Check,
-  Bell, Users,
+  Bell, Users, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { TikTokPlayer, type PlayerItem } from "@/components/koth/tiktok-player";
 import { VideoThumb } from "@/components/koth/video-thumb";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useServerFn } from "@tanstack/react-start";
+import { deleteOwnAccount } from "@/lib/account.functions";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({ meta: [{ title: "Profile — KOTH" }] }),
