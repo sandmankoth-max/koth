@@ -431,3 +431,80 @@ function RankNotifications() {
     </div>
   );
 }
+
+function WinnersBanner() {
+  const { user } = useAuth();
+  const [items, setItems] = useState<{ id: string; payload: any }[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+    supabase
+      .from("notifications")
+      .select("id, payload")
+      .eq("user_id", user.id)
+      .eq("read", false)
+      .eq("type", "winners_announcement")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .then(({ data }) => {
+        if (active) setItems(data ?? []);
+      });
+    return () => {
+      active = false;
+    };
+  }, [user]);
+
+  async function dismiss(id: string) {
+    setItems((cur) => cur.filter((x) => x.id !== id));
+    await supabase.from("notifications").update({ read: true }).eq("id", id);
+  }
+
+  if (items.length === 0) return null;
+
+  return (
+    <div className="flex flex-col gap-2">
+      {items.map((n) => {
+        const p = n.payload ?? {};
+        const podium: Array<{ label: string; username?: string; amount?: number; tone: string }> = [
+          { label: "1st", username: p.first_username, amount: Number(p.first_amount ?? 0), tone: "bg-koth-red text-koth-white" },
+          { label: "2nd", username: p.second_username, amount: Number(p.second_amount ?? 0), tone: "bg-koth-silver text-koth-black" },
+          { label: "3rd", username: p.third_username, amount: Number(p.third_amount ?? 0), tone: "bg-koth-bronze text-koth-white" },
+        ];
+        return (
+          <section
+            key={n.id}
+            className="koth-stripe relative overflow-hidden rounded-3xl bg-koth-black p-4 text-koth-white"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Trophy className="h-4 w-4 text-koth-red" aria-hidden />
+                <p className="label-broadcast text-koth-white/70">Winners announced</p>
+              </div>
+              <button
+                onClick={() => dismiss(n.id)}
+                aria-label="Dismiss"
+                className="tap-44 -mr-2 -mt-2 inline-flex items-center justify-center rounded-full p-2 text-koth-white/70 hover:text-koth-white"
+              >
+                <X className="h-4 w-4" aria-hidden />
+              </button>
+            </div>
+            <h2 className="mt-1 text-lg font-bold leading-tight">Congrats to the podium</h2>
+            <div className="mt-3 grid grid-cols-3 gap-1.5">
+              {podium.map((r) => (
+                <div key={r.label} className={`rounded-xl px-2.5 py-2 ${r.tone}`}>
+                  <p className="label-broadcast text-[10px] opacity-80">{r.label}</p>
+                  <p className="mono-stat text-base font-bold leading-tight">${r.amount}</p>
+                  <p className="truncate text-[11px] font-semibold opacity-90">@{r.username}</p>
+                </div>
+              ))}
+            </div>
+            {p.note && (
+              <p className="mt-3 text-xs text-koth-white/80">{p.note}</p>
+            )}
+          </section>
+        );
+      })}
+    </div>
+  );
+}
