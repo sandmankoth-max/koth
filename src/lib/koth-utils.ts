@@ -18,7 +18,11 @@ export function formatValue(value: number | null | undefined, unitType: string, 
     const isInt = total % 1 === 0;
     return `${total.toFixed(isInt ? 0 : 2)}s`;
   }
-  if (unitType === "count_reps") return `${Math.round(Number(value))}`;
+  if (unitType === "count_reps") {
+    const n = Math.round(Number(value));
+    const label = (unitLabel || "reps").trim();
+    return `${n} ${label}`;
+  }
   return `${value} ${unitLabel}`;
 }
 
