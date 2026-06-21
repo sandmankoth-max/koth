@@ -21,7 +21,7 @@ export function BottomNav() {
     queryFn: async () => {
       const { data } = await supabase
         .from("challenges")
-        .select("id")
+        .select("id, ends_at")
         .eq("status", "active")
         .limit(1)
         .maybeSingle();
@@ -30,7 +30,8 @@ export function BottomNav() {
     refetchInterval: 60_000,
   });
 
-  const recordingDisabled = !activeChallenge;
+  const recordingDisabled =
+    !activeChallenge || new Date(activeChallenge.ends_at).getTime() <= Date.now();
 
   return (
     <nav
