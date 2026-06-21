@@ -618,6 +618,15 @@ export type Database = {
             Args: { p_reason?: string; p_submission_id: string }
             Returns: undefined
           }
+      admin_get_profile_moderation: {
+        Args: { p_user_id: string }
+        Returns: {
+          banned: boolean
+          banned_at: string
+          banned_reason: string
+          user_id: string
+        }[]
+      }
       admin_restore_submission: {
         Args: { p_submission_id: string }
         Returns: undefined
