@@ -20,6 +20,7 @@ import { RankBadge } from "@/components/koth/rank-badge";
 import { Avatar } from "@/components/koth/avatar";
 import { formatValue, getVideoSignedUrl } from "@/lib/koth-utils";
 import { toast } from "sonner";
+import { AdminSubmissions } from "@/components/koth/admin-submissions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Admin — KOTH" }] }),
