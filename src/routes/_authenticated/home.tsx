@@ -344,13 +344,19 @@ function TopThreePreview({
 
 function EmptyState() {
   return (
-    <div className="rounded-3xl border border-dashed border-border bg-card p-8 text-center">
-      <p className="label-broadcast text-muted-foreground">No active challenge</p>
-      <h2 className="mt-2 text-lg font-bold text-foreground">Stand by</h2>
-      <p className="mt-1 text-sm text-muted-foreground">
-        A new challenge drops every Monday at 10am.
+    <section className="koth-stripe relative overflow-hidden rounded-3xl bg-koth-black p-5 text-koth-white">
+      <p className="label-broadcast text-koth-white/60">This week's challenge</p>
+      <h1 className="mt-1 text-2xl font-bold leading-tight">Closed</h1>
+      <p className="mt-3 text-sm text-koth-white/80">
+        New challenge drops Monday at 10am. Check the leaderboard to see how this week shook out.
       </p>
-    </div>
+      <Link
+        to="/leaderboard"
+        className="mt-4 inline-flex tap-44 items-center justify-center rounded-full bg-koth-red px-5 py-2.5 text-sm font-bold text-koth-white"
+      >
+        View leaderboard →
+      </Link>
+    </section>
   );
 }
 
