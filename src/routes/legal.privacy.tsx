@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { LegalNotice } from "@/components/koth/legal-notice";
 
 export const Route = createFileRoute("/legal/privacy")({
   head: () => ({ meta: [{ title: "Privacy Policy — KOTH" }] }),
@@ -7,7 +6,6 @@ export const Route = createFileRoute("/legal/privacy")({
     <article className="mt-4 space-y-4">
       <header>
         <h1 className="text-2xl font-bold text-foreground">Privacy Policy</h1>
-        <LegalNotice />
       </header>
       <Section title="What we collect">
         Username, display name, password (hashed), date of birth, age-consent acknowledgment, optional

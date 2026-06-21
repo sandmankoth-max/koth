@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { LegalNotice } from "@/components/koth/legal-notice";
 
 export const Route = createFileRoute("/legal/rules")({
   head: () => ({ meta: [{ title: "Official Rules — KOTH" }] }),
@@ -7,7 +6,6 @@ export const Route = createFileRoute("/legal/rules")({
     <article className="mt-4 space-y-4">
       <header>
         <h1 className="text-2xl font-bold text-foreground">Official Rules</h1>
-        <LegalNotice />
       </header>
       <Section title="Eligibility">
         You must be 13 or older to create an account on KOTH. If you are between 13 and 17, you confirm at
@@ -15,9 +13,10 @@ export const Route = createFileRoute("/legal/rules")({
         for any cash or gift card prize.
       </Section>
       <Section title="How challenges work">
-        A new physical challenge is posted every Monday at 10:00am local time and closes the following Sunday
-        at 8:00pm. You may record and submit as many attempts as you want before the deadline. Only your most
-        recent submission counts toward your leaderboard position.
+        Challenges usually start Monday at 10:00am local time and close the following Sunday at 5:00pm,
+        though the exact schedule can change depending on the challenge — always check the in-app countdown
+        for the active challenge. You may record and submit as many attempts as you want before the deadline.
+        Only your most recent submission counts toward your leaderboard position.
       </Section>
       <Section title="Recording requirements">
         Every submission must be recorded live using the in-app camera. Uploads from your camera roll are not
@@ -30,9 +29,8 @@ export const Route = createFileRoute("/legal/rules")({
         these rules.
       </Section>
       <Section title="Prizes">
-        Default prizes are $100 / $20 / $10 for 1st / 2nd / 3rd. Prize amounts can vary per challenge and will
-        always be displayed in-app before the challenge closes. Prizes are paid manually outside the app
-        within a reasonable time after results are finalized.
+        Prize amounts vary per challenge and will always be displayed in-app before the challenge closes.
+        Prizes are paid manually outside the app within a reasonable time after results are finalized.
       </Section>
       <Section title="Ties">
         Ties are resolved by an admin based on closer review of the submissions. An admin may also choose to

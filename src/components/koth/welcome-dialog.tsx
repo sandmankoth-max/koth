@@ -40,8 +40,9 @@ export function WelcomeDialog() {
         <DialogHeader>
           <DialogTitle className="text-xl">Welcome to KOTH</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
-            A new physical challenge drops every Monday at 10am. Record your
-            attempt, climb the leaderboard, and the top 3 win cash by Sunday 8pm.
+            Challenges usually drop Monday at 10am and close Sunday at 5pm —
+            timing can shift per challenge. Record your attempt, climb the
+            leaderboard, and the top 3 win cash.
           </DialogDescription>
         </DialogHeader>
         <ul className="mt-2 space-y-2 text-sm text-foreground">
