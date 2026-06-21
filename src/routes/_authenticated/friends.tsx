@@ -166,7 +166,7 @@ function FeedTab({ tab, setTab, onAdd }: { tab: Tab; setTab: (t: Tab) => void; o
           </div>
         ) : (
           <div className="rounded-3xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
-            No videos yet from your friends in this challenge.
+            No videos yet from your friends.
           </div>
         )}
       </div>
