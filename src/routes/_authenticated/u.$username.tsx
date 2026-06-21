@@ -99,36 +99,37 @@ function UserProfile() {
   }));
 
   return (
-    <div className="space-y-5">
-      <button onClick={() => navigate({ to: "/feed" })} className="tap-44 -ml-2 inline-flex items-center gap-1 text-sm text-muted-foreground">
-        <ArrowLeft className="h-4 w-4" /> Back
-      </button>
-
-      <section className="flex flex-col items-center text-center">
-        <Avatar name={p.display_name ?? p.username} avatarPath={p.avatar_url} size={104} />
-        <h1 className="mt-3 text-lg font-bold text-foreground">{p.display_name}</h1>
-        <p className="text-sm text-muted-foreground">@{p.username}</p>
-
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <button onClick={() => navigate({ to: "/feed" })} className="tap-44 -ml-2 inline-flex items-center gap-1 text-sm text-muted-foreground">
+          <ArrowLeft className="h-4 w-4" /> Back
+        </button>
         <button
           onClick={() => { if (canSeeAll) setFriendsOpen(true); else toast.message("Add as friend to see their friends list"); }}
-          className="tap-44 mt-3 inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-1.5 text-sm font-semibold text-foreground"
+          className="tap-44 inline-flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-[11px] font-semibold text-foreground"
         >
-          <Users className="h-4 w-4 text-koth-red" />
+          <Users className="h-3 w-3 text-koth-red" />
           <span className="mono-stat font-bold">{countsQ.data ?? 0}</span>
           <span className="text-muted-foreground">friends</span>
           {!canSeeAll && <Lock className="h-3 w-3 text-muted-foreground" />}
         </button>
+      </div>
 
-        {canSeeAll && p.bio && <p className="mt-3 max-w-xs text-sm text-foreground/85">{p.bio}</p>}
+      <section className="flex flex-col items-center text-center">
+        <Avatar name={p.display_name ?? p.username} avatarPath={p.avatar_url} size={72} />
+        <h1 className="mt-2 text-base font-bold text-foreground">{p.display_name}</h1>
+        <p className="text-xs text-muted-foreground">@{p.username}</p>
+
+        {canSeeAll && p.bio && <p className="mt-2 max-w-[240px] text-xs text-foreground/85 line-clamp-2">{p.bio}</p>}
 
         {!isSelf && (
-          <div className="mt-4 w-full max-w-xs">
+          <div className="mt-3 w-full max-w-xs">
             {friendQ.data?.status === "accepted" ? (
               <span className="pill bg-koth-pr-bg text-koth-pr-text">Friends</span>
             ) : friendQ.data?.status === "pending" ? (
               <span className="pill bg-muted text-muted-foreground">Request pending</span>
             ) : (
-              <Button onClick={sendRequest} className="tap-44 h-11 w-full rounded-full bg-koth-red text-koth-white hover:bg-koth-red/90">
+              <Button onClick={sendRequest} className="tap-44 h-10 w-full rounded-full bg-koth-red text-koth-white hover:bg-koth-red/90 text-sm">
                 <UserPlus className="mr-2 h-4 w-4" /> Add friend
               </Button>
             )}
