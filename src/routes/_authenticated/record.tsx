@@ -94,7 +94,7 @@ function Record() {
           user_id: user.id,
           challenge_id: challenge.id,
           video_path: path,
-          self_reported_value: Number(reportedValue),
+          self_reported_value: Math.round(Number(reportedValue) * 10) / 10,
           visibility: visibility ?? "public",
         })
         .select("id")
