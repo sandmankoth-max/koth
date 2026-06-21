@@ -271,6 +271,15 @@ function AdminGradeSlide({
     else { toast.success(`Banned @${s.profiles?.username}`); onChanged(); }
   }
 
+  async function confirmDelete() {
+    setBusy(true);
+    const { error } = await supabase.rpc("admin_delete_submission" as any, { p_submission_id: s.id });
+    setBusy(false);
+    setDeleteOpen(false);
+    if (error) toast.error(error.message);
+    else { toast.success("Video deleted"); onChanged(); }
+  }
+
   return (
     <div
       ref={containerRef}
