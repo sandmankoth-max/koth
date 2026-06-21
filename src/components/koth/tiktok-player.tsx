@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,7 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Heart, MessageCircle, Share2, X, Play, Trash2, ArrowLeft } from "lucide-react";
+import { Heart, MessageCircle, Share2, Play, Trash2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -55,6 +54,15 @@ type Props = {
 export function TikTokPlayer({ items, startIndex = 0, open, onOpenChange }: Props) {
   const scrollerRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onOpenChange(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, onOpenChange]);
+
   // Jump to startIndex when the player opens.
   useEffect(() => {
     if (!open) return;
@@ -68,34 +76,31 @@ export function TikTokPlayer({ items, startIndex = 0, open, onOpenChange }: Prop
     return () => window.clearTimeout(id);
   }, [open, startIndex]);
 
-  if (!items.length) return null;
+  if (!items.length || !open) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="h-[100dvh] w-screen max-w-none gap-0 border-0 bg-black p-0 sm:rounded-none [&>button]:hidden">
-        <DialogTitle className="sr-only">Videos</DialogTitle>
-        <button
-          onClick={() => onOpenChange(false)}
-          aria-label="Back"
-          className="tap-44 absolute left-3 top-3 z-50 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <div
-          ref={scrollerRef}
-          className="h-[100dvh] w-full snap-y snap-mandatory overflow-y-auto overscroll-y-contain bg-black"
-          style={{
-            scrollSnapType: "y mandatory",
-            WebkitOverflowScrolling: "touch",
-            scrollbarWidth: "none",
-          }}
-        >
-          {items.map((it) => (
-            <PlayerSlide key={it.id} item={it} scrollRoot={scrollerRef} onClose={() => onOpenChange(false)} />
-          ))}
-        </div>
-      </DialogContent>
-    </Dialog>
+    <div className="fixed inset-x-0 top-14 bottom-16 z-20 bg-black" role="dialog" aria-modal="true" aria-label="Videos">
+      <button
+        onClick={() => onOpenChange(false)}
+        aria-label="Back"
+        className="tap-44 absolute left-3 top-3 z-50 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur"
+      >
+        <ArrowLeft className="h-5 w-5" />
+      </button>
+      <div
+        ref={scrollerRef}
+        className="h-full w-full snap-y snap-mandatory overflow-y-auto overscroll-y-contain bg-black"
+        style={{
+          scrollSnapType: "y mandatory",
+          WebkitOverflowScrolling: "touch",
+          scrollbarWidth: "none",
+        }}
+      >
+        {items.map((it) => (
+          <PlayerSlide key={it.id} item={it} scrollRoot={scrollerRef} onClose={() => onOpenChange(false)} />
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -224,7 +229,7 @@ function PlayerSlide({
     <div
       ref={containerRef}
       className="relative w-full snap-start snap-always bg-black"
-      style={{ height: "100dvh", minHeight: "100dvh", scrollSnapStop: "always" }}
+      style={{ height: "100%", minHeight: "100%", scrollSnapStop: "always" }}
     >
       <button
         type="button"
