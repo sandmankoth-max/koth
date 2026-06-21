@@ -15,6 +15,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
+import { useNativePush } from "@/hooks/use-native-push";
 
 function NotFoundComponent() {
   return (
@@ -130,12 +131,18 @@ function AuthRefetcher() {
   return null;
 }
 
+function NativePushBridge() {
+  useNativePush();
+  return null;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <AuthRefetcher />
+        <NativePushBridge />
         <Outlet />
         <Toaster position="top-center" />
       </AuthProvider>
