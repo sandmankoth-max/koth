@@ -328,7 +328,7 @@ function FriendsPodium({ podium, c }: { podium: any[]; c: any }) {
   );
 }
 
-function FeedScroller({ rows, c }: { rows: any[]; c: any }) {
+function FeedScroller({ rows }: { rows: any[] }) {
   // Fixed overlay between top bar (~56px) and bottom nav (~64px). The IO
   // root is the scroller itself so autoplay decisions don't depend on
   // viewport scroll position.
@@ -344,13 +344,13 @@ function FeedScroller({ rows, c }: { rows: any[]; c: any }) {
       }}
     >
       {rows.map((r) => (
-        <FeedVideo key={r.id} row={r} c={c} scrollRoot={scrollerRef} />
+        <FeedVideo key={r.id} row={r} scrollRoot={scrollerRef} />
       ))}
     </div>
   );
 }
 
-function FeedVideo({ row, c, scrollRoot }: { row: any; c: any; scrollRoot: React.RefObject<HTMLDivElement | null> }) {
+function FeedVideo({ row, scrollRoot }: { row: any; scrollRoot: React.RefObject<HTMLDivElement | null> }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const videoRef = useRef<HTMLVideoElement>(null);
