@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { formatDistanceToNow } from "date-fns";
-import { Bell, Crown, ArrowDown, ArrowUp, Flag, UserPlus, UserCheck, Check, X, Heart, MessageCircle, AtSign, Megaphone, ShieldAlert, BadgeCheck } from "lucide-react";
+import { Bell, Crown, ArrowDown, Flag, UserPlus, UserCheck, Check, X, Heart, MessageCircle, AtSign, Megaphone, ShieldAlert, BadgeCheck } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/notifications")({
@@ -14,7 +14,6 @@ export const Route = createFileRoute("/_authenticated/notifications")({
 const iconFor = (t: string) =>
   t === "podium_gained" ? <Crown className="h-5 w-5 text-koth-red" /> :
   t === "podium_lost" ? <ArrowDown className="h-5 w-5 text-koth-red" /> :
-  t === "overtaken" ? <ArrowUp className="h-5 w-5 text-koth-steel" /> :
   t === "deadline_reminder" || t === "deadline_reminder_24h" ? <Flag className="h-5 w-5 text-koth-pr-text" /> :
   t === "friend_request" ? <UserPlus className="h-5 w-5 text-koth-red" /> :
   t === "friend_accepted" ? <UserCheck className="h-5 w-5 text-koth-red" /> :
@@ -37,10 +36,8 @@ const labelFor = (n: any) => {
       return `1 day left to submit — ${n.payload?.title ?? "today's challenge"}`;
     case "deadline_reminder":
       return `1 hour left to submit — ${n.payload?.title ?? "today's challenge closes soon"}`;
-    case "overtaken":
-      return `@${n.payload?.overtaken_by_username} passed you — you're #${n.payload?.new_rank}`;
     case "podium_lost":
-      return `@${n.payload?.overtaken_by_username} knocked you off the podium`;
+      return `You were kicked off the podium${n.payload?.overtaken_by_username ? ` by @${n.payload.overtaken_by_username}` : ""}`;
     case "podium_gained":
       return `You're on the podium — #${n.payload?.new_rank}`;
     case "time_verified":

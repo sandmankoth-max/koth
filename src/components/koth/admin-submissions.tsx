@@ -19,7 +19,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { VideoThumb } from "@/components/koth/video-thumb";
 import { getVideoSignedUrl, formatValue } from "@/lib/koth-utils";
-import { X, CheckCircle2, Ban, ShieldX } from "lucide-react";
+import { X, CheckCircle2, Ban, ShieldX, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 type Status = "pending_review" | "verified" | "disqualified";
@@ -203,6 +203,7 @@ function AdminGradeSlide({
   const [busy, setBusy] = useState(false);
   const [suspendOpen, setSuspendOpen] = useState(false);
   const [banOpen, setBanOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [reason, setReason] = useState("");
 
   useEffect(() => {
@@ -270,6 +271,15 @@ function AdminGradeSlide({
     else { toast.success(`Banned @${s.profiles?.username}`); onChanged(); }
   }
 
+  async function confirmDelete() {
+    setBusy(true);
+    const { error } = await supabase.rpc("admin_delete_submission" as any, { p_submission_id: s.id });
+    setBusy(false);
+    setDeleteOpen(false);
+    if (error) toast.error(error.message);
+    else { toast.success("Video deleted"); onChanged(); }
+  }
+
   return (
     <div
       ref={containerRef}
@@ -322,20 +332,27 @@ function AdminGradeSlide({
             <CheckCircle2 className="mr-1.5 h-4 w-4" /> Verify
           </Button>
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <button
             onClick={() => { setReason(""); setSuspendOpen(true); }}
             disabled={busy}
-            className="tap-44 flex items-center justify-center gap-1.5 rounded-full border border-koth-red bg-koth-red/15 py-2.5 text-sm font-bold text-koth-red backdrop-blur hover:bg-koth-red hover:text-white"
+            className="tap-44 flex items-center justify-center gap-1.5 rounded-full border border-koth-red bg-koth-red/15 py-2.5 text-xs font-bold text-koth-red backdrop-blur hover:bg-koth-red hover:text-white"
           >
             <ShieldX className="h-4 w-4" /> Suspend
           </button>
           <button
             onClick={() => { setReason("Inappropriate content"); setBanOpen(true); }}
             disabled={busy}
-            className="tap-44 flex items-center justify-center gap-1.5 rounded-full border border-white/30 bg-white/5 py-2.5 text-sm font-bold text-white backdrop-blur hover:bg-koth-red hover:border-koth-red"
+            className="tap-44 flex items-center justify-center gap-1.5 rounded-full border border-white/30 bg-white/5 py-2.5 text-xs font-bold text-white backdrop-blur hover:bg-koth-red hover:border-koth-red"
           >
-            <Ban className="h-4 w-4" /> Ban user
+            <Ban className="h-4 w-4" /> Ban
+          </button>
+          <button
+            onClick={() => setDeleteOpen(true)}
+            disabled={busy}
+            className="tap-44 flex items-center justify-center gap-1.5 rounded-full border border-white/30 bg-white/5 py-2.5 text-xs font-bold text-white backdrop-blur hover:bg-koth-red hover:border-koth-red"
+          >
+            <Trash2 className="h-4 w-4" /> Delete
           </button>
         </div>
       </div>
@@ -362,6 +379,26 @@ function AdminGradeSlide({
         onConfirm={confirmBan}
         busy={busy}
       />
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this video?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the submission, its likes and comments. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmDelete(); }}
+              disabled={busy}
+              className="bg-koth-red text-koth-white hover:bg-koth-red/90"
+            >
+              {busy ? "…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
