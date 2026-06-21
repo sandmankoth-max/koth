@@ -659,6 +659,7 @@ export type Database = {
         | "reply_challenge_comment"
         | "tag_challenge_comment"
         | "admin_message"
+        | "winners_announcement"
       submission_status:
         | "pending_review"
         | "verified"
@@ -823,6 +824,7 @@ export const Constants = {
         "reply_challenge_comment",
         "tag_challenge_comment",
         "admin_message",
+        "winners_announcement",
       ],
       submission_status: [
         "pending_review",
