@@ -101,6 +101,7 @@ function Home() {
   if (!c) {
     return (
       <div className="space-y-4">
+        <WinnersBanner />
         <RankNotifications />
         <EmptyState />
       </div>
@@ -119,6 +120,7 @@ function Home() {
     return (
       <div className="space-y-4">
         <WelcomeDialog />
+        <WinnersBanner />
         <RankNotifications />
         <section className="koth-stripe relative overflow-hidden rounded-3xl bg-koth-black p-5 text-koth-white">
           <p className="label-broadcast text-koth-white/60">This week's challenge</p>
@@ -138,7 +140,9 @@ function Home() {
   return (
     <div className="space-y-4">
       <WelcomeDialog />
+      <WinnersBanner />
       <RankNotifications />
+
 
       {/* Challenge hero card — tightened */}
       <section className="koth-stripe relative overflow-hidden rounded-3xl bg-koth-black p-4 text-koth-white">
