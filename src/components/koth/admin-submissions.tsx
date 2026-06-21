@@ -203,6 +203,7 @@ function AdminGradeSlide({
   const [busy, setBusy] = useState(false);
   const [suspendOpen, setSuspendOpen] = useState(false);
   const [banOpen, setBanOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [reason, setReason] = useState("");
 
   useEffect(() => {
