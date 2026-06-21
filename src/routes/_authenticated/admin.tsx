@@ -82,7 +82,6 @@ function CreateChallenge() {
     prize_first: 100,
     prize_second: 20,
     prize_third: 10,
-    status: "upcoming" as "upcoming" | "active",
     max_video_seconds: 60,
   });
 
@@ -91,6 +90,19 @@ function CreateChallenge() {
     if (!user) return;
     setBusy(true);
     try {
+      const startsAt = new Date(form.starts_at);
+      const isActiveNow = startsAt.getTime() <= Date.now();
+      const status = isActiveNow ? "active" : "upcoming";
+
+      // If activating immediately, supersede any prior active/closed challenges.
+      if (isActiveNow) {
+        const { error: supErr } = await supabase
+          .from("challenges")
+          .update({ status: "inactive" } as any)
+          .in("status", ["active", "closed"]);
+        if (supErr) throw supErr;
+      }
+
       const { error } = await supabase
         .from("challenges")
         .insert({
@@ -99,9 +111,9 @@ function CreateChallenge() {
           unit_type: form.unit_type,
           unit_label: form.unit_label,
           safety_note: form.safety_note || null,
-          starts_at: new Date(form.starts_at).toISOString(),
+          starts_at: startsAt.toISOString(),
           ends_at: new Date(form.ends_at).toISOString(),
-          status: form.status,
+          status,
           prize_first: form.prize_first,
           prize_second: form.prize_second,
           prize_third: form.prize_third,
@@ -112,7 +124,7 @@ function CreateChallenge() {
         .single();
       if (error) throw error;
 
-      toast.success("Challenge created.");
+      toast.success(isActiveNow ? "Challenge created and is now active." : "Challenge scheduled.");
       setForm((f) => ({ ...f, title: "", description: "", safety_note: "" }));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed");
