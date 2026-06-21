@@ -33,6 +33,8 @@ const labelFor = (n: any) => {
   switch (n.type) {
     case "new_challenge":
       return `New challenge is live: ${n.payload?.title ?? "this week's challenge"}`;
+    case "challenge_closed":
+      return `Challenge closed — ${n.payload?.title ?? "this week's challenge"}. New one drops Monday at 10am.`;
     case "deadline_reminder_24h":
       return `1 day left to submit — ${n.payload?.title ?? "today's challenge"}`;
     case "deadline_reminder":
