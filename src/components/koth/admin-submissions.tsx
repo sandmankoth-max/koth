@@ -333,19 +333,27 @@ function AdminGradeSlide({
           </Button>
         </div>
         <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <button
             onClick={() => { setReason(""); setSuspendOpen(true); }}
             disabled={busy}
-            className="tap-44 flex items-center justify-center gap-1.5 rounded-full border border-koth-red bg-koth-red/15 py-2.5 text-sm font-bold text-koth-red backdrop-blur hover:bg-koth-red hover:text-white"
+            className="tap-44 flex items-center justify-center gap-1.5 rounded-full border border-koth-red bg-koth-red/15 py-2.5 text-xs font-bold text-koth-red backdrop-blur hover:bg-koth-red hover:text-white"
           >
             <ShieldX className="h-4 w-4" /> Suspend
           </button>
           <button
             onClick={() => { setReason("Inappropriate content"); setBanOpen(true); }}
             disabled={busy}
-            className="tap-44 flex items-center justify-center gap-1.5 rounded-full border border-white/30 bg-white/5 py-2.5 text-sm font-bold text-white backdrop-blur hover:bg-koth-red hover:border-koth-red"
+            className="tap-44 flex items-center justify-center gap-1.5 rounded-full border border-white/30 bg-white/5 py-2.5 text-xs font-bold text-white backdrop-blur hover:bg-koth-red hover:border-koth-red"
           >
-            <Ban className="h-4 w-4" /> Ban user
+            <Ban className="h-4 w-4" /> Ban
+          </button>
+          <button
+            onClick={() => setDeleteOpen(true)}
+            disabled={busy}
+            className="tap-44 flex items-center justify-center gap-1.5 rounded-full border border-white/30 bg-white/5 py-2.5 text-xs font-bold text-white backdrop-blur hover:bg-koth-red hover:border-koth-red"
+          >
+            <Trash2 className="h-4 w-4" /> Delete
           </button>
         </div>
       </div>
