@@ -332,7 +332,6 @@ function AdminGradeSlide({
             <CheckCircle2 className="mr-1.5 h-4 w-4" /> Verify
           </Button>
         </div>
-        <div className="grid grid-cols-2 gap-2">
         <div className="grid grid-cols-3 gap-2">
           <button
             onClick={() => { setReason(""); setSuspendOpen(true); }}
