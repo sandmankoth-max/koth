@@ -412,144 +412,121 @@ function SubmissionRow({ s, onUpdate }: { s: any; onUpdate: (p: any) => Promise<
   );
 }
 
-function MarkPaid() {
-  const [challenges, setChallenges] = useState<any[]>([]);
-  const [sel, setSel] = useState<string>("");
-  const [results, setResults] = useState<any[]>([]);
+function AnnounceWinners() {
+  const [form, setForm] = useState({
+    first_username: "",
+    first_amount: "" as string,
+    second_username: "",
+    second_amount: "" as string,
+    third_username: "",
+    third_amount: "" as string,
+    note: "",
+  });
+  const [busy, setBusy] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
-  useEffect(() => {
-    supabase
-      .from("challenges")
-      .select("id, title, status")
-      .in("status", ["closed", "archived", "active"])
-      .order("starts_at", { ascending: false })
-      .limit(20)
-      .then(({ data }) => {
-        setChallenges(data ?? []);
-        if (data?.[0]) setSel(data[0].id);
+  async function send() {
+    setBusy(true);
+    try {
+      const { data, error } = await supabase.rpc("admin_announce_winners" as any, {
+        p_first_username: form.first_username.trim().replace(/^@/, ""),
+        p_first_amount: Number(form.first_amount || 0),
+        p_second_username: form.second_username.trim().replace(/^@/, ""),
+        p_second_amount: Number(form.second_amount || 0),
+        p_third_username: form.third_username.trim().replace(/^@/, ""),
+        p_third_amount: Number(form.third_amount || 0),
+        p_note: form.note || null,
       });
-  }, []);
-
-  async function load(cid: string) {
-    const { data } = await supabase
-      .from("results")
-      .select("*, profiles!results_user_id_fkey(username, display_name, avatar_url)")
-      .eq("challenge_id", cid)
-      .order("rank");
-    setResults(data ?? []);
+      if (error) throw error;
+      toast.success(`Winners announced to ${data ?? 0} users`);
+      setForm({
+        first_username: "", first_amount: "",
+        second_username: "", second_amount: "",
+        third_username: "", third_amount: "",
+        note: "",
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed");
+    } finally {
+      setBusy(false);
+      setConfirmOpen(false);
+    }
   }
-  useEffect(() => {
-    if (sel) load(sel);
-  }, [sel]);
 
-  async function togglePaid(id: string, paid: boolean) {
-    await supabase.from("results").update({ paid }).eq("id", id);
-    setResults((r) => r.map((x) => (x.id === id ? { ...x, paid } : x)));
+  function valid() {
+    return (
+      form.first_username.trim() && form.second_username.trim() && form.third_username.trim() &&
+      form.first_amount !== "" && form.second_amount !== "" && form.third_amount !== ""
+    );
   }
+
+  const rows: Array<["first" | "second" | "third", string]> = [
+    ["first", "1st place"],
+    ["second", "2nd place"],
+    ["third", "3rd place"],
+  ];
 
   return (
-    <div className="mt-4 space-y-3">
-      <Select value={sel} onValueChange={setSel}>
-        <SelectTrigger><SelectValue /></SelectTrigger>
-        <SelectContent>
-          {challenges.map((c) => (
-            <SelectItem key={c.id} value={c.id}>
-              [{c.status}] {c.title}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <div className="divide-y divide-border rounded-3xl border border-border bg-card">
-        {results.length === 0 ? (
-          <p className="p-6 text-center text-sm text-muted-foreground">No results recorded.</p>
-        ) : (
-          results.map((r) => (
-            <div key={r.id} className="flex items-center gap-3 p-3">
-              <RankBadge rank={r.rank} size="md" />
-              <Avatar name={r.profiles?.display_name} avatarPath={r.profiles?.avatar_url} size={36} />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold">{r.profiles?.display_name}</p>
-                <p className="truncate text-xs text-muted-foreground">@{r.profiles?.username}</p>
-              </div>
-              <div className="mono-stat text-sm font-bold">${Number(r.prize_amount)}</div>
-              <Button
-                size="sm"
-                variant={r.paid ? "outline" : "default"}
-                onClick={() => togglePaid(r.id, !r.paid)}
-                className={`rounded-full ${r.paid ? "" : "bg-koth-red text-koth-white"}`}
-              >
-                {r.paid ? "Paid ✓" : "Mark paid"}
-              </Button>
-            </div>
-          ))
-        )}
-      </div>
+    <div className="mt-4 space-y-4 rounded-3xl border border-border bg-card p-5">
+      <p className="text-xs text-muted-foreground">
+        Sends a winners banner to every user on the home page. Usernames must already exist on the platform.
+      </p>
+      {rows.map(([key, label]) => (
+        <div key={key} className="grid grid-cols-[1fr_110px] gap-3">
+          <Field label={`${label} — username`}>
+            <Input
+              placeholder="username"
+              autoCapitalize="none"
+              value={(form as any)[`${key}_username`]}
+              onChange={(e) => setForm({ ...form, [`${key}_username`]: e.target.value })}
+            />
+          </Field>
+          <Field label="Prize $">
+            <Input
+              type="number"
+              min="0"
+              step="any"
+              value={(form as any)[`${key}_amount`]}
+              onChange={(e) => setForm({ ...form, [`${key}_amount`]: e.target.value })}
+            />
+          </Field>
+        </div>
+      ))}
+      <Field label="Note (optional)">
+        <Textarea rows={2} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="e.g. Congrats — prizes sent." />
+      </Field>
+      <Button
+        onClick={() => setConfirmOpen(true)}
+        disabled={busy || !valid()}
+        className="tap-44 h-12 w-full rounded-full bg-koth-red text-koth-white"
+      >
+        {busy ? "…" : "Announce winners"}
+      </Button>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Announce winners to everyone?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This shows a banner on every user's home page with 1st, 2nd, and 3rd place and prize amounts. Double-check the usernames and amounts.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); send(); }}
+              disabled={busy}
+              className="bg-koth-red text-koth-white hover:bg-koth-red/90"
+            >
+              {busy ? "…" : "Send"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
 
-function ManageChallenges() {
-  const [items, setItems] = useState<any[]>([]);
-  async function load() {
-    const { data } = await supabase
-      .from("challenges")
-      .select("id, title, status, starts_at, ends_at")
-      .in("status", ["active", "upcoming"])
-      .order("starts_at");
-    setItems(data ?? []);
-  }
-  useEffect(() => {
-    load();
-  }, []);
-
-  async function closeNow(id: string) {
-    if (!confirm("Close this challenge now? Final results will be computed.")) return;
-    const { error } = await supabase.rpc("close_challenge" as any, { p_challenge_id: id });
-    if (error) toast.error(error.message);
-    else {
-      toast.success("Challenge closed & results computed");
-      load();
-    }
-  }
-
-  async function cancelChallenge(id: string) {
-    if (!confirm("Delete this scheduled challenge? This cannot be undone.")) return;
-    const { error } = await supabase.from("challenges").delete().eq("id", id);
-    if (error) toast.error(error.message);
-    else {
-      toast.success("Removed");
-      load();
-    }
-  }
-
-  if (items.length === 0) return null;
-  return (
-    <div className="mt-4 rounded-3xl border border-border bg-card p-5">
-      <p className="label-broadcast text-muted-foreground mb-3">Active & upcoming</p>
-      <div className="divide-y divide-border">
-        {items.map((c) => (
-          <div key={c.id} className="flex items-center justify-between gap-2 py-2">
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold">{c.title}</p>
-              <p className="text-xs text-muted-foreground">
-                {c.status} · starts {new Date(c.starts_at).toLocaleString()}
-              </p>
-            </div>
-            {c.status === "active" ? (
-              <Button size="sm" variant="outline" onClick={() => closeNow(c.id)} className="rounded-full">
-                Close now
-              </Button>
-            ) : (
-              <Button size="sm" variant="outline" onClick={() => cancelChallenge(c.id)} className="rounded-full">
-                Cancel
-              </Button>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
