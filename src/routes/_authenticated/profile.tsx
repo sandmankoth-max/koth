@@ -30,7 +30,9 @@ export const Route = createFileRoute("/_authenticated/profile")({
 function Profile() {
   const { user, profile, isAdmin, signOut, refreshProfile } = useAuth();
   const navigate = useNavigate();
-  const fileRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const libraryRef = useRef<HTMLInputElement>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [editingBio, setEditingBio] = useState(false);
   const [bioDraft, setBioDraft] = useState(profile?.bio ?? "");
