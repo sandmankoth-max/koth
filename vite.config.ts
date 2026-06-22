@@ -28,6 +28,11 @@ function nitroPreviewEntryShim() {
         const rawEntry = resolve(rawSsrDir, "index.js");
         const distServer = resolve(cwd, "dist/server");
         if (!existsSync(rawEntry) || !existsSync(distServer)) return;
+        // If the Cloudflare worker bundle exists (index.mjs), this is a
+        // production deploy — do NOT overwrite its assets dir or we'll break
+        // the worker's module graph ("No such module assets/react").
+        const cfEntry = resolve(distServer, "index.mjs");
+        if (existsSync(cfEntry)) return;
         const indexTarget = resolve(distServer, "index.js");
         if (!existsSync(indexTarget)) cpSync(rawEntry, indexTarget);
         const rawAssets = resolve(rawSsrDir, "assets");
