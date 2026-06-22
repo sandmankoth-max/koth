@@ -5,7 +5,7 @@
 //     error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
-import { cpSync, existsSync, mkdirSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 // TanStack Start's SPA prerender boots a Node-based preview server that loads
@@ -13,7 +13,9 @@ import { resolve } from "node:path";
 // `dist/server/index.mjs` whose `augmentReq` mutates `req.ip` and reads
 // `env.ASSETS` — both incompatible with Node. The raw, un-wrapped SSR build
 // lives at `node_modules/.nitro/vite/services/ssr/` and works fine in Node,
-// so we copy that into `dist/server/` as `server.js` for the preview/prerender.
+// so we copy it into `dist/server/` (keeping the same `index.js` + `assets/`
+// layout the SSR chunks expect) and write a tiny `server.js` re-export for
+// the preview-server-plugin entry lookup.
 function nitroPreviewEntryShim() {
   return {
     name: "koth:nitro-preview-entry-shim",
@@ -26,14 +28,17 @@ function nitroPreviewEntryShim() {
         const rawEntry = resolve(rawSsrDir, "index.js");
         const distServer = resolve(cwd, "dist/server");
         if (!existsSync(rawEntry) || !existsSync(distServer)) return;
-        const target = resolve(distServer, "server.js");
-        if (existsSync(target)) return;
-        cpSync(rawEntry, target);
+        const indexTarget = resolve(distServer, "index.js");
+        if (!existsSync(indexTarget)) cpSync(rawEntry, indexTarget);
         const rawAssets = resolve(rawSsrDir, "assets");
         const distAssets = resolve(distServer, "assets");
-        if (existsSync(rawAssets) && !existsSync(distAssets)) {
+        if (existsSync(rawAssets)) {
           mkdirSync(distAssets, { recursive: true });
           cpSync(rawAssets, distAssets, { recursive: true });
+        }
+        const serverShim = resolve(distServer, "server.js");
+        if (!existsSync(serverShim)) {
+          writeFileSync(serverShim, `export { default } from "./index.js";\n`);
         }
       },
     },
