@@ -126,7 +126,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!/^[a-z0-9_]{3,16}$/.test(username)) {
       throw new Error("Username must be 3–16 chars: lowercase letters, numbers, underscore.");
     }
-    if (PROFANITY.some((w) => username.includes(w) || input.display_name.toLowerCase().includes(w))) {
+    const displayName = (input.display_name.trim() || username).slice(0, 20);
+    if (displayName.length < 1 || displayName.length > 20) {
+      throw new Error("Display name must be 1–20 characters.");
+    }
+    if (PROFANITY.some((w) => username.includes(w) || displayName.toLowerCase().includes(w))) {
       throw new Error("Username or display name contains disallowed language.");
     }
     if (input.password.length < 8 || input.password.length > 16) {
@@ -142,7 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       options: {
         data: {
           username,
-          display_name: input.display_name.trim() || username,
+          display_name: displayName,
           date_of_birth: input.date_of_birth,
           age_consent_ack_at: new Date().toISOString(),
         },
@@ -153,6 +157,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const newUserId = signUpData.user?.id;
     if (input.avatar_file && newUserId) {
       try {
+        // Wait briefly for the profile row to be created by the DB trigger
+        // so our UPDATE actually targets an existing row.
+        for (let i = 0; i < 10; i++) {
+          const { data: row } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("id", newUserId)
+            .maybeSingle();
+          if (row) break;
+          await new Promise((r) => setTimeout(r, 200));
+        }
         const f = input.avatar_file;
         const ext = (f.name.split(".").pop() || "jpg").toLowerCase();
         const path = `${newUserId}/${Date.now()}.${ext}`;
@@ -161,13 +176,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .upload(path, f, { contentType: f.type, upsert: true });
         if (!upErr) {
           await supabase.from("profiles").update({ avatar_url: path }).eq("id", newUserId);
+          // Refresh in-memory profile so the avatar shows immediately app-wide.
+          await loadProfile(newUserId);
         }
       } catch {
         // non-fatal — user can set avatar later in profile
       }
     }
     if (newUserId) recordDeviceFingerprint(newUserId);
-  }, []);
+  }, [loadProfile]);
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
