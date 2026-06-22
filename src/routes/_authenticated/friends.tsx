@@ -7,14 +7,12 @@ import { Avatar } from "@/components/koth/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Check, UserPlus, X, Users, Heart, MessageCircle, Share2, Play, Crown,
+  Check, UserPlus, X, Users, Heart, MessageCircle, Share2, Play,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { formatValue, getVideoSignedUrl } from "@/lib/koth-utils";
 import { CommentDrawer } from "@/components/koth/comment-drawer";
-import { RankBadge } from "@/components/koth/rank-badge";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VideoScrubber } from "@/components/koth/video-scrubber";
 
 export const Route = createFileRoute("/_authenticated/friends")({
@@ -112,22 +110,6 @@ function FeedTab({ tab, setTab, onAdd }: { tab: Tab; setTab: (t: Tab) => void; o
   const c = challengeQ.data;
   const noFriends = friendsQ.data && friendsQ.data.length === 0;
 
-  // Friends podium: best entry per user for the ACTIVE challenge (verified only).
-  const podium = (() => {
-    if (!c) return [] as any[];
-    const rows = (feedQ.data ?? []).filter(
-      (r: any) => r.challenge_id === c.id && r.status === "verified",
-    );
-    const byUser = new Map<string, any>();
-    for (const r of rows) {
-      const val = Number(r.admin_verified_value ?? r.self_reported_value);
-      const prev = byUser.get(r.user_id);
-      if (!prev || val > prev.val) byUser.set(r.user_id, { ...r, val });
-    }
-    return Array.from(byUser.values()).sort((a, b) => b.val - a.val).slice(0, 10);
-  })();
-
-  const [podiumOpen, setPodiumOpen] = useState(false);
   const hasFeed = (feedQ.data?.length ?? 0) > 0;
 
   if (!hasFeed) {
@@ -196,135 +178,7 @@ function FeedTab({ tab, setTab, onAdd }: { tab: Tab; setTab: (t: Tab) => void; o
         </div>
       </div>
 
-      {/* Floating podium button */}
-      {c && podium.length > 0 && (
-        <button
-          onClick={() => setPodiumOpen(true)}
-          className="tap-44 fixed right-3 top-16 z-40 inline-flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-2 text-xs font-bold text-white backdrop-blur"
-        >
-          <Crown className="h-4 w-4 text-koth-red" aria-hidden /> Podium
-        </button>
-      )}
-
-      {c && (
-        <PodiumDialog
-          open={podiumOpen}
-          onOpenChange={setPodiumOpen}
-          podium={podium}
-          c={c}
-        />
-      )}
     </>
-  );
-}
-
-function PodiumDialog({
-  open,
-  onOpenChange,
-  podium,
-  c,
-}: {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  podium: any[];
-  c: any;
-}) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
-        <DialogTitle>Friends podium</DialogTitle>
-        <p className="text-xs text-muted-foreground">
-          Best result per friend for <span className="font-semibold text-foreground">{c.title}</span>.
-        </p>
-        <FriendsPodium podium={podium} c={c} />
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function FriendsPodium({ podium, c }: { podium: any[]; c: any }) {
-  const top3 = podium.slice(0, 3);
-  const rest = podium.slice(3);
-  return (
-    <section className="space-y-3 rounded-3xl border border-border bg-card p-3">
-      <div className="grid grid-cols-3 items-end gap-2 pt-6">
-        {[1, 0, 2].map((pos) => {
-          const r = top3[pos];
-          const rank = pos + 1;
-          const heights = ["h-32", "h-28", "h-24"];
-          const isFirst = rank === 1;
-          const tile = isFirst
-            ? "bg-gradient-to-b from-koth-red to-[color-mix(in_oklab,var(--color-koth-red)_70%,black)] text-koth-white"
-            : rank === 2
-              ? "bg-koth-silver text-koth-black"
-              : "bg-koth-bronze text-koth-white";
-          const orderCls = pos === 1 ? "order-1" : pos === 0 ? "order-2" : "order-3";
-          if (!r) {
-            return (
-              <div
-                key={rank}
-                className={`${orderCls} ${heights[pos]} flex flex-col items-center justify-end rounded-2xl border border-dashed border-border bg-card p-2`}
-              >
-                <RankBadge rank={rank} size="sm" />
-                <p className="mt-1 text-[10px] text-muted-foreground">Open</p>
-              </div>
-            );
-          }
-          const p = r.profiles;
-          return (
-            <div key={r.id} className={`${orderCls} relative flex flex-col items-center`}>
-              {isFirst && (
-                <Crown
-                  className="absolute -top-5 left-1/2 z-10 h-6 w-6 -translate-x-1/2 fill-koth-red text-koth-red drop-shadow"
-                  aria-hidden
-                />
-              )}
-              <div
-                className={`${heights[pos]} flex w-full flex-col items-center justify-between rounded-2xl px-1.5 pb-2 pt-3 text-center shadow ${tile}`}
-              >
-                <Avatar
-                  name={p?.display_name ?? p?.username ?? "?"}
-                  avatarPath={p?.avatar_url}
-                  size={isFirst ? 38 : 32}
-                />
-                <div className="min-w-0 w-full">
-                  <p className="w-full truncate text-[10px] font-semibold opacity-90">
-                    @{p?.username}
-                  </p>
-                  <p className="mono-stat w-full truncate text-sm font-bold leading-tight">
-                    {formatValue(r.val, c.unit_type, c.unit_label)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {rest.length > 0 && (
-        <ul className="divide-y divide-border rounded-2xl border border-border bg-background">
-          {rest.map((r, i) => {
-            const p = r.profiles;
-            return (
-              <li key={r.id} className="flex items-center gap-3 px-3 py-2">
-                <span className="mono-stat w-6 text-center text-xs font-bold text-muted-foreground">
-                  {i + 4}
-                </span>
-                <Avatar
-                  name={p?.display_name ?? p?.username ?? "?"}
-                  avatarPath={p?.avatar_url}
-                  size={28}
-                />
-                <p className="min-w-0 flex-1 truncate text-sm text-foreground">@{p?.username}</p>
-                <p className="mono-stat text-sm font-bold text-foreground">
-                  {formatValue(r.val, c.unit_type, c.unit_label)}
-                </p>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </section>
   );
 }
 
