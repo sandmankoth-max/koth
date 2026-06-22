@@ -144,7 +144,11 @@ function RootComponent() {
         <AuthRefetcher />
         <NativePushBridge />
         <Outlet />
-        <Toaster position="top-center" />
+        <Toaster
+          position="top-center"
+          offset="calc(env(safe-area-inset-top) + 16px)"
+          mobileOffset="calc(env(safe-area-inset-top) + 16px)"
+        />
       </AuthProvider>
     </QueryClientProvider>
   );
