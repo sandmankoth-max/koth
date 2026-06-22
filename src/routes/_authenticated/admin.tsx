@@ -173,11 +173,11 @@ function CreateChallenge() {
       <Field label="Safety note (optional)">
         <Textarea value={form.safety_note} rows={2} onChange={(e) => setForm({ ...form, safety_note: e.target.value })} />
       </Field>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field label="Starts at">
           <Input type="datetime-local" value={form.starts_at} onChange={(e) => setForm({ ...form, starts_at: e.target.value })} />
         </Field>
-        <Field label="Ends at">
+        <Field label="Ends at line 180">
           <Input type="datetime-local" value={form.ends_at} onChange={(e) => setForm({ ...form, ends_at: e.target.value })} />
         </Field>
       </div>
