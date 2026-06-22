@@ -49,6 +49,11 @@ function WebCameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
   const [flashOn, setFlashOn] = useState(false);
   const [hasTorch, setHasTorch] = useState(false);
 
+  useEffect(() => {
+    document.body.classList.add("camera-active");
+    return () => document.body.classList.remove("camera-active");
+  }, []);
+
   const stop = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
@@ -143,7 +148,7 @@ function WebCameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
   const frontFlashOn = flashOn && facing === "user";
 
   return (
-    <div className="fixed inset-0 z-50 bg-black text-koth-white">
+    <div className="fixed inset-0 z-[100] h-[100dvh] overflow-hidden overscroll-none bg-black text-koth-white">
       {/* Preview */}
       <div className="absolute inset-0">
         {error ? (
@@ -172,10 +177,8 @@ function WebCameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
 
       {/* Top overlay: close left, timer centered, flip+flash stacked right */}
       <div
-        className="absolute inset-x-0 top-0 z-10 flex items-start justify-between px-4 py-3"
-        style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.75rem)" }}
+        className="camera-top-controls absolute inset-x-0 top-0 z-20 grid grid-cols-[44px_minmax(0,1fr)_44px] items-start gap-3 px-4 pb-3 pt-3"
       >
-
         <button
           onClick={() => { stop(); onCancel(); }}
           className="tap-44 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur"
@@ -183,7 +186,7 @@ function WebCameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
         >
           <X className="h-6 w-6" aria-hidden />
         </button>
-        <div className="pointer-events-none absolute inset-x-0 top-3 flex justify-center">
+        <div className="pointer-events-none flex min-w-0 justify-center pt-1">
           {recording ? (
             <span className="pill mono-stat bg-koth-red text-koth-white">
               <span className="h-2 w-2 animate-pulse rounded-full bg-koth-white" />
@@ -195,7 +198,7 @@ function WebCameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
             </span>
           ) : null}
         </div>
-        <div className="flex flex-col items-center gap-2">
+        <div className="flex shrink-0 flex-col items-center gap-3">
           <button
             onClick={() => setFacing((f) => (f === "user" ? "environment" : "user"))}
             className="tap-44 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur disabled:opacity-50"
@@ -217,8 +220,7 @@ function WebCameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
 
       {/* Snapchat-style shutter */}
       <div
-        className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-8 px-6 pt-6"
-        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 2.5rem)" }}
+        className="camera-bottom-controls absolute inset-x-0 bottom-0 z-20 flex items-center justify-center gap-8 px-6 pt-6"
       >
         <button
           onClick={recording ? finish : start}

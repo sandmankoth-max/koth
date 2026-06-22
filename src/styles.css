@@ -158,6 +158,24 @@
   /* Native-tap-target sized button surface. */
   .tap-44 { min-height: 44px; min-width: 44px; }
 
+  body.camera-active {
+    overflow: hidden;
+  }
+
+  body.camera-active nav,
+  body.camera-active header,
+  body.camera-active [aria-label="Primary"] {
+    display: none !important;
+  }
+
+  .camera-top-controls {
+    padding-top: max(2.75rem, calc(env(safe-area-inset-top) + 1.25rem));
+  }
+
+  .camera-bottom-controls {
+    padding-bottom: max(6.5rem, calc(env(safe-area-inset-bottom) + 5.5rem));
+  }
+
   /* Inputs on dark KOTH surfaces (auth, modal sheets). */
   .koth-input {
     background-color: oklch(1 0 0 / 0.06) !important;
