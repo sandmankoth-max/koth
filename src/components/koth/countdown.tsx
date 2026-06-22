@@ -26,7 +26,7 @@ export function Countdown({ target, variant = "urgent", className }: Props) {
   return (
     <span
       className={cn(
-        "pill mono-stat",
+        "pill mono-stat whitespace-nowrap",
         variant === "urgent" && !parts.expired
           ? "bg-koth-red text-koth-white"
           : "bg-koth-black text-koth-white",
