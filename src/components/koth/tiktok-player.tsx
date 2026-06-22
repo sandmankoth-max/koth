@@ -79,7 +79,16 @@ export function TikTokPlayer({ items, startIndex = 0, open, onOpenChange }: Prop
   if (!items.length || !open) return null;
 
   return (
-    <div className="fixed inset-x-0 top-14 bottom-16 z-20 bg-black" role="dialog" aria-modal="true" aria-label="Videos">
+    <div
+      className="fixed inset-x-0 z-40 bg-black"
+      style={{
+        top: "calc(3.5rem + env(safe-area-inset-top))",
+        bottom: "calc(4rem + env(safe-area-inset-bottom))",
+      }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Videos"
+    >
       <button
         onClick={() => onOpenChange(false)}
         aria-label="Back"
