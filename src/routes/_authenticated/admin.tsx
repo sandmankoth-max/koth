@@ -177,7 +177,7 @@ function CreateChallenge() {
         <Field label="Starts at">
           <Input type="datetime-local" value={form.starts_at} onChange={(e) => setForm({ ...form, starts_at: e.target.value })} />
         </Field>
-        <Field label="Ends at line 180">
+        <Field label="Ends at">
           <Input type="datetime-local" value={form.ends_at} onChange={(e) => setForm({ ...form, ends_at: e.target.value })} />
         </Field>
       </div>
