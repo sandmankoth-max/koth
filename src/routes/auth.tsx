@@ -19,7 +19,64 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-function AuthPage notFoundComponent = () => <div>Not found</div>
+function AuthPage() {
+  const { mode = "login" } = Route.useSearch();
+  const { signIn, signUp } = useAuth();
+  const navigate = useNavigate();
+  const [busy, setBusy] = useState(false);
+
+  // login fields
+  const [u, setU] = useState("");
+  const [p, setP] = useState("");
+
+  // signup fields
+  const [su, setSu] = useState("");
+  const [sp, setSp] = useState("");
+  const [sd, setSd] = useState("");
+  const [sdob, setSdob] = useState("");
+  const [consent, setConsent] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const isSignup = mode === "signup";
+
+  function onPickAvatar(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (f.size > 5 * 1024 * 1024) {
+      toast.error("Image must be under 5MB");
+      return;
+    }
+    setAvatarFile(f);
+    setAvatarPreview(URL.createObjectURL(f));
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      if (isSignup) {
+        await signUp({
+          username: su,
+          password: sp,
+          display_name: sd || su,
+          date_of_birth: sdob,
+          age_consent: consent,
+          avatar_file: avatarFile,
+        });
+        toast.success("Welcome to KOTH");
+      } else {
+        await signIn(u, p);
+      }
+      navigate({ to: "/home" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-koth-black px-6 py-8 text-koth-white">
       <Link to="/" className="label-broadcast mb-8 text-koth-white/60">
