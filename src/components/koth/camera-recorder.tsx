@@ -171,7 +171,11 @@ function WebCameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
       )}
 
       {/* Top overlay: close left, timer centered, flip+flash stacked right */}
-      <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-between px-4 py-3">
+      <div
+        className="absolute inset-x-0 top-0 z-10 flex items-start justify-between px-4 py-3"
+        style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.75rem)" }}
+      >
+
         <button
           onClick={() => { stop(); onCancel(); }}
           className="tap-44 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur"
@@ -212,7 +216,10 @@ function WebCameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
       </div>
 
       {/* Snapchat-style shutter */}
-      <div className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-8 px-6 pb-10 pt-6">
+      <div
+        className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-8 px-6 pt-6"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 2.5rem)" }}
+      >
         <button
           onClick={recording ? finish : start}
           disabled={!!error}
