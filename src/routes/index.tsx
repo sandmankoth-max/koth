@@ -27,7 +27,13 @@ function Splash() {
   if (session) return <Navigate to="/home" />;
 
   return (
-    <div className="relative flex min-h-screen flex-col bg-koth-black px-6 text-koth-white">
+    <div
+      className="relative flex min-h-screen flex-col bg-koth-black px-6 text-koth-white"
+      style={{
+        paddingTop: "env(safe-area-inset-top)",
+        paddingBottom: "env(safe-area-inset-bottom)",
+      }}
+    >
       <div className="flex flex-1 flex-col items-center justify-center gap-8">
         <SplashAnimation />
 
