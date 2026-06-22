@@ -22,7 +22,29 @@ function nitroPreviewEntryShim() {
         const target = resolve(distServer, "server.js");
         const source = resolve(distServer, "index.mjs");
         if (existsSync(source) && !existsSync(target)) {
-          writeFileSync(target, `export { default } from "./index.mjs";\n`);
+          // The Cloudflare nitro entry mutates `req.ip` and reads `env.ASSETS`,
+          // both of which break under the Node-based preview server used during
+          // SPA prerender. Wrap the call so prerender succeeds in Node.
+          writeFileSync(
+            target,
+            `import original from "./index.mjs";
+
+const fakeEnv = { ASSETS: { fetch: async () => new Response(null, { status: 404 }) } };
+const fakeCtx = { waitUntil: () => {}, passThroughOnException: () => {} };
+
+export default {
+  async fetch(req, env, ctx) {
+    const proxied = new Proxy(req, {
+      set(target, prop, value) {
+        try { target[prop] = value; } catch { /* read-only getter on Node Request */ }
+        return true;
+      },
+    });
+    return original.fetch(proxied, env ?? fakeEnv, ctx ?? fakeCtx);
+  },
+};
+`,
+          );
         }
       },
     },
