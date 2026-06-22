@@ -247,7 +247,7 @@ function PlayerSlide({
         aria-label="Tap to pause or play"
       >
         {url ? (
-          <video ref={videoRef} src={url} loop playsInline className="h-full w-full object-contain" />
+          <video ref={videoRef} src={url} loop playsInline className="h-full w-full object-cover" />
         ) : (
           <div className="h-full w-full animate-pulse bg-neutral-900" />
         )}
