@@ -160,10 +160,10 @@ function UserProfile() {
                     badge={
                       s.status === "disqualified" ? (
                         <span className="rounded-full bg-koth-red px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">Suspended</span>
-                      ) : s.status === "verified" ? (
-                        <span className="rounded-full bg-koth-pr-bg px-1.5 py-0.5 text-[9px] font-bold uppercase text-koth-pr-text">Verified</span>
                       ) : s.visibility === "friends_only" ? (
                         <span className="rounded-full bg-koth-black/70 px-1.5 py-0.5 text-[9px] font-bold uppercase text-koth-white">Friends</span>
+                      ) : s.status === "verified" ? (
+                        <span className="rounded-full bg-koth-pr-bg px-1.5 py-0.5 text-[9px] font-bold uppercase text-koth-pr-text">Verified</span>
                       ) : (
                         <span className="rounded-full bg-koth-red/85 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">Attempt</span>
                       )
