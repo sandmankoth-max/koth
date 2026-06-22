@@ -141,12 +141,12 @@ function AuthPage() {
                 className="koth-input"
               />
             </Field>
-            <Field label="Display name">
+            <Field label="Display name" hint="Up to 20 characters">
               <Input
                 value={sd}
-                onChange={(e) => setSd(e.target.value)}
+                onChange={(e) => setSd(e.target.value.slice(0, 20))}
                 required
-                maxLength={40}
+                maxLength={20}
                 className="koth-input"
               />
             </Field>
