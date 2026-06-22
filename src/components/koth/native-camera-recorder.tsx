@@ -135,7 +135,7 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
   const frontFlashOn = flashOn && facing === "front";
 
   return (
-    <div id="cameraPreview" className="fixed inset-0 z-50 text-koth-white" style={{ background: "transparent" }}>
+    <div id="cameraPreview" className="fixed inset-0 z-[100] h-[100dvh] overflow-hidden overscroll-none text-koth-white" style={{ background: "transparent" }}>
       {error && (
         <div className="absolute inset-0 flex items-center justify-center bg-black px-6 text-center">
           <div>
@@ -157,8 +157,7 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
       )}
 
       <div
-        className="absolute inset-x-0 top-0 z-10 flex items-start justify-between px-4 py-3"
-        style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.75rem)" }}
+        className="camera-top-controls absolute inset-x-0 top-0 z-20 grid grid-cols-[44px_minmax(0,1fr)_44px] items-start gap-3 px-4 pb-3 pt-3"
       >
         <button
           onClick={async () => { try { await CameraPreview.stop(); } catch {} onCancel(); }}
@@ -167,7 +166,7 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
         >
           <X className="h-6 w-6" aria-hidden />
         </button>
-        <div className="pointer-events-none absolute inset-x-0 top-3 flex justify-center">
+        <div className="pointer-events-none flex min-w-0 justify-center pt-1">
           {recording ? (
             <span className="pill mono-stat bg-koth-red text-koth-white">
               <span className="h-2 w-2 animate-pulse rounded-full bg-koth-white" />
@@ -179,7 +178,7 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
             </span>
           ) : null}
         </div>
-        <div className="flex flex-col items-center gap-2">
+        <div className="flex shrink-0 flex-col items-center gap-3">
           <button
             onClick={() => setFacing((f) => (f === "front" ? "rear" : "front"))}
             className="tap-44 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur disabled:opacity-50"
@@ -200,8 +199,7 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
       </div>
 
       <div
-        className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-8 px-6 pt-6"
-        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 2.5rem)" }}
+        className="camera-bottom-controls absolute inset-x-0 bottom-0 z-20 flex items-center justify-center gap-8 px-6 pt-6"
       >
         <button
           onClick={recording ? finish : start}
