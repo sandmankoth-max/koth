@@ -162,8 +162,8 @@
     overflow: hidden;
   }
 
-  body.camera-active > nav,
-  body.camera-active > header,
+  body.camera-active nav,
+  body.camera-active header,
   body.camera-active [aria-label="Primary"] {
     display: none !important;
   }
