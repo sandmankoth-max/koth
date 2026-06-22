@@ -10,11 +10,8 @@ export function AppShell({ children }: { children: ReactNode }) {
     >
       <TopBar />
       <main
-        className="mx-auto w-full max-w-md flex-1 overflow-y-auto px-4 pt-4"
-        style={{
-          WebkitOverflowScrolling: "touch",
-          paddingBottom: "calc(7rem + env(safe-area-inset-bottom))",
-        }}
+        className="mx-auto w-full max-w-md flex-1 overflow-y-auto px-4 pb-4 pt-4"
+        style={{ WebkitOverflowScrolling: "touch" }}
       >
         {children}
       </main>
