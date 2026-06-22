@@ -5,6 +5,9 @@ const config: CapacitorConfig = {
   appName: 'KOTH',
   webDir: 'dist/client',
   ios: {
+    contentInset: 'never',
+    backgroundColor: '#0D0D0D',
+    webContentsDebuggingEnabled: true,
   },
   plugins: {
     PushNotifications: {
