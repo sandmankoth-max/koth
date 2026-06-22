@@ -99,7 +99,7 @@ function Profile() {
       {/* Centered identity — compact */}
       <section className="flex flex-col items-center text-center">
         <button
-          onClick={() => setPickerOpen((v) => !v)}
+          onClick={() => fileRef.current?.click()}
           className="tap-44 relative inline-flex items-center justify-center rounded-full"
           aria-label="Change avatar"
         >
@@ -112,28 +112,7 @@ function Profile() {
             <Camera className="h-3 w-3" aria-hidden />
           </span>
         </button>
-        {pickerOpen && (
-          <div className="mt-2 flex gap-2">
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() => { setPickerOpen(false); cameraRef.current?.click(); }}
-            >
-              Take photo
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() => { setPickerOpen(false); libraryRef.current?.click(); }}
-            >
-              Choose from library
-            </Button>
-          </div>
-        )}
-        <input ref={cameraRef} type="file" accept="image/*" capture="user" className="hidden" onChange={onPickAvatar} />
-        <input ref={libraryRef} type="file" accept="image/*" className="hidden" onChange={onPickAvatar} />
+        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPickAvatar} />
 
         <h1 className="mt-2 text-base font-bold text-foreground">{profile?.display_name}</h1>
         <p className="text-xs text-muted-foreground">@{profile?.username}</p>
