@@ -199,7 +199,10 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
         </div>
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-8 px-6 pb-10 pt-6">
+      <div
+        className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-8 px-6 pt-6"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 2.5rem)" }}
+      >
         <button
           onClick={recording ? finish : start}
           disabled={!!error}
