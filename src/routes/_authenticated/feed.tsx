@@ -135,7 +135,7 @@ function AutoPlayVideo({ path }: { path: string }) {
       loop
       playsInline
       controls
-      className="aspect-[9/16] w-full bg-black"
+      className="aspect-[9/16] w-full bg-black object-cover"
     />
   );
 }
