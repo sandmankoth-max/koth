@@ -37,9 +37,7 @@ function AuthPage() {
   const [consent, setConsent] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  const cameraRef = useRef<HTMLInputElement>(null);
-  const libraryRef = useRef<HTMLInputElement>(null);
-  const [pickerOpen, setPickerOpen] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const isSignup = mode === "signup";
 
@@ -100,7 +98,7 @@ function AuthPage() {
             <div className="flex flex-col items-center gap-2">
               <button
                 type="button"
-                onClick={() => setPickerOpen((v) => !v)}
+                onClick={() => fileRef.current?.click()}
                 className="tap-44 relative inline-flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-koth-white/20 bg-koth-white/5"
                 aria-label="Add profile photo"
               >
@@ -113,42 +111,8 @@ function AuthPage() {
                   +
                 </span>
               </button>
-              {pickerOpen && (
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setPickerOpen(false);
-                      cameraRef.current?.click();
-                    }}
-                  >
-                    Take photo
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setPickerOpen(false);
-                      libraryRef.current?.click();
-                    }}
-                  >
-                    Choose from library
-                  </Button>
-                </div>
-              )}
               <input
-                ref={cameraRef}
-                type="file"
-                accept="image/*"
-                capture="user"
-                className="hidden"
-                onChange={onPickAvatar}
-              />
-              <input
-                ref={libraryRef}
+                ref={fileRef}
                 type="file"
                 accept="image/*"
                 className="hidden"
