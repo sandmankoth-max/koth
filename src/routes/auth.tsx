@@ -78,7 +78,13 @@ function AuthPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-koth-black px-6 py-8 text-koth-white">
+    <div
+      className="flex min-h-screen flex-col bg-koth-black px-6 text-koth-white"
+      style={{
+        paddingTop: "calc(env(safe-area-inset-top) + 1.25rem)",
+        paddingBottom: "calc(env(safe-area-inset-bottom) + 1.25rem)",
+      }}
+    >
       <Link to="/" className="label-broadcast mb-8 text-koth-white/60">
         ← Back
       </Link>
