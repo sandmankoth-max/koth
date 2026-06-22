@@ -79,7 +79,16 @@ export function TikTokPlayer({ items, startIndex = 0, open, onOpenChange }: Prop
   if (!items.length || !open) return null;
 
   return (
-    <div className="fixed inset-x-0 top-14 bottom-16 z-20 bg-black" role="dialog" aria-modal="true" aria-label="Videos">
+    <div
+      className="fixed inset-x-0 z-40 bg-black"
+      style={{
+        top: "calc(3.5rem + env(safe-area-inset-top))",
+        bottom: "calc(4rem + env(safe-area-inset-bottom))",
+      }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Videos"
+    >
       <button
         onClick={() => onOpenChange(false)}
         aria-label="Back"
@@ -238,7 +247,7 @@ function PlayerSlide({
         aria-label="Tap to pause or play"
       >
         {url ? (
-          <video ref={videoRef} src={url} loop playsInline className="h-full w-full object-contain" />
+          <video ref={videoRef} src={url} loop playsInline className="h-full w-full object-cover" />
         ) : (
           <div className="h-full w-full animate-pulse bg-neutral-900" />
         )}
@@ -265,23 +274,23 @@ function PlayerSlide({
           to="/u/$username"
           params={{ username: item.user.username }}
           onClick={(e) => e.stopPropagation()}
-          className="text-base font-bold"
+          className="block max-w-full truncate text-base font-bold"
         >
           @{item.user.username}
         </Link>
         {item.challenge_title && (
-          <p className="mt-1 text-xs text-white/80">
-            <span className="rounded-full bg-koth-red px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="max-w-[60vw] truncate rounded-full bg-koth-red px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
               {item.challenge_title}
             </span>
             {item.value != null && item.unit_type && (
-              <span className="ml-2 mono-stat font-bold">
+              <span className="mono-stat text-xs font-bold">
                 {formatValue(item.value, item.unit_type, item.unit_label ?? "")}
               </span>
             )}
-          </p>
+          </div>
         )}
-        {item.caption && <p className="mt-2 text-sm text-white/90">{item.caption}</p>}
+        {item.caption && <p className="mt-2 line-clamp-2 text-sm text-white/90">{item.caption}</p>}
       </div>
 
       {/* Right rail */}

@@ -71,19 +71,19 @@ function Feed() {
         const ch = (s as any).challenges;
         return (
           <article key={s.id} className="overflow-hidden rounded-3xl border border-border bg-card">
-            <div className="flex items-center gap-3 p-4">
+            <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 p-4">
               <Avatar name={p?.display_name ?? p?.username} avatarPath={p?.avatar_url} size={40} />
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-foreground">{p?.display_name}</p>
                 <p className="truncate text-xs text-muted-foreground">@{p?.username}</p>
                 {ch?.title && (
-                  <p className="mt-1 inline-block rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <p className="mt-1 max-w-full truncate rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground inline-block">
                     {ch.title}
                   </p>
                 )}
               </div>
               {ch && (
-                <div className="mono-stat text-lg font-bold text-foreground">
+                <div className="mono-stat shrink-0 text-base font-bold text-foreground">
                   {formatValue(Number(s.admin_verified_value ?? s.self_reported_value), ch.unit_type, ch.unit_label)}
                 </div>
               )}
@@ -135,7 +135,7 @@ function AutoPlayVideo({ path }: { path: string }) {
       loop
       playsInline
       controls
-      className="aspect-[9/16] w-full bg-black"
+      className="aspect-[9/16] w-full bg-black object-cover"
     />
   );
 }
