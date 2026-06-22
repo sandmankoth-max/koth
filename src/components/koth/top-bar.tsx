@@ -40,7 +40,10 @@ export function TopBar() {
 
   return (
     <>
-      <header className="sticky top-0 z-20 border-b border-border bg-koth-black/95 backdrop-blur">
+      <header
+        className="z-20 shrink-0 border-b border-border bg-koth-black/95 backdrop-blur"
+        style={{ paddingTop: "env(safe-area-inset-top)" }}
+      >
         <div className="mx-auto flex max-w-md items-center justify-between px-4 py-3">
           <Link to="/home" className="flex items-center gap-2" aria-label="KOTH home">
             <LogoMark size={32} className="shrink-0" />
