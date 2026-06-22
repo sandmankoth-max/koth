@@ -7,14 +7,12 @@ import { Avatar } from "@/components/koth/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Check, UserPlus, X, Users, Heart, MessageCircle, Share2, Play, Crown,
+  Check, UserPlus, X, Users, Heart, MessageCircle, Share2, Play,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { formatValue, getVideoSignedUrl } from "@/lib/koth-utils";
 import { CommentDrawer } from "@/components/koth/comment-drawer";
-import { RankBadge } from "@/components/koth/rank-badge";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VideoScrubber } from "@/components/koth/video-scrubber";
 
 export const Route = createFileRoute("/_authenticated/friends")({
