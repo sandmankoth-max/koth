@@ -78,12 +78,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await supabase.auth.signOut();
       setProfile(null);
       setIsAdmin(false);
+      setIsModerator(false);
       throw new Error("This account has been banned.");
     }
     const nextProfile = (profileRow as Profile) ?? null;
     setProfile(nextProfile);
     if (nextProfile?.avatar_url) void getAvatarSignedUrl(nextProfile.avatar_url);
     setIsAdmin(Boolean(roles?.some((r) => r.role === "admin")));
+    setIsModerator(Boolean(roles?.some((r) => r.role === "moderator")));
   }, []);
 
   useEffect(() => {
