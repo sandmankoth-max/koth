@@ -180,16 +180,35 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
       const result: any = await CameraPreview.stopRecordVideo();
       setRecording(false);
       recordingRef.current = false;
-      const path: string = result?.videoFilePath || result?.path || result?.value || "";
-      if (!path) throw new Error("No video file returned");
-      // Read file into a Blob so the rest of the app (upload, preview) works unchanged.
-      const read = await Filesystem.readFile({ path });
-      const base64 = typeof read.data === "string" ? read.data : "";
-      const bin = atob(base64);
-      const bytes = new Uint8Array(bin.length);
-      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      const rawPath: string = result?.videoFilePath || result?.path || result?.value || "";
+      if (!rawPath) throw new Error("No video file returned");
       const mimeType = "video/mp4";
-      const blob = new Blob([bytes], { type: mimeType });
+      // Prefer fetching via the WebView using Capacitor.convertFileSrc — this
+      // streams the file as a Blob without base64 round-tripping and works for
+      // arbitrary absolute paths (Filesystem.readFile rejects paths outside
+      // its known Directory roots, e.g. the Caches dir, with OS-PLUG-FILE-0013).
+      let blob: Blob | null = null;
+      try {
+        const fileUrl = rawPath.startsWith("file://") ? rawPath : `file://${rawPath}`;
+        const webPath = (Capacitor as any).convertFileSrc
+          ? (Capacitor as any).convertFileSrc(fileUrl)
+          : fileUrl;
+        const res = await fetch(webPath);
+        if (res.ok) {
+          const b = await res.blob();
+          blob = new Blob([b], { type: mimeType });
+        }
+      } catch {
+        // fall through to Filesystem fallback
+      }
+      if (!blob) {
+        const read = await Filesystem.readFile({ path: rawPath.startsWith("file://") ? rawPath : `file://${rawPath}` });
+        const base64 = typeof read.data === "string" ? read.data : "";
+        const bin = atob(base64);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        blob = new Blob([bytes], { type: mimeType });
+      }
       onCapture({
         blob,
         previewUrl: URL.createObjectURL(blob),
