@@ -77,7 +77,7 @@ export function AdminSubmissions() {
     const { data } = await supabase
       .from("submissions")
       .select(
-        "id, user_id, video_path, self_reported_value, admin_verified_value, submitted_at, status, visibility, profiles!submissions_user_id_fkey(username, display_name, avatar_url)",
+        "id, user_id, video_path, self_reported_value, admin_verified_value, submitted_at, status, visibility, admin_color, profiles!submissions_user_id_fkey(username, display_name, avatar_url)",
       )
       .eq("challenge_id", challengeId)
       .eq("visibility", "public")
