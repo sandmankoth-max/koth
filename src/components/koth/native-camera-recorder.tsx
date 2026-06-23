@@ -24,8 +24,12 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
   const [elapsed, setElapsed] = useState(0);
   const [flashOn, setFlashOn] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [previewReady, setPreviewReady] = useState(false);
   const startTsRef = useRef(0);
   const startedRef = useRef(false);
+  const mountedRef = useRef(true);
+  const startingRef = useRef<Promise<void> | null>(null);
+  const recordingRef = useRef(false);
 
   // Make body transparent so the native camera layer shows through.
   useEffect(() => {
@@ -41,41 +45,78 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
     };
   }, []);
 
-  const startPreview = useCallback(async (pos: "front" | "rear") => {
+  const isNativeStarted = useCallback(async () => {
     try {
-      try { await CameraPreview.stop(); } catch {}
-      await CameraPreview.start({
-        position: pos,
-        parent: "cameraPreview",
-        className: "cameraPreview",
-        toBack: true,
-        disableAudio: false,
-        enableHighResolution: true,
-      } as any);
-      startedRef.current = true;
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Camera unavailable");
+      const state = await CameraPreview.isCameraStarted();
+      return Boolean(state?.value);
+    } catch {
+      return startedRef.current;
     }
   }, []);
 
-  useEffect(() => {
-    startPreview(facing);
-    return () => {
-      (async () => { try { await CameraPreview.stop(); } catch {} })();
+  const stopPreview = useCallback(async () => {
+    try {
+      if (startedRef.current || await isNativeStarted()) {
+        await CameraPreview.stop();
+      }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e ?? "");
+      if (!message.includes("already stopped")) console.warn("Camera stop failed", e);
+    } finally {
       startedRef.current = false;
+      if (mountedRef.current) setPreviewReady(false);
+    }
+  }, [isNativeStarted]);
+
+  const startPreview = useCallback(async (pos: "front" | "rear") => {
+    if (startingRef.current) return startingRef.current;
+    const run = (async () => {
+      setError(null);
+      if (await isNativeStarted()) {
+        startedRef.current = true;
+        if (mountedRef.current) setPreviewReady(true);
+        return;
+      }
+      await CameraPreview.start({
+        position: pos,
+        toBack: true,
+        disableAudio: true,
+        enableHighResolution: false,
+        rotateWhenOrientationChanged: false,
+      } as any);
+      startedRef.current = true;
+      if (mountedRef.current) setPreviewReady(true);
+    })();
+    startingRef.current = run;
+    try {
+      await run;
+    } catch (e) {
+      if (mountedRef.current) setError(e instanceof Error ? e.message : "Camera unavailable");
+    } finally {
+      if (startingRef.current === run) startingRef.current = null;
+    }
+  }, [isNativeStarted]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    startPreview("rear");
+    return () => {
+      mountedRef.current = false;
+      void stopPreview();
     };
-  }, [facing, startPreview]);
+  }, [startPreview, stopPreview]);
 
   // Flash (torch on rear). Front "flash" handled by white overlay below.
   useEffect(() => {
+    if (!previewReady || facing !== "rear") return;
     (async () => {
       try {
         await CameraPreview.setFlashMode({
-          flashMode: flashOn && facing === "rear" ? "torch" : "off",
+          flashMode: flashOn ? "torch" : "off",
         } as any);
       } catch {}
     })();
-  }, [flashOn, facing]);
+  }, [flashOn, facing, previewReady]);
 
   useEffect(() => {
     if (!recording) return;
@@ -84,7 +125,9 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
   }, [recording]);
 
   const start = useCallback(async () => {
+    if (recordingRef.current) return;
     try {
+      if (!startedRef.current) await startPreview(facing);
       await CameraPreview.startRecordVideo({
         position: facing,
         quality: 85,
@@ -93,15 +136,18 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
       startTsRef.current = Date.now();
       setElapsed(0);
       setRecording(true);
+      recordingRef.current = true;
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not start recording");
     }
-  }, [facing, flashOn]);
+  }, [facing, flashOn, startPreview]);
 
   const finish = useCallback(async () => {
+    if (!recordingRef.current) return;
     try {
       const result: any = await CameraPreview.stopRecordVideo();
       setRecording(false);
+      recordingRef.current = false;
       const path: string = result?.videoFilePath || result?.path || "";
       if (!path) throw new Error("No video file returned");
       // Read file into a Blob so the rest of the app (upload, preview) works unchanged.
@@ -121,8 +167,31 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not save recording");
       setRecording(false);
+      recordingRef.current = false;
     }
   }, [onCapture]);
+
+  const switchCamera = useCallback(async () => {
+    if (recordingRef.current) return;
+    const nextFacing = facing === "front" ? "rear" : "front";
+    try {
+      if (flashOn && facing === "rear") {
+        await CameraPreview.setFlashMode({ flashMode: "off" } as any).catch(() => {});
+      }
+      if (!startedRef.current) {
+        await startPreview(nextFacing);
+      } else {
+        await CameraPreview.flip();
+      }
+      setFacing(nextFacing);
+      setFlashOn(false);
+    } catch {
+      await stopPreview();
+      await startPreview(nextFacing);
+      setFacing(nextFacing);
+      setFlashOn(false);
+    }
+  }, [facing, flashOn, startPreview, stopPreview]);
 
   useEffect(() => {
     if (!recording || !maxSeconds) return;
@@ -160,7 +229,7 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
         className="camera-top-controls absolute inset-x-0 top-0 z-20 grid grid-cols-[44px_minmax(0,1fr)_44px] items-start gap-3 px-4 pb-3 pt-3"
       >
         <button
-          onClick={async () => { try { await CameraPreview.stop(); } catch {} onCancel(); }}
+          onClick={async () => { await stopPreview(); onCancel(); }}
           className="tap-44 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur"
           aria-label="Close camera"
         >
@@ -180,7 +249,7 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
         </div>
         <div className="flex shrink-0 flex-col items-center gap-3">
           <button
-            onClick={() => setFacing((f) => (f === "front" ? "rear" : "front"))}
+            onClick={switchCamera}
             className="tap-44 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur disabled:opacity-50"
             aria-label="Switch camera"
             disabled={recording}

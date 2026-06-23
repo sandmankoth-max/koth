@@ -10,6 +10,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import type { Session, User } from "@supabase/supabase-js";
 import { assertDeviceNotBanned, recordDeviceFingerprint } from "@/lib/device-fingerprint";
+import { primeAvatarSignedUrl } from "@/lib/koth-utils";
 
 /**
  * KOTH uses username + password auth (no email, no phone).
@@ -175,6 +176,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .from("koth-avatars")
           .upload(path, f, { contentType: f.type, upsert: true });
         if (!upErr) {
+          const { data: signed } = await supabase.storage.from("koth-avatars").createSignedUrl(path, 3600);
+          primeAvatarSignedUrl(path, signed?.signedUrl ?? null);
           await supabase.from("profiles").update({ avatar_url: path }).eq("id", newUserId);
           // Refresh in-memory profile so the avatar shows immediately app-wide.
           await loadProfile(newUserId);

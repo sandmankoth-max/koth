@@ -1,5 +1,36 @@
 import { supabase } from "@/integrations/supabase/client";
 
+const AVATAR_CACHE_KEY = "koth.avatarSignedUrls.v1";
+const AVATAR_CACHE_SKEW_MS = 60_000;
+const avatarUrlCache = new Map<string, { url: string; expiresAt: number }>();
+
+function readStoredAvatarCache(path: string) {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(AVATAR_CACHE_KEY);
+    if (!raw) return null;
+    const stored = JSON.parse(raw) as Record<string, { url: string; expiresAt: number }>;
+    const entry = stored[path];
+    if (!entry || entry.expiresAt <= Date.now() + AVATAR_CACHE_SKEW_MS) return null;
+    avatarUrlCache.set(path, entry);
+    return entry.url;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredAvatarCache(path: string, entry: { url: string; expiresAt: number }) {
+  if (typeof window === "undefined") return;
+  try {
+    const raw = window.localStorage.getItem(AVATAR_CACHE_KEY);
+    const stored = raw ? (JSON.parse(raw) as Record<string, { url: string; expiresAt: number }>) : {};
+    stored[path] = entry;
+    window.localStorage.setItem(AVATAR_CACHE_KEY, JSON.stringify(stored));
+  } catch {
+    // Best-effort cache only.
+  }
+}
+
 export function initials(name: string): string {
   return name
     .split(/\s+/)
@@ -55,10 +86,31 @@ export async function getVideoSignedUrl(path: string, expiresIn = 3600): Promise
   return data?.signedUrl ?? null;
 }
 
+export function getCachedAvatarUrl(path: string | null): string | null {
+  if (!path) return null;
+  if (path.startsWith("http") || path.startsWith("blob:")) return path;
+  const memoryEntry = avatarUrlCache.get(path);
+  if (memoryEntry && memoryEntry.expiresAt > Date.now() + AVATAR_CACHE_SKEW_MS) {
+    return memoryEntry.url;
+  }
+  return readStoredAvatarCache(path);
+}
+
+export function primeAvatarSignedUrl(path: string | null, url: string | null, expiresIn = 3600) {
+  if (!path || !url || path.startsWith("http")) return;
+  const entry = { url, expiresAt: Date.now() + expiresIn * 1000 };
+  avatarUrlCache.set(path, entry);
+  writeStoredAvatarCache(path, entry);
+}
+
 export async function getAvatarSignedUrl(path: string | null, expiresIn = 3600): Promise<string | null> {
   if (!path) return null;
   // Avatar URLs may be stored as a raw storage path or a full URL.
   if (path.startsWith("http")) return path;
+  const cached = getCachedAvatarUrl(path);
+  if (cached) return cached;
   const { data } = await supabase.storage.from("koth-avatars").createSignedUrl(path, expiresIn);
-  return data?.signedUrl ?? null;
+  const signedUrl = data?.signedUrl ?? null;
+  primeAvatarSignedUrl(path, signedUrl, expiresIn);
+  return signedUrl;
 }

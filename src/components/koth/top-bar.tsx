@@ -36,7 +36,7 @@ export function TopBar() {
       active = false;
       supabase.removeChannel(ch);
     };
-  }, [user, pathname]);
+  }, [user]);
 
   return (
     <>
