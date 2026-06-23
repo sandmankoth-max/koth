@@ -608,7 +608,7 @@ function AddTab() {
 
       <Section title={`Friends · ${accepted.length}`}>
         {accepted.length === 0 ? (
-          <p className="px-1 py-3 text-sm text-muted-foreground">No friends yet.</p>
+          <p className="px-4 py-3 text-sm text-muted-foreground">No friends yet.</p>
         ) : (
           accepted.map((r) => {
             const p = r.requester_id === user?.id ? r.addr : r.req;
