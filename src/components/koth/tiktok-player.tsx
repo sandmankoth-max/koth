@@ -31,6 +31,7 @@ export type PlayerItem = {
   unit_type?: string;
   unit_label?: string;
   challenge_title?: string | null;
+  admin_color?: string | null;
   user: {
     id: string;
     username: string;
