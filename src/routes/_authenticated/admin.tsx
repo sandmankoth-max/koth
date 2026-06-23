@@ -55,12 +55,14 @@ function Admin() {
           <TabsTrigger value="review" className="flex-1">Submissions</TabsTrigger>
           <TabsTrigger value="results" className="flex-1">Results</TabsTrigger>
           <TabsTrigger value="notify" className="flex-1">Notify</TabsTrigger>
+          <TabsTrigger value="staff" className="flex-1">Staff</TabsTrigger>
         </TabsList>
         <TabsContent value="create"><CreateChallenge /></TabsContent>
         <TabsContent value="edit"><EditChallenge /></TabsContent>
         <TabsContent value="review"><AdminSubmissions /></TabsContent>
         <TabsContent value="results"><AnnounceWinners /></TabsContent>
         <TabsContent value="notify"><SendNotification /></TabsContent>
+        <TabsContent value="staff"><CreateAdminAccount /></TabsContent>
       </Tabs>
     </div>
   );
