@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { LogoMark } from "@/components/koth/logo-mark";
 
 export function TopBar() {
-  const { user, isAdmin } = useAuth();
+  const { user, isStaff } = useAuth();
   const [unread, setUnread] = useState(0);
   const [showHelp, setShowHelp] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
