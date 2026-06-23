@@ -8,7 +8,8 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { RefreshCcw, X, Zap, ZapOff } from "lucide-react";
-import { CameraPreview } from "@capacitor-community/camera-preview";
+import { Capacitor, registerPlugin } from "@capacitor/core";
+import { CameraPreview as CommunityCameraPreview } from "@capacitor-community/camera-preview";
 import { Filesystem } from "@capacitor/filesystem";
 import type { CapturedVideo } from "./camera-recorder";
 
@@ -17,6 +18,11 @@ type Props = {
   onCapture: (v: CapturedVideo) => void;
   maxSeconds?: number | null;
 };
+
+type NativeCameraPreviewPlugin = typeof CommunityCameraPreview;
+
+const IosCameraPreview = registerPlugin<NativeCameraPreviewPlugin>("KothCameraPreview");
+const CameraPreview = Capacitor.getPlatform() === "ios" ? IosCameraPreview : CommunityCameraPreview;
 
 let cameraQueue = Promise.resolve();
 let activeCameraOwner: symbol | null = null;
@@ -97,10 +103,10 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
           position: pos,
           toBack: true,
           disableAudio: false,
-          enableHighResolution: true,
+          enableHighResolution: false,
           rotateWhenOrientationChanged: false,
-          width: window.innerWidth,
-          height: window.innerHeight,
+          width: Math.round(window.innerWidth),
+          height: Math.round(window.innerHeight),
           x: 0,
           y: 0,
         } as any);
@@ -154,6 +160,8 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
       if (!startedRef.current) await startPreview(facing);
       await CameraPreview.startRecordVideo({
         position: facing,
+        width: Math.round(window.innerWidth),
+        height: Math.round(window.innerHeight),
         quality: 85,
         withFlash: flashOn && facing === "rear",
       } as any);
@@ -172,7 +180,7 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
       const result: any = await CameraPreview.stopRecordVideo();
       setRecording(false);
       recordingRef.current = false;
-      const path: string = result?.videoFilePath || result?.path || "";
+      const path: string = result?.videoFilePath || result?.path || result?.value || "";
       if (!path) throw new Error("No video file returned");
       // Read file into a Blob so the rest of the app (upload, preview) works unchanged.
       const read = await Filesystem.readFile({ path });
