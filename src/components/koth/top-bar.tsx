@@ -50,7 +50,7 @@ export function TopBar() {
             <span className="label-broadcast text-koth-white tracking-[0.12em]">KOTH</span>
           </Link>
           <div className="flex items-center gap-1.5">
-            {isAdmin && (
+            {isStaff && (
               <Link
                 to="/admin"
                 aria-label="Admin"
