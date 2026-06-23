@@ -147,6 +147,9 @@ class KothCameraPreviewPlugin: CAPPlugin, CAPBridgedPlugin, AVCaptureFileOutputR
 
             movieOutput.movieFragmentInterval = .invalid
             movieOutput.startRecording(to: url, recordingDelegate: self)
+            DispatchQueue.main.async {
+                call.resolve()
+            }
         }
     }
 
@@ -306,7 +309,6 @@ class KothCameraPreviewPlugin: CAPPlugin, CAPBridgedPlugin, AVCaptureFileOutputR
 
     func fileOutput(_ output: AVCaptureFileOutput, didStartRecordingTo fileURL: URL, from connections: [AVCaptureConnection]) {
         DispatchQueue.main.async { [weak self] in
-            self?.startRecordCall?.resolve()
             self?.startRecordCall = nil
         }
     }
