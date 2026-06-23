@@ -323,6 +323,7 @@ function AdminGradeSlide({
         <Avatar name={s.profiles?.display_name ?? s.profiles?.username} avatarPath={s.profiles?.avatar_url} size={36} />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-bold">@{s.profiles?.username}</p>
+          {s.admin_color && <div className="mt-0.5"><AdminColorBadge color={s.admin_color} /></div>}
           <p className="text-[11px] text-white/70">
             Reported{" "}
             <span className="mono-stat font-bold text-white">
