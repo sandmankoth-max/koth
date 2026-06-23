@@ -86,6 +86,7 @@ function Leaderboard() {
     unit_type: c?.unit_type,
     unit_label: c?.unit_label,
     challenge_title: c?.title ?? null,
+    admin_color: r.admin_color,
     user: {
       id: r.user_id,
       username: r.profiles?.username ?? "user",
