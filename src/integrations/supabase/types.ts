@@ -416,6 +416,7 @@ export type Database = {
       }
       submissions: {
         Row: {
+          admin_color: string | null
           admin_verified_value: number | null
           challenge_id: string
           comment_count: number
@@ -430,6 +431,7 @@ export type Database = {
           visibility: Database["public"]["Enums"]["submission_visibility"]
         }
         Insert: {
+          admin_color?: string | null
           admin_verified_value?: number | null
           challenge_id: string
           comment_count?: number
@@ -444,6 +446,7 @@ export type Database = {
           visibility?: Database["public"]["Enums"]["submission_visibility"]
         }
         Update: {
+          admin_color?: string | null
           admin_verified_value?: number | null
           challenge_id?: string
           comment_count?: number
