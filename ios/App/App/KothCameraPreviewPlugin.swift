@@ -45,7 +45,10 @@ class KothCameraPreviewPlugin: CAPPlugin, CAPBridgedPlugin, AVCaptureFileOutputR
                 return
             }
 
-            AVCaptureDevice.requestAccess(for: .audio) { _ in
+            AVCaptureDevice.requestAccess(for: .audio) { audioGranted in
+                if !audioGranted {
+                    self.disableAudio = true
+                }
                 self.configureAndStart(call)
             }
         }
@@ -314,12 +317,15 @@ class KothCameraPreviewPlugin: CAPPlugin, CAPBridgedPlugin, AVCaptureFileOutputR
 
         if pendingStopAfterRecording {
             pendingStopAfterRecording = false
+            startRecordCall = nil
             try? FileManager.default.removeItem(at: outputFileURL)
             return
         }
 
         DispatchQueue.main.async {
             if let error = error {
+                self.startRecordCall?.reject(error.localizedDescription)
+                self.startRecordCall = nil
                 call?.reject(error.localizedDescription)
                 return
             }
