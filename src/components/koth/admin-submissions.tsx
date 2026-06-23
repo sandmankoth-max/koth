@@ -6,6 +6,7 @@
  *   In-feed actions: enter adjusted value + Verify, Suspend (in-app dialog), Ban user.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar } from "@/components/koth/avatar";
 import { Button } from "@/components/ui/button";
@@ -19,8 +20,28 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { VideoThumb } from "@/components/koth/video-thumb";
 import { getVideoSignedUrl, formatValue } from "@/lib/koth-utils";
-import { X, CheckCircle2, Ban, ShieldX, Trash2 } from "lucide-react";
+import { X, CheckCircle2, Ban, ShieldX, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
+import { createAdminAccount } from "@/lib/admin-accounts.functions";
+
+export const ADMIN_COLOR_MAP: Record<string, { label: string; dot: string; bg: string; text: string }> = {
+  red:    { label: "Red",    dot: "bg-red-500",    bg: "bg-red-500/20",    text: "text-red-300" },
+  blue:   { label: "Blue",   dot: "bg-blue-500",   bg: "bg-blue-500/20",   text: "text-blue-300" },
+  green:  { label: "Green",  dot: "bg-emerald-500",bg: "bg-emerald-500/20",text: "text-emerald-300" },
+  yellow: { label: "Yellow", dot: "bg-yellow-400", bg: "bg-yellow-400/20", text: "text-yellow-200" },
+  purple: { label: "Purple", dot: "bg-purple-500", bg: "bg-purple-500/20", text: "text-purple-300" },
+};
+
+export function AdminColorBadge({ color, className = "" }: { color?: string | null; className?: string }) {
+  if (!color || !ADMIN_COLOR_MAP[color]) return null;
+  const c = ADMIN_COLOR_MAP[color];
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${c.bg} ${c.text} ${className}`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${c.dot}`} />
+      {c.label}
+    </span>
+  );
+}
 
 type Status = "pending_review" | "verified" | "disqualified";
 
