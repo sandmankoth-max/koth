@@ -42,6 +42,8 @@ interface AuthState {
   user: User | null;
   profile: Profile | null;
   isAdmin: boolean;
+  isModerator: boolean;
+  isStaff: boolean;
   loading: boolean;
   signIn: (username: string, password: string) => Promise<void>;
   signUp: (input: {
