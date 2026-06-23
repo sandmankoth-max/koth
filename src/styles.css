@@ -161,6 +161,13 @@
   body.camera-active {
     overflow: hidden;
   }
+  html:has(body.camera-active),
+  body.camera-active,
+  body.camera-active #root,
+  body.camera-active [data-tanstack-router-root] {
+    background: transparent !important;
+    background-color: transparent !important;
+  }
 
   body.camera-active nav,
   body.camera-active header,
