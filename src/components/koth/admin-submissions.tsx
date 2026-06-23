@@ -473,12 +473,25 @@ export function ReasonDialog({
   );
 }
 
-export function CreateAdminAccount() {
-  const callCreate = useServerFn(createAdminAccount);
+export function StaffManager() {
+  const callCreate = useServerFn(createModeratorAccount);
+  const callList = useServerFn(listStaffAccounts);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [staff, setStaff] = useState<Array<{ user_id: string; role: "admin" | "moderator"; username: string; display_name: string | null }>>([]);
+
+  async function refresh() {
+    try {
+      const rows = await callList();
+      setStaff(rows);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to load staff");
+    }
+  }
+
+  useEffect(() => { refresh(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -487,45 +500,68 @@ export function CreateAdminAccount() {
       const res = await callCreate({
         data: { username: username.trim(), password, displayName: displayName.trim() || undefined },
       });
-      toast.success(`Admin @${res.username} created`);
+      toast.success(`Moderator @${res.username} created`);
       setUsername(""); setPassword(""); setDisplayName("");
+      refresh();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to create admin");
+      toast.error(e instanceof Error ? e.message : "Failed to create moderator");
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <form onSubmit={submit} className="space-y-3 rounded-2xl border border-border bg-card p-4">
-      <div className="flex items-center gap-2">
-        <UserPlus className="h-4 w-4 text-koth-red" />
-        <h3 className="text-sm font-bold">Create admin account</h3>
+    <div className="space-y-4">
+      <div className="rounded-2xl border border-border bg-card p-4">
+        <h3 className="text-sm font-bold">Current staff</h3>
+        <ul className="mt-3 space-y-2">
+          {staff.length === 0 ? (
+            <li className="text-xs text-muted-foreground">No staff yet.</li>
+          ) : staff.map((s) => (
+            <li key={`${s.user_id}-${s.role}`} className="flex items-center justify-between rounded-xl bg-muted/40 px-3 py-2">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold">@{s.username}</p>
+                {s.display_name && <p className="truncate text-[11px] text-muted-foreground">{s.display_name}</p>}
+              </div>
+              <span className={`pill text-[10px] ${s.role === "admin" ? "bg-koth-red text-white" : "bg-blue-500/20 text-blue-300"}`}>
+                {s.role}
+              </span>
+            </li>
+          ))}
+        </ul>
       </div>
-      <p className="text-xs text-muted-foreground">
-        Creates a staff account with full admin privileges. Use a strong, unique password per admin.
-      </p>
-      <Input
-        placeholder="username (lowercase, 3-20 chars)"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-        autoCapitalize="none"
-        autoCorrect="off"
-      />
-      <Input
-        placeholder="display name (optional)"
-        value={displayName}
-        onChange={(e) => setDisplayName(e.target.value)}
-      />
-      <Input
-        type="password"
-        placeholder="password (min 8 chars)"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <Button type="submit" disabled={busy} className="w-full bg-koth-red text-white hover:bg-koth-red/90">
-        {busy ? "Creating…" : "Create admin"}
-      </Button>
-    </form>
+
+      <form onSubmit={submit} className="space-y-3 rounded-2xl border border-border bg-card p-4">
+        <div className="flex items-center gap-2">
+          <UserPlus className="h-4 w-4 text-koth-red" />
+          <h3 className="text-sm font-bold">Create moderator account</h3>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Moderators can grade submissions (verify, suspend, ban, delete) but cannot create challenges, send notifications, announce winners, or add new staff.
+        </p>
+        <Input
+          placeholder="username (lowercase, 3-20 chars)"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          autoCapitalize="none"
+          autoCorrect="off"
+        />
+        <Input
+          placeholder="display name (optional)"
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
+        />
+        <Input
+          type="password"
+          placeholder="password (min 8 chars)"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <Button type="submit" disabled={busy} className="w-full bg-koth-red text-white hover:bg-koth-red/90">
+          {busy ? "Creating…" : "Create moderator"}
+        </Button>
+      </form>
+    </div>
   );
 }
+
