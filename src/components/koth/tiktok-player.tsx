@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Avatar } from "@/components/koth/avatar";
 import { getVideoSignedUrl, formatValue } from "@/lib/koth-utils";
+import { AdminColorBadge } from "@/components/koth/admin-submissions";
 import { cn } from "@/lib/utils";
 import { CommentDrawer } from "@/components/koth/comment-drawer";
 import { VideoScrubber } from "@/components/koth/video-scrubber";
