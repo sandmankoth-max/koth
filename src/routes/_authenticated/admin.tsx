@@ -22,7 +22,7 @@ import {
 import { Avatar } from "@/components/koth/avatar";
 import { formatValue, getVideoSignedUrl } from "@/lib/koth-utils";
 import { toast } from "sonner";
-import { AdminSubmissions } from "@/components/koth/admin-submissions";
+import { AdminSubmissions, CreateAdminAccount } from "@/components/koth/admin-submissions";
 import { PromptDialog } from "@/components/koth/prompt-dialog";
 
 export const Route = createFileRoute("/_authenticated/admin")({
