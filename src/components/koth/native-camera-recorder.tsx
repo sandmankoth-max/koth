@@ -96,9 +96,13 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
         await CameraPreview.start({
           position: pos,
           toBack: true,
-          disableAudio: true,
-          enableHighResolution: false,
+          disableAudio: false,
+          enableHighResolution: true,
           rotateWhenOrientationChanged: false,
+          width: window.innerWidth,
+          height: window.innerHeight,
+          x: 0,
+          y: 0,
         } as any);
         startedRef.current = true;
         if (mountedRef.current) setPreviewReady(true);
