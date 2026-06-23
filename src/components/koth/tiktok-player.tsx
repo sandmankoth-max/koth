@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Avatar } from "@/components/koth/avatar";
 import { getVideoSignedUrl, formatValue } from "@/lib/koth-utils";
+import { AdminColorBadge } from "@/components/koth/admin-submissions";
 import { cn } from "@/lib/utils";
 import { CommentDrawer } from "@/components/koth/comment-drawer";
 import { VideoScrubber } from "@/components/koth/video-scrubber";
@@ -31,6 +32,7 @@ export type PlayerItem = {
   unit_type?: string;
   unit_label?: string;
   challenge_title?: string | null;
+  admin_color?: string | null;
   user: {
     id: string;
     username: string;
@@ -122,7 +124,7 @@ function PlayerSlide({
   scrollRoot: React.RefObject<HTMLDivElement | null>;
   onClose: () => void;
 }) {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const qc = useQueryClient();
   const deleteSubmission = useServerFn(deleteOwnSubmission);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -288,6 +290,7 @@ function PlayerSlide({
                 {formatValue(item.value, item.unit_type, item.unit_label ?? "")}
               </span>
             )}
+            {isAdmin && item.admin_color && <AdminColorBadge color={item.admin_color} />}
           </div>
         )}
         {item.caption && <p className="mt-2 line-clamp-2 text-sm text-white/90">{item.caption}</p>}

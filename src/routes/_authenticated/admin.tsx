@@ -22,7 +22,7 @@ import {
 import { Avatar } from "@/components/koth/avatar";
 import { formatValue, getVideoSignedUrl } from "@/lib/koth-utils";
 import { toast } from "sonner";
-import { AdminSubmissions } from "@/components/koth/admin-submissions";
+import { AdminSubmissions, CreateAdminAccount } from "@/components/koth/admin-submissions";
 import { PromptDialog } from "@/components/koth/prompt-dialog";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -55,12 +55,14 @@ function Admin() {
           <TabsTrigger value="review" className="flex-1">Submissions</TabsTrigger>
           <TabsTrigger value="results" className="flex-1">Results</TabsTrigger>
           <TabsTrigger value="notify" className="flex-1">Notify</TabsTrigger>
+          <TabsTrigger value="staff" className="flex-1">Staff</TabsTrigger>
         </TabsList>
         <TabsContent value="create"><CreateChallenge /></TabsContent>
         <TabsContent value="edit"><EditChallenge /></TabsContent>
         <TabsContent value="review"><AdminSubmissions /></TabsContent>
         <TabsContent value="results"><AnnounceWinners /></TabsContent>
         <TabsContent value="notify"><SendNotification /></TabsContent>
+        <TabsContent value="staff"><CreateAdminAccount /></TabsContent>
       </Tabs>
     </div>
   );

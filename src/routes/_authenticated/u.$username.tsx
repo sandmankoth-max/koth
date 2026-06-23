@@ -69,7 +69,7 @@ function UserProfile() {
     enabled: !!profileId,
     queryFn: async () => {
       const q = supabase.from("submissions").select(
-        "id, video_path, self_reported_value, admin_verified_value, submitted_at, visibility, is_active_entry, status, challenges(id, title, unit_type, unit_label)",
+        "id, video_path, self_reported_value, admin_verified_value, submitted_at, visibility, is_active_entry, status, admin_color, challenges(id, title, unit_type, unit_label)",
       ).eq("user_id", profileId!).order("submitted_at", { ascending: false });
       const { data } = canSeeAll ? await q : await q.limit(1);
       return (data ?? []).filter((s: any) =>
@@ -95,6 +95,7 @@ function UserProfile() {
     value: Number(s.admin_verified_value ?? s.self_reported_value),
     unit_type: s.challenges?.unit_type, unit_label: s.challenges?.unit_label,
     challenge_title: s.challenges?.title,
+    admin_color: s.admin_color,
     user: { id: p.id, username: p.username, display_name: p.display_name, avatar_url: p.avatar_url },
   }));
 

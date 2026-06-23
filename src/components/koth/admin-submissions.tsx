@@ -6,6 +6,7 @@
  *   In-feed actions: enter adjusted value + Verify, Suspend (in-app dialog), Ban user.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar } from "@/components/koth/avatar";
 import { Button } from "@/components/ui/button";
@@ -19,8 +20,28 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { VideoThumb } from "@/components/koth/video-thumb";
 import { getVideoSignedUrl, formatValue } from "@/lib/koth-utils";
-import { X, CheckCircle2, Ban, ShieldX, Trash2 } from "lucide-react";
+import { X, CheckCircle2, Ban, ShieldX, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
+import { createAdminAccount } from "@/lib/admin-accounts.functions";
+
+export const ADMIN_COLOR_MAP: Record<string, { label: string; dot: string; bg: string; text: string }> = {
+  red:    { label: "Red",    dot: "bg-red-500",    bg: "bg-red-500/20",    text: "text-red-300" },
+  blue:   { label: "Blue",   dot: "bg-blue-500",   bg: "bg-blue-500/20",   text: "text-blue-300" },
+  green:  { label: "Green",  dot: "bg-emerald-500",bg: "bg-emerald-500/20",text: "text-emerald-300" },
+  yellow: { label: "Yellow", dot: "bg-yellow-400", bg: "bg-yellow-400/20", text: "text-yellow-200" },
+  purple: { label: "Purple", dot: "bg-purple-500", bg: "bg-purple-500/20", text: "text-purple-300" },
+};
+
+export function AdminColorBadge({ color, className = "" }: { color?: string | null; className?: string }) {
+  if (!color || !ADMIN_COLOR_MAP[color]) return null;
+  const c = ADMIN_COLOR_MAP[color];
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${c.bg} ${c.text} ${className}`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${c.dot}`} />
+      {c.label}
+    </span>
+  );
+}
 
 type Status = "pending_review" | "verified" | "disqualified";
 
@@ -56,7 +77,7 @@ export function AdminSubmissions() {
     const { data } = await supabase
       .from("submissions")
       .select(
-        "id, user_id, video_path, self_reported_value, admin_verified_value, submitted_at, status, visibility, profiles!submissions_user_id_fkey(username, display_name, avatar_url)",
+        "id, user_id, video_path, self_reported_value, admin_verified_value, submitted_at, status, visibility, admin_color, profiles!submissions_user_id_fkey(username, display_name, avatar_url)",
       )
       .eq("challenge_id", challengeId)
       .eq("visibility", "public")
@@ -117,6 +138,11 @@ export function AdminSubmissions() {
               <p className="truncate px-1 text-center text-[10px] font-semibold text-foreground">
                 @{s.profiles?.username}
               </p>
+              {s.admin_color && (
+                <div className="flex justify-center pb-1">
+                  <AdminColorBadge color={s.admin_color} />
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -297,6 +323,7 @@ function AdminGradeSlide({
         <Avatar name={s.profiles?.display_name ?? s.profiles?.username} avatarPath={s.profiles?.avatar_url} size={36} />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-bold">@{s.profiles?.username}</p>
+          {s.admin_color && <div className="mt-0.5"><AdminColorBadge color={s.admin_color} /></div>}
           <p className="text-[11px] text-white/70">
             Reported{" "}
             <span className="mono-stat font-bold text-white">
@@ -443,5 +470,62 @@ export function ReasonDialog({
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+  );
+}
+
+export function CreateAdminAccount() {
+  const callCreate = useServerFn(createAdminAccount);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      const res = await callCreate({
+        data: { username: username.trim(), password, displayName: displayName.trim() || undefined },
+      });
+      toast.success(`Admin @${res.username} created`);
+      setUsername(""); setPassword(""); setDisplayName("");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to create admin");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form onSubmit={submit} className="space-y-3 rounded-2xl border border-border bg-card p-4">
+      <div className="flex items-center gap-2">
+        <UserPlus className="h-4 w-4 text-koth-red" />
+        <h3 className="text-sm font-bold">Create admin account</h3>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Creates a staff account with full admin privileges. Use a strong, unique password per admin.
+      </p>
+      <Input
+        placeholder="username (lowercase, 3-20 chars)"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+        autoCapitalize="none"
+        autoCorrect="off"
+      />
+      <Input
+        placeholder="display name (optional)"
+        value={displayName}
+        onChange={(e) => setDisplayName(e.target.value)}
+      />
+      <Input
+        type="password"
+        placeholder="password (min 8 chars)"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+      <Button type="submit" disabled={busy} className="w-full bg-koth-red text-white hover:bg-koth-red/90">
+        {busy ? "Creating…" : "Create admin"}
+      </Button>
+    </form>
   );
 }

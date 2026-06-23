@@ -62,7 +62,7 @@ function Leaderboard() {
       const { data } = await supabase
         .from("submissions")
         .select(
-          "id, user_id, self_reported_value, admin_verified_value, status, video_path, submitted_at, profiles!submissions_user_id_fkey(username, display_name, avatar_url)",
+          "id, user_id, self_reported_value, admin_verified_value, status, video_path, submitted_at, admin_color, profiles!submissions_user_id_fkey(username, display_name, avatar_url)",
         )
         .eq("challenge_id", c!.id)
         .eq("is_active_entry", true)
@@ -86,6 +86,7 @@ function Leaderboard() {
     unit_type: c?.unit_type,
     unit_label: c?.unit_label,
     challenge_title: c?.title ?? null,
+    admin_color: r.admin_color,
     user: {
       id: r.user_id,
       username: r.profiles?.username ?? "user",
