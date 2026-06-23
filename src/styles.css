@@ -161,6 +161,13 @@
   body.camera-active {
     overflow: hidden;
   }
+  html:has(body.camera-active),
+  body.camera-active,
+  body.camera-active #root,
+  body.camera-active [data-tanstack-router-root] {
+    background: transparent !important;
+    background-color: transparent !important;
+  }
 
   body.camera-active nav,
   body.camera-active header,
@@ -169,11 +176,11 @@
   }
 
   .camera-top-controls {
-    padding-top: max(2.75rem, calc(env(safe-area-inset-top) + 1.25rem));
+    padding-top: max(2.75rem, calc(env(safe-area-inset-top) + 1.25rem)) !important;
   }
 
   .camera-bottom-controls {
-    padding-bottom: max(6.5rem, calc(env(safe-area-inset-bottom) + 5.5rem));
+    padding-bottom: max(6.5rem, calc(env(safe-area-inset-bottom) + 5.5rem)) !important;
   }
 
   /* Inputs on dark KOTH surfaces (auth, modal sheets). */
