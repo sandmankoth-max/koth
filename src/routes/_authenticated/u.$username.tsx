@@ -95,6 +95,7 @@ function UserProfile() {
     value: Number(s.admin_verified_value ?? s.self_reported_value),
     unit_type: s.challenges?.unit_type, unit_label: s.challenges?.unit_label,
     challenge_title: s.challenges?.title,
+    admin_color: s.admin_color,
     user: { id: p.id, username: p.username, display_name: p.display_name, avatar_url: p.avatar_url },
   }));
 
