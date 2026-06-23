@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useServerFn } from "@tanstack/react-start";
 import { deleteOwnAccount } from "@/lib/account.functions";
+import { primeAvatarSignedUrl } from "@/lib/koth-utils";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({ meta: [{ title: "Profile — KOTH" }] }),
@@ -52,6 +53,8 @@ function Profile() {
       const { error: upErr } = await supabase.storage.from("koth-avatars")
         .upload(path, f, { contentType: f.type, upsert: true });
       if (upErr) throw upErr;
+      const { data: signed } = await supabase.storage.from("koth-avatars").createSignedUrl(path, 3600);
+      primeAvatarSignedUrl(path, signed?.signedUrl ?? null);
       await supabase.from("profiles").update({ avatar_url: path }).eq("id", user.id);
       await refreshProfile();
       toast.success("Avatar updated");

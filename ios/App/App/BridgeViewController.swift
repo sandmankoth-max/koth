@@ -8,9 +8,25 @@ import Capacitor
 class BridgeViewController: CAPBridgeViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
+        configureTransparentWebView()
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        configureTransparentWebView()
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        configureTransparentWebView()
+    }
+
+    private func configureTransparentWebView() {
         view.backgroundColor = .clear
         webView?.isOpaque = false
         webView?.backgroundColor = .clear
+        webView?.superview?.backgroundColor = .clear
+        webView?.scrollView.isOpaque = false
         webView?.scrollView.backgroundColor = .clear
     }
 }

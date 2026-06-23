@@ -164,7 +164,9 @@
   html:has(body.camera-active),
   body.camera-active,
   body.camera-active #root,
-  body.camera-active [data-tanstack-router-root] {
+  body.camera-active [data-tanstack-router-root],
+  body.camera-active .app-shell,
+  body.camera-active .app-main {
     background: transparent !important;
     background-color: transparent !important;
   }
@@ -176,7 +178,7 @@
   }
 
   .camera-top-controls {
-    padding-top: max(2.75rem, calc(env(safe-area-inset-top) + 1.25rem)) !important;
+    padding-top: max(4rem, calc(env(safe-area-inset-top) + 2rem)) !important;
   }
 
   .camera-bottom-controls {

@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { initials } from "@/lib/koth-utils";
 import { useEffect, useState } from "react";
-import { getAvatarSignedUrl } from "@/lib/koth-utils";
+import { getAvatarSignedUrl, getCachedAvatarUrl } from "@/lib/koth-utils";
 
 type Props = {
   name: string;
@@ -15,11 +15,13 @@ type Props = {
  * Generated client-side so we never need a static placeholder asset.
  */
 export function Avatar({ name, avatarPath, size = 40, className }: Props) {
-  const [url, setUrl] = useState<string | null>(null);
+  const [url, setUrl] = useState<string | null>(() => getCachedAvatarUrl(avatarPath ?? null));
   useEffect(() => {
     let active = true;
     if (avatarPath) {
-      getAvatarSignedUrl(avatarPath).then((u) => active && setUrl(u));
+      const cached = getCachedAvatarUrl(avatarPath);
+      setUrl(cached);
+      if (!cached) getAvatarSignedUrl(avatarPath).then((u) => active && setUrl(u));
     } else {
       setUrl(null);
     }
@@ -40,6 +42,16 @@ export function Avatar({ name, avatarPath, size = 40, className }: Props) {
       />
     );
   }
+  if (avatarPath) {
+    return (
+      <span
+        aria-label={`${name} avatar loading`}
+        className={cn("inline-flex animate-pulse rounded-full bg-muted", className)}
+        style={{ width: size, height: size }}
+      />
+    );
+  }
+
   return (
     <span
       aria-label={`${name} avatar`}
