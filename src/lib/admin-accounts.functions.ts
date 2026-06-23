@@ -52,15 +52,25 @@ export const listStaffAccounts = createServerFn({ method: "GET" })
       .rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (!isAdmin) throw new Error("Forbidden");
 
-    const { data, error } = await context.supabase
+    const { data: roles, error } = await context.supabase
       .from("user_roles")
-      .select("role, user_id, profiles!user_roles_user_id_fkey(username, display_name)")
+      .select("role, user_id")
       .in("role", ["admin", "moderator"]);
     if (error) throw new Error(error.message);
-    return (data ?? []).map((r: any) => ({
-      user_id: r.user_id,
-      role: r.role as "admin" | "moderator",
-      username: r.profiles?.username ?? "(unknown)",
-      display_name: r.profiles?.display_name ?? null,
-    }));
+    const ids = Array.from(new Set((roles ?? []).map((r) => r.user_id)));
+    if (ids.length === 0) return [] as Array<{ user_id: string; role: "admin" | "moderator"; username: string; display_name: string | null }>;
+    const { data: profs } = await context.supabase
+      .from("profiles")
+      .select("id, username, display_name")
+      .in("id", ids);
+    const byId = new Map((profs ?? []).map((p: any) => [p.id, p]));
+    return (roles ?? []).map((r) => {
+      const p = byId.get(r.user_id) as any;
+      return {
+        user_id: r.user_id,
+        role: r.role as "admin" | "moderator",
+        username: p?.username ?? "(unknown)",
+        display_name: p?.display_name ?? null,
+      };
+    });
   });
