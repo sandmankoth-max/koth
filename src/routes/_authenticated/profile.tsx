@@ -253,7 +253,7 @@ function VideoGallery() {
     enabled: !!user,
     queryFn: async () => {
       const { data } = await supabase.from("submissions").select(
-        "id, video_path, self_reported_value, admin_verified_value, submitted_at, visibility, is_active_entry, status, challenges(id, title, unit_type, unit_label)",
+        "id, video_path, self_reported_value, admin_verified_value, submitted_at, visibility, is_active_entry, status, admin_color, challenges(id, title, unit_type, unit_label)",
       ).eq("user_id", user!.id).order("submitted_at", { ascending: false });
       return (data ?? []).filter((s: any) =>
         s.challenges && (s.visibility === "friends_only" || s.is_active_entry || s.status === "disqualified"),
@@ -268,6 +268,7 @@ function VideoGallery() {
     unit_type: s.challenges?.unit_type,
     unit_label: s.challenges?.unit_label,
     challenge_title: s.challenges?.title,
+    admin_color: s.admin_color,
     user: {
       id: user!.id,
       username: profile?.username ?? "you",
