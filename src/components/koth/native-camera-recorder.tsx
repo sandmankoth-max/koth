@@ -18,6 +18,15 @@ type Props = {
   maxSeconds?: number | null;
 };
 
+let cameraQueue = Promise.resolve();
+let activeCameraOwner: symbol | null = null;
+
+function runCameraOperation<T>(operation: () => Promise<T>) {
+  const run = cameraQueue.then(operation, operation);
+  cameraQueue = run.then(() => undefined, () => undefined);
+  return run;
+}
+
 export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
   const [facing, setFacing] = useState<"front" | "rear">("rear");
   const [recording, setRecording] = useState(false);
@@ -30,6 +39,7 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
   const mountedRef = useRef(true);
   const startingRef = useRef<Promise<void> | null>(null);
   const recordingRef = useRef(false);
+  const ownerRef = useRef(Symbol("native-camera-recorder"));
 
   // Make body transparent so the native camera layer shows through.
   useEffect(() => {
@@ -56,9 +66,13 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
 
   const stopPreview = useCallback(async () => {
     try {
-      if (startedRef.current || await isNativeStarted()) {
-        await CameraPreview.stop();
-      }
+      await runCameraOperation(async () => {
+        if (activeCameraOwner && activeCameraOwner !== ownerRef.current) return;
+        if (startedRef.current || await isNativeStarted()) {
+          await CameraPreview.stop();
+        }
+        activeCameraOwner = null;
+      });
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e ?? "");
       if (!message.includes("already stopped")) console.warn("Camera stop failed", e);
@@ -72,20 +86,23 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
     if (startingRef.current) return startingRef.current;
     const run = (async () => {
       setError(null);
-      if (await isNativeStarted()) {
+      await runCameraOperation(async () => {
+        activeCameraOwner = ownerRef.current;
+        if (await isNativeStarted()) {
+          startedRef.current = true;
+          if (mountedRef.current) setPreviewReady(true);
+          return;
+        }
+        await CameraPreview.start({
+          position: pos,
+          toBack: true,
+          disableAudio: true,
+          enableHighResolution: false,
+          rotateWhenOrientationChanged: false,
+        } as any);
         startedRef.current = true;
         if (mountedRef.current) setPreviewReady(true);
-        return;
-      }
-      await CameraPreview.start({
-        position: pos,
-        toBack: true,
-        disableAudio: true,
-        enableHighResolution: false,
-        rotateWhenOrientationChanged: false,
-      } as any);
-      startedRef.current = true;
-      if (mountedRef.current) setPreviewReady(true);
+      });
     })();
     startingRef.current = run;
     try {
@@ -111,9 +128,12 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
     if (!previewReady || facing !== "rear") return;
     (async () => {
       try {
-        await CameraPreview.setFlashMode({
-          flashMode: flashOn ? "torch" : "off",
-        } as any);
+        await runCameraOperation(async () => {
+          if (activeCameraOwner !== ownerRef.current) return;
+          await CameraPreview.setFlashMode({
+            flashMode: flashOn ? "torch" : "off",
+          } as any);
+        });
       } catch {}
     })();
   }, [flashOn, facing, previewReady]);
@@ -176,12 +196,19 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
     const nextFacing = facing === "front" ? "rear" : "front";
     try {
       if (flashOn && facing === "rear") {
-        await CameraPreview.setFlashMode({ flashMode: "off" } as any).catch(() => {});
+        await runCameraOperation(async () => {
+          if (activeCameraOwner === ownerRef.current) {
+            await CameraPreview.setFlashMode({ flashMode: "off" } as any).catch(() => {});
+          }
+        });
       }
       if (!startedRef.current) {
         await startPreview(nextFacing);
       } else {
-        await CameraPreview.flip();
+        await runCameraOperation(async () => {
+          if (activeCameraOwner !== ownerRef.current) activeCameraOwner = ownerRef.current;
+          await CameraPreview.flip();
+        });
       }
       setFacing(nextFacing);
       setFlashOn(false);
