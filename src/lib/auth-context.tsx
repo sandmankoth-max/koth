@@ -42,6 +42,8 @@ interface AuthState {
   user: User | null;
   profile: Profile | null;
   isAdmin: boolean;
+  isModerator: boolean;
+  isStaff: boolean;
   loading: boolean;
   signIn: (username: string, password: string) => Promise<void>;
   signUp: (input: {
@@ -63,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isModerator, setIsModerator] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const loadProfile = useCallback(async (_uid: string) => {
@@ -75,12 +78,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await supabase.auth.signOut();
       setProfile(null);
       setIsAdmin(false);
+      setIsModerator(false);
       throw new Error("This account has been banned.");
     }
     const nextProfile = (profileRow as Profile) ?? null;
     setProfile(nextProfile);
     if (nextProfile?.avatar_url) void getAvatarSignedUrl(nextProfile.avatar_url);
     setIsAdmin(Boolean(roles?.some((r) => r.role === "admin")));
+    setIsModerator(Boolean(roles?.some((r) => r.role === "moderator")));
   }, []);
 
   useEffect(() => {
@@ -93,6 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setProfile(null);
         setIsAdmin(false);
+        setIsModerator(false);
       }
     });
 
@@ -200,8 +206,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user, loadProfile]);
 
   const value = useMemo<AuthState>(
-    () => ({ session, user, profile, isAdmin, loading, signIn, signUp, signOut, refreshProfile }),
-    [session, user, profile, isAdmin, loading, signIn, signUp, signOut, refreshProfile],
+    () => ({ session, user, profile, isAdmin, isModerator, isStaff: isAdmin || isModerator, loading, signIn, signUp, signOut, refreshProfile }),
+    [session, user, profile, isAdmin, isModerator, loading, signIn, signUp, signOut, refreshProfile],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

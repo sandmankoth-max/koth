@@ -675,6 +675,7 @@ export type Database = {
       }
       is_fingerprint_banned: { Args: { _fp: string }; Returns: boolean }
       is_profane: { Args: { _text: string }; Returns: boolean }
+      is_staff: { Args: { _user_id: string }; Returns: boolean }
       lifecycle_tick: { Args: never; Returns: Json }
       notify_rank_changes: {
         Args: { p_actor: string; p_challenge_id: string }
@@ -683,7 +684,7 @@ export type Database = {
       username_exists: { Args: { _username: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "member" | "admin"
+      app_role: "member" | "admin" | "moderator"
       challenge_status:
         | "upcoming"
         | "active"
@@ -847,7 +848,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["member", "admin"],
+      app_role: ["member", "admin", "moderator"],
       challenge_status: [
         "upcoming",
         "active",

@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { LogoMark } from "@/components/koth/logo-mark";
 
 export function TopBar() {
-  const { user, isAdmin } = useAuth();
+  const { user, isStaff } = useAuth();
   const [unread, setUnread] = useState(0);
   const [showHelp, setShowHelp] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -50,7 +50,7 @@ export function TopBar() {
             <span className="label-broadcast text-koth-white tracking-[0.12em]">KOTH</span>
           </Link>
           <div className="flex items-center gap-1.5">
-            {isAdmin && (
+            {isStaff && (
               <Link
                 to="/admin"
                 aria-label="Admin"

@@ -29,7 +29,7 @@ export const Route = createFileRoute("/_authenticated/profile")({
 });
 
 function Profile() {
-  const { user, profile, isAdmin, signOut, refreshProfile } = useAuth();
+  const { user, profile, isAdmin, isStaff, signOut, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -175,8 +175,8 @@ function Profile() {
             <SheetRow onClick={() => { setSettingsOpen(false); navigate({ to: "/legal/rules" }); }} icon={<FileText className="h-4 w-4" />} label="Official Rules" />
             <SheetRow onClick={() => { setSettingsOpen(false); navigate({ to: "/legal/terms" }); }} icon={<FileText className="h-4 w-4" />} label="Terms of Service" />
             <SheetRow onClick={() => { setSettingsOpen(false); navigate({ to: "/legal/privacy" }); }} icon={<FileText className="h-4 w-4" />} label="Privacy Policy" />
-            {isAdmin && (
-              <SheetRow onClick={() => { setSettingsOpen(false); navigate({ to: "/admin" }); }} icon={<ShieldCheck className="h-4 w-4 text-koth-red" />} label="Admin panel" />
+            {isStaff && (
+              <SheetRow onClick={() => { setSettingsOpen(false); navigate({ to: "/admin" }); }} icon={<ShieldCheck className="h-4 w-4 text-koth-red" />} label={isAdmin ? "Admin panel" : "Moderator panel"} />
             )}
             <button
               onClick={async () => { await signOut(); navigate({ to: "/" }); }}
