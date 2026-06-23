@@ -138,6 +138,11 @@ export function AdminSubmissions() {
               <p className="truncate px-1 text-center text-[10px] font-semibold text-foreground">
                 @{s.profiles?.username}
               </p>
+              {s.admin_color && (
+                <div className="flex justify-center pb-1">
+                  <AdminColorBadge color={s.admin_color} />
+                </div>
+              )}
             </div>
           ))}
         </div>
