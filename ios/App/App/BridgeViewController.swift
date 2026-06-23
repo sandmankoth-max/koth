@@ -6,6 +6,11 @@ import Capacitor
 /// WebView itself to be non-opaque with a clear background — otherwise
 /// the WebView paints over the camera and the user sees a grey screen.
 class BridgeViewController: CAPBridgeViewController {
+    override open func capacitorDidLoad() {
+        super.capacitorDidLoad()
+        bridge?.registerPluginInstance(KothCameraPreviewPlugin())
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         configureTransparentWebView()
