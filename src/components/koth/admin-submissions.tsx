@@ -472,3 +472,60 @@ export function ReasonDialog({
     </AlertDialog>
   );
 }
+
+export function CreateAdminAccount() {
+  const callCreate = useServerFn(createAdminAccount);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      const res = await callCreate({
+        data: { username: username.trim(), password, displayName: displayName.trim() || undefined },
+      });
+      toast.success(`Admin @${res.username} created`);
+      setUsername(""); setPassword(""); setDisplayName("");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to create admin");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form onSubmit={submit} className="space-y-3 rounded-2xl border border-border bg-card p-4">
+      <div className="flex items-center gap-2">
+        <UserPlus className="h-4 w-4 text-koth-red" />
+        <h3 className="text-sm font-bold">Create admin account</h3>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Creates a staff account with full admin privileges. Use a strong, unique password per admin.
+      </p>
+      <Input
+        placeholder="username (lowercase, 3-20 chars)"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+        autoCapitalize="none"
+        autoCorrect="off"
+      />
+      <Input
+        placeholder="display name (optional)"
+        value={displayName}
+        onChange={(e) => setDisplayName(e.target.value)}
+      />
+      <Input
+        type="password"
+        placeholder="password (min 8 chars)"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+      <Button type="submit" disabled={busy} className="w-full bg-koth-red text-white hover:bg-koth-red/90">
+        {busy ? "Creating…" : "Create admin"}
+      </Button>
+    </form>
+  );
+}
