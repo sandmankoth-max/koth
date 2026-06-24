@@ -31,6 +31,7 @@ function Record() {
   const [visibility, setVisibility] = useState<Visibility | null>(null);
   const [explainOpen, setExplainOpen] = useState<Visibility | null>(null);
   const [challenge, setChallenge] = useState<any>(null);
+  const [suspension, setSuspension] = useState<{ until: string; reason: string | null } | null>(null);
 
   useEffect(() => {
     supabase
@@ -42,6 +43,22 @@ function Record() {
       .maybeSingle()
       .then(({ data }) => setChallenge(data));
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("suspended_until, suspension_reason")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.suspended_until && new Date(data.suspended_until).getTime() > Date.now()) {
+          setSuspension({ until: data.suspended_until, reason: data.suspension_reason ?? null });
+        } else {
+          setSuspension(null);
+        }
+      });
+  }, [user]);
 
   useEffect(() => {
     return () => {
