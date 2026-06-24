@@ -386,10 +386,10 @@ function SubmissionRow({ s, onUpdate }: { s: any; onUpdate: (p: any) => Promise<
       <PromptDialog
         open={suspendOpen}
         onOpenChange={setSuspendOpen}
-        title="Suspend submission"
-        description="Why is this submission being suspended? This note will be sent to the user in their notification."
+        title="Reject submission"
+        description="Why is this submission being rejected? This note will be sent to the user in their notification."
         placeholder="Reason (optional)"
-        confirmLabel="Suspend"
+        confirmLabel="Reject"
         destructive
         onConfirm={async (reason) => {
           setSuspendOpen(false);
@@ -399,7 +399,7 @@ function SubmissionRow({ s, onUpdate }: { s: any; onUpdate: (p: any) => Promise<
           });
           if (error) toast.error(error.message);
           else {
-            toast.success("Suspended");
+            toast.success("Rejected");
             await onUpdate({ status: "disqualified", is_active_entry: false, __local: true });
           }
         }}

@@ -48,7 +48,7 @@ type Status = "pending_review" | "verified" | "disqualified";
 const STATUS_LABEL: Record<Status, string> = {
   pending_review: "Pending",
   verified: "Verified",
-  disqualified: "Suspended",
+  disqualified: "Rejected",
 };
 
 export function AdminSubmissions() {
@@ -280,7 +280,7 @@ function AdminGradeSlide({
     setSuspendOpen(false);
     setReason("");
     if (error) toast.error(error.message);
-    else { toast.success("Suspended"); onChanged(); }
+    else { toast.success("Rejected"); onChanged(); }
   }
 
   async function confirmBan() {
@@ -336,7 +336,7 @@ function AdminGradeSlide({
           s.status === "disqualified" ? "bg-koth-red text-white" :
           "bg-white/20 text-white"
         }`}>
-          {s.status === "pending_review" ? "Pending" : s.status === "verified" ? "Verified" : "Suspended"}
+          {s.status === "pending_review" ? "Pending" : s.status === "verified" ? "Verified" : "Rejected"}
         </span>
       </div>
 
@@ -387,9 +387,9 @@ function AdminGradeSlide({
       <ReasonDialog
         open={suspendOpen}
         onOpenChange={setSuspendOpen}
-        title="Suspend this submission?"
+        title="Reject this submission?"
         description="The reason you enter will be sent to the user in their notification center."
-        confirmLabel="Suspend"
+        confirmLabel="Reject"
         reason={reason}
         setReason={setReason}
         onConfirm={confirmSuspend}
