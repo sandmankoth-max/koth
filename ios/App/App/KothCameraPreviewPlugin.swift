@@ -141,7 +141,11 @@ class KothCameraPreviewPlugin: CAPPlugin, CAPBridgedPlugin, AVCaptureFileOutputR
             if let connection = movieOutput.connection(with: .video) {
                 self.applyOrientation(to: connection)
                 if connection.isVideoMirroringSupported {
-                    connection.isVideoMirrored = false
+                    connection.automaticallyAdjustsVideoMirroring = false
+                    // Mirror saved video to match the on-screen preview when
+                    // using the front camera (Snap/TikTok behavior). Rear cam
+                    // stays un-mirrored so text/scenes look correct.
+                    connection.isVideoMirrored = self.cameraPosition == .front
                 }
             }
 
