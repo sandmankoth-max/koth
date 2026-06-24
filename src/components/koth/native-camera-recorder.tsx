@@ -34,7 +34,7 @@ function runCameraOperation<T>(operation: () => Promise<T>) {
 }
 
 export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
-  const [facing, setFacing] = useState<"front" | "rear">("rear");
+  const [facing, setFacing] = useState<"front" | "rear">("front");
   const [recording, setRecording] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [flashOn, setFlashOn] = useState(false);
