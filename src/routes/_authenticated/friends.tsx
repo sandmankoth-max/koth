@@ -192,7 +192,7 @@ function FeedScroller({ rows }: { rows: any[] }) {
       ref={scrollerRef}
       className="fixed inset-x-0 top-14 z-20 snap-y snap-mandatory overflow-y-auto overscroll-y-contain bg-black"
       style={{
-        bottom: "calc(4rem + env(safe-area-inset-bottom))",
+        bottom: "calc(5.5rem + env(safe-area-inset-bottom))",
         scrollSnapType: "y mandatory",
         WebkitOverflowScrolling: "touch",
         scrollbarWidth: "none",
