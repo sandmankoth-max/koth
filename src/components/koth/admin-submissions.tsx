@@ -456,7 +456,7 @@ export function ReasonDialog({
           placeholder="Reason (sent to user)"
           rows={3}
           className="resize-none rounded-xl"
-          autoFocus
+          
         />
         <AlertDialogFooter>
           <AlertDialogCancel disabled={busy}>Cancel</AlertDialogCancel>
