@@ -38,6 +38,11 @@ export function TopBar() {
     };
   }, [user]);
 
+  // Clear the badge optimistically the moment the user lands on /notifications.
+  useEffect(() => {
+    if (pathname.startsWith("/notifications")) setUnread(0);
+  }, [pathname]);
+
   return (
     <>
       <header
