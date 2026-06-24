@@ -1,0 +1,1 @@
+GRANT SELECT (banned, banned_at, banned_reason, suspended_until, suspended_at, suspended_by, suspension_reason) ON public.profiles TO authenticated;

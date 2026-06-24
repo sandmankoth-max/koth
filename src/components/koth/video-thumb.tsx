@@ -66,11 +66,18 @@ export function VideoThumb({ videoPath, onClick, className, autoplayOnView, badg
       {url ? (
         <video
           ref={ref}
-          src={url}
+          src={`${url}#t=0.1`}
           muted
           loop
           playsInline
-          preload="metadata"
+          preload="auto"
+          // Force first-frame paint on iOS/Safari: seek slightly past 0 once
+          // metadata is loaded so a thumbnail frame is actually rendered
+          // instead of staying black.
+          onLoadedMetadata={(e) => {
+            const v = e.currentTarget;
+            try { if (v.currentTime < 0.1) v.currentTime = 0.1; } catch { /* noop */ }
+          }}
           className="h-full w-full object-cover"
         />
       ) : (
