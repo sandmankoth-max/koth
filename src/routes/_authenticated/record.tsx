@@ -226,7 +226,7 @@ function Record() {
             </Button>
             <Button
               onClick={() => setStage("visibility")}
-              disabled={!reportedValue || Number(reportedValue) <= 0 || Number(reportedValue) >= 1000}
+              disabled={!reportedValue || !Number.isFinite(Number(reportedValue)) || Number(reportedValue) <= 0 || Number(reportedValue) >= 1000}
               className="tap-44 h-12 rounded-full bg-koth-red text-koth-white hover:bg-koth-red/90"
             >
               Next
