@@ -55,6 +55,7 @@ export function AdminSubmissions() {
   const [challenges, setChallenges] = useState<any[]>([]);
   const [challengeId, setChallengeId] = useState<string>("");
   const [status, setStatus] = useState<Status>("pending_review");
+  const [colorFilter, setColorFilter] = useState<string | null>(null);
   const [subs, setSubs] = useState<any[]>([]);
   const [playerIndex, setPlayerIndex] = useState<number | null>(null);
 
@@ -96,6 +97,11 @@ export function AdminSubmissions() {
     [challenges, challengeId],
   );
 
+  const visibleSubs = useMemo(
+    () => (colorFilter ? subs.filter((s) => s.admin_color === colorFilter) : subs),
+    [subs, colorFilter],
+  );
+
   return (
     <div className="mt-4 space-y-3">
       <Select value={challengeId} onValueChange={setChallengeId}>
@@ -107,15 +113,7 @@ export function AdminSubmissions() {
         </SelectContent>
       </Select>
 
-      {/* Color tag legend */}
-      <div className="flex flex-wrap items-center gap-1.5 rounded-2xl border border-border bg-card px-3 py-2 text-[10px]">
-        <span className="font-bold uppercase tracking-wider text-muted-foreground">Tags:</span>
-        {(Object.keys(ADMIN_COLOR_MAP) as Array<keyof typeof ADMIN_COLOR_MAP>).map((c) => (
-          <AdminColorBadge key={c} color={c as string} />
-        ))}
-      </div>
-
-      {/* Filter pills */}
+      {/* Status pills */}
       <div className="grid grid-cols-3 gap-1.5 rounded-full border border-border bg-card p-1">
         {(["pending_review", "verified", "disqualified"] as Status[]).map((s) => (
           <button
@@ -130,13 +128,43 @@ export function AdminSubmissions() {
         ))}
       </div>
 
-      {subs.length === 0 ? (
+      {/* Optional color filter */}
+      <div className="flex flex-wrap items-center gap-1.5 rounded-2xl border border-border bg-card px-2.5 py-2">
+        <span className="label-broadcast pl-1 text-[10px] text-muted-foreground">Filter</span>
+        <button
+          onClick={() => setColorFilter(null)}
+          className={`tap-44 rounded-full px-3 py-1 text-[11px] font-bold ${
+            colorFilter === null ? "bg-foreground text-background" : "text-muted-foreground"
+          }`}
+        >
+          All
+        </button>
+        {(Object.keys(ADMIN_COLOR_MAP) as Array<keyof typeof ADMIN_COLOR_MAP>).map((c) => {
+          const meta = ADMIN_COLOR_MAP[c];
+          const active = colorFilter === c;
+          return (
+            <button
+              key={c}
+              onClick={() => setColorFilter(active ? null : (c as string))}
+              className={`tap-44 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold ${
+                active ? `${meta.bg} ${meta.text}` : "text-muted-foreground"
+              }`}
+              aria-label={`Filter ${meta.label}`}
+            >
+              <span className={`h-1.5 w-1.5 rounded-full ${meta.dot}`} />
+              {meta.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {visibleSubs.length === 0 ? (
         <p className="rounded-2xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
-          No {STATUS_LABEL[status].toLowerCase()} submissions.
+          No {STATUS_LABEL[status].toLowerCase()} submissions{colorFilter ? ` in ${ADMIN_COLOR_MAP[colorFilter].label}` : ""}.
         </p>
       ) : (
         <div className="grid grid-cols-3 gap-[2px]">
-          {subs.map((s, i) => (
+          {visibleSubs.map((s, i) => (
             <div key={s.id} className="space-y-1">
               <VideoThumb
                 videoPath={s.video_path}
@@ -159,7 +187,7 @@ export function AdminSubmissions() {
       {playerIndex !== null && challenge && (
         <AdminGradingFeed
           challenge={challenge}
-          subs={subs}
+          subs={visibleSubs}
           startIndex={playerIndex}
           onClose={() => setPlayerIndex(null)}
           onChanged={() => { refetch(); }}
