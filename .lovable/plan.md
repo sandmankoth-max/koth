@@ -1,103 +1,78 @@
-## Phase B + your clarifications
+This is a large batch. I'll group everything into themed chunks so it's easy to review. Nothing here changes the core data model except adding **suspensions** and splitting the admin into a Grading panel + Punish panel.
 
-### 1. Data model changes (one migration)
+## 1. Camera & recording (`native-camera-recorder.tsx`, `KothCameraPreviewPlugin.swift`)
+- Default to **front camera** on open.
+- Stop inverting the saved video — capture mirrored on front cam so playback matches the preview (set `isVideoMirrored = true` on the movie connection when front-facing).
+- Allow **flip while recording**: swap the video input on the live `AVCaptureSession` without stopping the file output. Re-apply torch state for the new camera (back = real torch, front = white-overlay flash, same as preview).
+- Fix review screen being clipped by bottom nav: the review/submit screen will use a safe-area bottom padding + scrollable container so buttons are always reachable. Nav bars stay fixed; the inner content scrolls.
 
-- **Split "active entry"** so friends-only uploads never wipe history and never enter the public leaderboard:
-  - `submissions.is_active_entry` keeps meaning "this user's leaderboard entry for this challenge" but ONLY the most recent `visibility='public'` row gets it. Friends-only rows are never active.
-  - Rewrite `handle_new_submission` trigger:
-    - On INSERT, if `NEW.visibility = 'public'`: clear `is_active_entry` on the user's prior PUBLIC rows for that challenge AND mark NEW as active (`is_active_entry = true`). Do NOT touch friends-only rows.
-    - If `NEW.visibility = 'friends_only'`: force `is_active_entry = false`. Do not touch anything else.
-- Update `close_challenge`, `notify_rank_changes`, `lifecycle_tick` reminder check, and `admin_ban_user` queries already filter on `is_active_entry` and `visibility='public'` implicitly (active rows are public only after the change) — verify and add `visibility='public'` where needed for safety.
+## 2. Video thumbnails everywhere
+- On submit upload, also generate a JPEG poster (~1s into the video, via `<video>` + canvas on web, AVAssetImageGenerator on iOS) and upload it to `koth-videos` alongside the mov, storing `thumb_path` on `submissions`.
+- Use that thumbnail as the `poster` for every `<video>` (profile grid, friends profiles, admin grading, recorder review screen, tiktok player initial frame).
+- Fallback for older rows with no thumb: client generates one on first render from the signed URL and caches it.
 
-### 2. Server function changes
+## 3. Notifications
+- Remove the duplicate "suspended/rejected" notification — only the one with reason fires (reason optional).
+- Rename `time_verified` copy → **"Your entry was verified"** (and "Your entry of X was verified" when a value exists). Same for any other "time"-specific strings.
+- Bell badge: clear immediately when the notifications page mounts (optimistic), then sync.
+- New podium move notifications: notify when a user **gains, loses, or moves** within the top 3 (not just "passed"). Welcome dialog copy updated to match.
 
-- `deletePreviousSubmissionsForChallenge` (used in `record.tsx`): only run when the new submission is **public**, and only delete prior **public** submissions for that challenge (keep all friends-only history). Caller passes the new visibility.
-- New `deleteOwnComment` server fn (also lets the video owner delete any comment on their own video): authorise as comment author OR submission owner, then delete.
-- `deleteOwnSubmission` already exists — leave it; profile grid will reuse it for "delete this video" from your own page.
+## 4. Welcome dialog
+- Third bullet → "Get notified if you're on the podium and someone takes your spot."
 
-### 3. Position card "behind the next rank up"
+## 5. Submission validation
+- Reject `.`, empty, or non-numeric self-reported values both client-side and in a DB check.
 
-`src/components/koth/position-card.tsx`: change the headline beneath your rank.
+## 6. Friends feed page
+- Keep the top tabs (Friends Feed / Add Friends) visible while scrolling the feed (sticky header inside the scroll container, not page-level).
+- Fix the bottom caption being hidden behind the bottom nav (apply same safe-area padding the profile feed uses).
 
-- If `myRank === 1`: "You're on top. Defend the hill."
-- Else: compute `targetRank = myRank - 1`, find that user's value, message = `"<gap> behind #<targetRank>"`.
-- Drop the existing "from the podium" sub-line (now redundant — #4 already says "behind #3").
+## 7. Comment drawer
+- Fix the input being clipped at the bottom — add `env(safe-area-inset-bottom)` padding and make the drawer height respect `100dvh`.
+- Unify styling so the drawer looks the same from feed, friends feed, and profile.
 
-### 4. Friends feed = public ∪ friends-only by your friends
+## 8. Admin **Grading** panel
+- Don't auto-focus the value input when a video opens (remove `autoFocus`); it opens only when the user taps it.
+- Add a persistent **Back/Exit (X)** button overlay in the scrolling grader.
+- "Out of videos" empty state gets an **Exit** button back to admin home.
+- Suspend button is renamed/relabeled — see #9. The current "Suspend" button (which actually rejects the video) becomes **Reject**, and every "suspended" tag/label across the app becomes "rejected".
+- Show the 5 color tags currently in use somewhere on the panel header: **red, blue, green, yellow, purple** (5 total).
 
-`src/routes/_authenticated/friends.tsx` FeedTab query:
+## 9. New admin **Punish** panel (separate tab from Grading)
+- Two actions: **Ban** and **Suspend**.
+- **Suspend**: pick a user (username autofill), set duration (preset chips: 1h, 24h, 3d, 7d, custom), set reason. While suspended:
+  - Posting to the **challenge** feed is blocked (button greyed out with "Suspended until …, reason: …").
+  - Posting to **friends** feed and recording still work.
+  - Existing pending submissions stay in the grading queue (suspension does not auto-grade).
+  - A notification is sent on suspend, and another when it ends (auto-expire or manually lifted).
+- **Suspended Users** sub-tab: list current suspensions with username, time left, reason; actions to **shorten / extend / cancel**.
+- Ban behavior unchanged: log out, prevent re-login (existing fingerprint + username bans).
+- Mods get access to Punish panel (ban + suspend), same as Grading.
 
-- Drop `is_active_entry` filter.
-- Add `.or('visibility.eq.public,visibility.eq.friends_only')` and keep `user_id IN friends`, `challenge_id = active`, `status != 'disqualified'`.
-- Sort by `submitted_at desc`. Multiple attempts per friend can show (matches "videos save to profile even with more attempts").
+## 10. Username autofill component
+- Snap-style typeahead: as you type, query `profiles` for matching usernames, show avatar + display name, tap to fill. Used in:
+  - Punish panel (ban/suspend target)
+  - Winners announcement form on the admin announce tab.
 
-### 5. Visibility copy in record flow
+## 11. Admin panel layout/bug fixes
+- Fix the broken **Staff** tab (currently errors). Likely a missing import / stale type after the moderator migration — repair the handler and grid layout.
+- Reflow admin tab buttons so they wrap cleanly on mobile (CSS grid with consistent button heights, no overflowing borders).
 
-`src/routes/_authenticated/record.tsx`:
-
-- Rename "Friends Feed Only" tile to **"Save to your profile / friends only"** with body "Goes to your profile and your friends feed. Doesn't replace earlier attempts and isn't eligible for the prize pool."
-- Public tile body adds "Replaces your previous public attempt for this challenge."
-- Pass `visibility` to `deletePreviousSubmissionsForChallenge` so the server can skip the wipe for friends-only.
-
-### 6. Profile grid shows every saved video + delete
-
-`src/routes/_authenticated/profile.tsx` ChallengesTab:
-
-- Remove `is_active_entry` filter so all friends-only history is listed (latest first). Public rows: still only the active one (older publics were deleted on upload).
-- Long-press / overflow button on each tile opens a small action sheet with "Delete video" → calls `deleteOwnSubmission`. Invalidate `my-videos`, `my-entry`, leaderboard caches.
-- Same delete affordance from inside `TikTokPlayer` when `item.user.id === currentUser.id` (small trash icon in the action rail).
-
-### 7. Phase B — Comments drawer
-
-New component `src/components/koth/comment-drawer.tsx` using existing `Drawer` from `src/components/ui/drawer.tsx`. Used for both kinds:
-
-- Props: `kind: 'video' | 'challenge'`, `targetId` (submission_id or challenge_id), `open`, `onOpenChange`.
-- Query top-level comments (parent_id null) with author profile, like state, reply_count. Replies fetched on expand.
-- Composer at bottom with @mention autocomplete (see §8). Submit inserts row; optimistic update.
-- Each comment row: avatar (Link to /u/$username), body with @username spans linked, like button (toggles `comment_likes` row with `kind='video'|'challenge'`), reply button (sets composer parent), and **trash** icon when `viewer.id === comment.author_id` OR (kind='video' AND viewer.id === submission.user_id). Trash calls `deleteOwnComment`.
-- Threaded replies rendered indented under parent (one level deep, like TikTok).
-
-### 8. @mention autocomplete
-
-New util hook `useMentionSearch(q)` querying `profiles` by `username ilike '<q>%'` limit 6 (debounced 150ms). Composer parses last token starting with `@`, opens a popover list; selecting fills the username and stores the resolved `profile.id` in `taggedIds`. On submit, write the comment with `tagged_user_ids = Array.from(taggedIds matching final body)`.
-
-### 9. Wire comment drawer into TikTokPlayer
-
-`tiktok-player.tsx`: replace the "Comments coming soon" toast on the comment rail button with `setCommentsOpen(true)`, rendering `<CommentDrawer kind='video' targetId={item.id} />`. Trash icon added when the current user owns the video → calls `deleteOwnSubmission`, advances/closes player.
-
-### 10. Live home-page chat (challenge chat)
-
-New section in `src/routes/_authenticated/home.tsx` under the hero: "Trash talk" card showing the 3 most recent `challenge_comments` for the active challenge plus a "Open chat" button that opens `<CommentDrawer kind='challenge' targetId={c.id} />`. Realtime: subscribe via supabase channel on `challenge_comments` insert filtered by `challenge_id=c.id` to update the preview list and bump query.
-
-### 11. App-wide tappable profile pictures
-
-Add small wrapper `<ProfileAvatar username avatarPath name size />` (in `src/components/koth/avatar.tsx` or new file) that renders the Avatar inside `<Link to="/u/$username">`. Use it in:
-
-- `home.tsx` TopThreePreview rows
-- `leaderboard.tsx` rows
-- `friends.tsx` feed cards
-- `live-activity.tsx` items
-- `notifications.tsx` rows (where a username is known)
-- `tiktok-player.tsx` rail avatar (already a Link — leave)
-
-### 12. Cache invalidation map
-
-After comment insert/delete: `['video-comments', targetId]`, `['video-comment-count', targetId]`, and for challenge: `['challenge-comments', targetId]`. After like toggle in comment: per-comment like query.
+## 12. Performance polish
+- Add `loading="lazy"` and `decoding="async"` to thumbnails; preload only the visible tiktok video; pause off-screen videos.
+- Memoize heavy lists (profile grid, friends feed); debounce typeahead queries.
+- Use the new thumbnail poster so videos don't show a black frame while loading.
 
 ---
 
-## Technical notes
+## Technical notes (database)
 
-- All new tables already exist from the prior migration (`video_comments`, `challenge_comments`, `comment_likes`, etc.) — no new tables needed, just triggers and RLS adjustments if any are missing for delete by owner. I'll check `video_comments` policies and add a `DELETE` policy for `author_id = auth.uid()` and for the submission owner via `EXISTS` on submissions.
-- Position card uses the same leaderboard query (post-change, that's purely public rows since friends-only is never active).
-- No new dependencies.
+New columns/tables (one migration):
+- `submissions.thumb_path text`
+- `profiles.suspended_until timestamptz`, `profiles.suspension_reason text`, `profiles.suspended_at timestamptz`, `profiles.suspended_by uuid`
+- Trigger / RPC: `admin_suspend_user(user_id, until, reason)`, `admin_update_suspension(user_id, until, reason)`, `admin_clear_suspension(user_id)`, plus a `lifecycle_tick` addition that fires `suspension_ended` notifications and clears expired suspensions.
+- Update `handle_new_submission` (or add a BEFORE INSERT trigger) to reject challenge-feed submissions from suspended users, and to reject non-numeric/`.` self-reported values.
+- New `app_role`-style policy: only staff (admin + moderator) can call the suspension RPCs.
+- Remove the duplicate `admin_disqualify_submission` overload so only one notification is created.
 
-## Out of scope (Phase C)
-
-- Notification deep-linking that opens the comment thread at the right comment.
-- Friends podium ranking ranking-by-friends-only.
-- Share sheet implementation (still placeholder).
-
----
-
-Reply "go" and I'll execute, or tell me what to drop/change.
+I'll send the migration via the migration tool first, then update the UI in a follow-up pass once you approve. Want me to proceed with all 12 sections, or trim any of them?
