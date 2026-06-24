@@ -499,7 +499,10 @@ function Composer({
   }
 
   return (
-    <div className="relative border-t border-border bg-background p-2 pb-3">
+    <div
+      className="relative border-t border-border bg-background p-2"
+      style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+    >
       {mentionQ && suggestionsQ.data && suggestionsQ.data.length > 0 && (
         <div className="absolute bottom-full left-0 right-0 mx-3 mb-1 max-h-56 overflow-y-auto rounded-2xl border border-border bg-card shadow-lg">
           {suggestionsQ.data.map((p: any) => (
