@@ -1,19 +1,17 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Avatar } from "@/components/koth/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Check, UserPlus, X, Users, Heart, MessageCircle, Share2, Play,
+  Check, UserPlus, X, Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { formatValue, getVideoSignedUrl } from "@/lib/koth-utils";
-import { CommentDrawer } from "@/components/koth/comment-drawer";
-import { VideoScrubber } from "@/components/koth/video-scrubber";
+import { TikTokPlayer, type PlayerItem } from "@/components/koth/tiktok-player";
 
 export const Route = createFileRoute("/_authenticated/friends")({
   head: () => ({ meta: [{ title: "Friends — KOTH" }] }),
