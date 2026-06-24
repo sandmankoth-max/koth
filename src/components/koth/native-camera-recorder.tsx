@@ -314,7 +314,8 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
         <div className="flex shrink-0 flex-col items-center gap-3">
           <button
             onClick={switchCamera}
-            className="tap-44 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur"
+            disabled={recording}
+            className="tap-44 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur disabled:opacity-50"
             aria-label="Switch camera"
           >
             <RefreshCcw className="h-6 w-6" aria-hidden />
