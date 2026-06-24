@@ -216,14 +216,26 @@ function AdminGradingFeed({
     return () => window.clearTimeout(id);
   }, [startIndex]);
 
+  // Auto-close when the queue is exhausted so the user isn't trapped on a black screen.
+  useEffect(() => {
+    if (subs.length === 0) onClose();
+  }, [subs.length, onClose]);
+
   return (
     <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
       <DialogContent className="fixed left-1/2 top-1/2 h-[100dvh] w-screen max-w-md -translate-x-1/2 -translate-y-1/2 gap-0 border-0 bg-black p-0 sm:rounded-none [&>button]:hidden">
         <DialogTitle className="sr-only">Admin grading — {challenge.title}</DialogTitle>
         <button
           onClick={onClose}
+          aria-label="Back"
+          className="tap-44 absolute left-3 top-3 z-50 inline-flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-2 text-xs font-bold text-white backdrop-blur"
+        >
+          <ArrowLeft className="h-5 w-5" /> Back
+        </button>
+        <button
+          onClick={onClose}
           aria-label="Close"
-          className="tap-44 absolute right-3 top-3 z-50 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur"
+          className="tap-44 absolute right-3 top-3 z-50 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur"
         >
           <X className="h-5 w-5" />
         </button>
@@ -232,7 +244,15 @@ function AdminGradingFeed({
           className="h-[100dvh] w-full snap-y snap-mandatory overflow-y-auto overscroll-y-contain bg-black"
           style={{ scrollSnapType: "y mandatory", WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}
         >
-          {subs.map((s) => (
+          {subs.length === 0 ? (
+            <div className="flex h-[100dvh] flex-col items-center justify-center gap-3 px-6 text-center text-white">
+              <p className="label-broadcast text-koth-red">All caught up</p>
+              <p className="text-sm text-white/70">No more submissions in this queue.</p>
+              <button onClick={onClose} className="tap-44 mt-2 inline-flex items-center gap-2 rounded-full bg-koth-red px-5 py-2.5 text-sm font-bold text-white">
+                <ArrowLeft className="h-4 w-4" /> Back to gallery
+              </button>
+            </div>
+          ) : subs.map((s) => (
             <AdminGradeSlide
               key={s.id}
               s={s}
