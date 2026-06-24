@@ -97,7 +97,7 @@ function FeedTab({ tab, setTab, onAdd }: { tab: Tab; setTab: (t: Tab) => void; o
       const { data } = await supabase
         .from("submissions")
         .select(
-          "id, user_id, challenge_id, self_reported_value, admin_verified_value, video_path, submitted_at, visibility, status, profiles!submissions_user_id_fkey(username, display_name, avatar_url), challenges!submissions_challenge_id_fkey(id, title, unit_type, unit_label)",
+          "id, user_id, challenge_id, self_reported_value, admin_verified_value, admin_color, video_path, submitted_at, visibility, status, profiles!submissions_user_id_fkey(username, display_name, avatar_url), challenges!submissions_challenge_id_fkey(id, title, unit_type, unit_label)",
         )
         .in("user_id", visibleUserIds)
         .order("submitted_at", { ascending: false });
