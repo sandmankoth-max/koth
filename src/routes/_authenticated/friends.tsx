@@ -93,8 +93,8 @@ function FeedTab({ setTab, onAdd }: { tab: Tab; setTab: (t: Tab) => void; onAdd:
     },
   });
 
-  const c = challengeQ.data;
   const noFriends = friendsQ.data && friendsQ.data.length === 0;
+
 
   const hasFeed = (feedQ.data?.length ?? 0) > 0;
 
