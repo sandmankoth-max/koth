@@ -228,17 +228,20 @@ function AdminGradingFeed({
         <button
           onClick={onClose}
           aria-label="Back"
-          className="tap-44 absolute left-3 top-3 z-50 inline-flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-2 text-xs font-bold text-white backdrop-blur"
+          className="tap-44 absolute left-3 z-50 inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-xs font-bold text-black shadow-lg"
+          style={{ top: "calc(env(safe-area-inset-top) + 0.75rem)" }}
         >
-          <ArrowLeft className="h-5 w-5" /> Back
+          <ArrowLeft className="h-5 w-5" strokeWidth={2} /> Back
         </button>
         <button
           onClick={onClose}
           aria-label="Close"
-          className="tap-44 absolute right-3 top-3 z-50 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur"
+          className="tap-44 absolute right-3 z-50 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/70 text-white backdrop-blur"
+          style={{ top: "calc(env(safe-area-inset-top) + 0.75rem)" }}
         >
-          <X className="h-5 w-5" />
+          <X className="h-5 w-5" strokeWidth={1.75} />
         </button>
+
         <div
           ref={scrollerRef}
           className="h-[100dvh] w-full snap-y snap-mandatory overflow-y-auto overscroll-y-contain bg-black"
@@ -375,7 +378,10 @@ function AdminGradeSlide({
       )}
 
       {/* Top: status + user */}
-      <div className="absolute inset-x-0 top-0 z-10 flex items-center gap-2 bg-gradient-to-b from-black/75 to-transparent px-4 pt-12 pb-4 text-white">
+      <div
+        className="absolute inset-x-0 top-0 z-10 flex items-center gap-2 bg-gradient-to-b from-black/80 to-transparent px-4 pb-4 text-white"
+        style={{ paddingTop: "calc(env(safe-area-inset-top) + 4rem)" }}
+      >
         <Avatar name={s.profiles?.display_name ?? s.profiles?.username} avatarPath={s.profiles?.avatar_url} size={36} />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-bold">@{s.profiles?.username}</p>

@@ -12,7 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Heart, MessageCircle, Share2, Play, Trash2, ArrowLeft } from "lucide-react";
+import { Heart, MessageCircle, Send, Play, Trash2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -301,13 +301,13 @@ function PlayerSlide({
         {item.caption && <p className="mt-2 line-clamp-2 text-sm text-white/90">{item.caption}</p>}
       </div>
 
-      {/* Right rail */}
-      <div className="absolute right-2 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center gap-5 text-white">
+      {/* Right rail — Instagram-style: slim 1.5 stroke, larger icons, subtle drop shadow */}
+      <div className="absolute right-2.5 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center gap-6 text-white">
         <Link
           to="/u/$username"
           params={{ username: item.user.username }}
           onClick={(e) => e.stopPropagation()}
-          className="tap-44 relative z-30 inline-flex items-center justify-center rounded-full ring-2 ring-koth-red"
+          className="tap-44 relative z-30 inline-flex items-center justify-center rounded-full ring-2 ring-white/90"
           aria-label={`Open @${item.user.username}'s profile`}
         >
           <Avatar
@@ -319,26 +319,44 @@ function PlayerSlide({
 
         <RailButton
           onClick={toggleLike}
-          icon={<Heart className={cn("h-7 w-7", likeQ.data?.liked && "fill-koth-red text-koth-red")} />}
+          icon={
+            <Heart
+              strokeWidth={1.5}
+              className={cn(
+                "h-9 w-9 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)] transition-transform",
+                likeQ.data?.liked && "scale-110 fill-koth-red text-koth-red",
+              )}
+            />
+          }
           count={likeQ.data?.count ?? 0}
           label="like"
         />
         <RailButton
           onClick={() => setCommentsOpen(true)}
-          icon={<MessageCircle className="h-7 w-7" />}
+          icon={
+            <MessageCircle
+              strokeWidth={1.5}
+              className="h-9 w-9 -scale-x-100 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]"
+            />
+          }
           count={commentCountQ.data ?? 0}
           label="comments"
         />
         <RailButton
           onClick={() => toast.message("Sharing coming soon")}
-          icon={<Share2 className="h-7 w-7" />}
+          icon={
+            <Send
+              strokeWidth={1.5}
+              className="h-9 w-9 -rotate-12 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]"
+            />
+          }
           count={0}
           label="share"
         />
         {isOwner && (
           <RailButton
             onClick={() => setDeleteOpen(true)}
-            icon={<Trash2 className="h-6 w-6" />}
+            icon={<Trash2 strokeWidth={1.5} className="h-8 w-8 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" />}
             count={0}
             label="delete"
           />
@@ -383,14 +401,19 @@ function RailButton({
   return (
     <button
       onClick={(e) => { e.stopPropagation(); onClick(); }}
-      className="tap-44 flex flex-col items-center gap-0.5"
+      className="tap-44 flex flex-col items-center gap-1 active:scale-95 transition-transform"
       aria-label={label}
     >
       {icon}
-      <span className="mono-stat text-[11px] font-bold leading-none">{formatCount(count)}</span>
+      {count > 0 && (
+        <span className="text-[12px] font-semibold leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]">
+          {formatCount(count)}
+        </span>
+      )}
     </button>
   );
 }
+
 
 function formatCount(n: number) {
   if (n < 1000) return String(n);
