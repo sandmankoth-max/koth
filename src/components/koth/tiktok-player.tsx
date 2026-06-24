@@ -46,6 +46,8 @@ type Props = {
   startIndex?: number;
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  /** Hide the floating back button (e.g. when used as an embedded feed). */
+  hideBack?: boolean;
 };
 
 /**
@@ -53,7 +55,7 @@ type Props = {
  * Renders all items in a snap-scroll list (same UX as the friends feed),
  * with IntersectionObserver driving play / load per slide.
  */
-export function TikTokPlayer({ items, startIndex = 0, open, onOpenChange }: Props) {
+export function TikTokPlayer({ items, startIndex = 0, open, onOpenChange, hideBack = false }: Props) {
   const scrollerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -91,13 +93,16 @@ export function TikTokPlayer({ items, startIndex = 0, open, onOpenChange }: Prop
       aria-modal="true"
       aria-label="Videos"
     >
-      <button
-        onClick={() => onOpenChange(false)}
-        aria-label="Back"
-        className="tap-44 absolute left-3 top-3 z-50 text-white"
-      >
-        <ArrowLeft className="h-6 w-6" />
-      </button>
+      {!hideBack && (
+        <button
+          onClick={() => onOpenChange(false)}
+          aria-label="Back"
+          className="tap-44 absolute left-3 top-3 z-50 text-white"
+        >
+          <ArrowLeft className="h-6 w-6" />
+        </button>
+      )}
+
       <div
         ref={scrollerRef}
         className="h-full w-full snap-y snap-mandatory overflow-y-auto overscroll-y-contain bg-black"
