@@ -57,22 +57,10 @@ function Friends() {
   );
 }
 
-function FeedTab({ tab, setTab, onAdd }: { tab: Tab; setTab: (t: Tab) => void; onAdd: () => void }) {
+function FeedTab({ setTab, onAdd }: { tab: Tab; setTab: (t: Tab) => void; onAdd: () => void }) {
   const { user } = useAuth();
 
-  const challengeQ = useQuery({
-    queryKey: ["active-challenge"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("challenges")
-        .select("*")
-        .eq("status", "active")
-        .order("starts_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      return data;
-    },
-  });
+
 
   const friendsQ = useQuery({
     queryKey: ["friends", user?.id],
