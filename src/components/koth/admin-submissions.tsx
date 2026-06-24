@@ -107,6 +107,14 @@ export function AdminSubmissions() {
         </SelectContent>
       </Select>
 
+      {/* Color tag legend */}
+      <div className="flex flex-wrap items-center gap-1.5 rounded-2xl border border-border bg-card px-3 py-2 text-[10px]">
+        <span className="font-bold uppercase tracking-wider text-muted-foreground">Tags:</span>
+        {(Object.keys(ADMIN_COLOR_MAP) as Array<keyof typeof ADMIN_COLOR_MAP>).map((c) => (
+          <AdminColorBadge key={c} color={c as string} />
+        ))}
+      </div>
+
       {/* Filter pills */}
       <div className="grid grid-cols-3 gap-1.5 rounded-full border border-border bg-card p-1">
         {(["pending_review", "verified", "disqualified"] as Status[]).map((s) => (

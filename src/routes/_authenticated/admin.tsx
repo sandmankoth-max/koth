@@ -23,6 +23,8 @@ import { Avatar } from "@/components/koth/avatar";
 import { formatValue, getVideoSignedUrl } from "@/lib/koth-utils";
 import { toast } from "sonner";
 import { AdminSubmissions, StaffManager } from "@/components/koth/admin-submissions";
+import { PunishPanel } from "@/components/koth/punish-panel";
+import { UsernamePicker, type PickedUser } from "@/components/koth/username-picker";
 import { PromptDialog } from "@/components/koth/prompt-dialog";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -49,17 +51,19 @@ function Admin({ isAdmin }: { isAdmin: boolean }) {
       </section>
 
       <Tabs defaultValue={isAdmin ? "create" : "review"}>
-        <TabsList className="w-full flex-wrap">
-          {isAdmin && <TabsTrigger value="create" className="flex-1">Create</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="edit" className="flex-1">Edit</TabsTrigger>}
-          <TabsTrigger value="review" className="flex-1">Submissions</TabsTrigger>
-          {isAdmin && <TabsTrigger value="results" className="flex-1">Results</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="notify" className="flex-1">Notify</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="staff" className="flex-1">Staff</TabsTrigger>}
+        <TabsList className="grid h-auto w-full grid-cols-3 gap-1 p-1 sm:grid-cols-4">
+          {isAdmin && <TabsTrigger value="create" className="h-9 text-xs">Create</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="edit" className="h-9 text-xs">Edit</TabsTrigger>}
+          <TabsTrigger value="review" className="h-9 text-xs">Grade</TabsTrigger>
+          <TabsTrigger value="punish" className="h-9 text-xs">Punish</TabsTrigger>
+          {isAdmin && <TabsTrigger value="results" className="h-9 text-xs">Results</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="notify" className="h-9 text-xs">Notify</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="staff" className="h-9 text-xs">Staff</TabsTrigger>}
         </TabsList>
         {isAdmin && <TabsContent value="create"><CreateChallenge /></TabsContent>}
         {isAdmin && <TabsContent value="edit"><EditChallenge /></TabsContent>}
         <TabsContent value="review"><AdminSubmissions /></TabsContent>
+        <TabsContent value="punish"><PunishPanel /></TabsContent>
         {isAdmin && <TabsContent value="results"><AnnounceWinners /></TabsContent>}
         {isAdmin && <TabsContent value="notify"><SendNotification /></TabsContent>}
         {isAdmin && <TabsContent value="staff"><StaffManager /></TabsContent>}
@@ -433,12 +437,12 @@ function SubmissionRow({ s, onUpdate }: { s: any; onUpdate: (p: any) => Promise<
 }
 
 function AnnounceWinners() {
+  const [first, setFirst] = useState<PickedUser | null>(null);
+  const [second, setSecond] = useState<PickedUser | null>(null);
+  const [third, setThird] = useState<PickedUser | null>(null);
   const [form, setForm] = useState({
-    first_username: "",
     first_amount: "" as string,
-    second_username: "",
     second_amount: "" as string,
-    third_username: "",
     third_amount: "" as string,
     note: "",
     headline: "",
@@ -450,21 +454,20 @@ function AnnounceWinners() {
     setBusy(true);
     try {
       const { data, error } = await supabase.rpc("admin_announce_winners" as any, {
-        p_first_username: form.first_username.trim().replace(/^@/, ""),
+        p_first_username: first?.username ?? "",
         p_first_amount: Number(form.first_amount || 0),
-        p_second_username: form.second_username.trim().replace(/^@/, ""),
+        p_second_username: second?.username ?? "",
         p_second_amount: Number(form.second_amount || 0),
-        p_third_username: form.third_username.trim().replace(/^@/, ""),
+        p_third_username: third?.username ?? "",
         p_third_amount: Number(form.third_amount || 0),
         p_note: form.note || null,
         p_headline: form.headline.trim() || null,
       });
       if (error) throw error;
       toast.success(`Winners announced to ${data ?? 0} users`);
+      setFirst(null); setSecond(null); setThird(null);
       setForm({
-        first_username: "", first_amount: "",
-        second_username: "", second_amount: "",
-        third_username: "", third_amount: "",
+        first_amount: "", second_amount: "", third_amount: "",
         note: "", headline: "",
       });
     } catch (err) {
@@ -477,15 +480,15 @@ function AnnounceWinners() {
 
   function valid() {
     return (
-      form.first_username.trim() && form.second_username.trim() && form.third_username.trim() &&
+      !!first && !!second && !!third &&
       form.first_amount !== "" && form.second_amount !== "" && form.third_amount !== ""
     );
   }
 
-  const rows: Array<["first" | "second" | "third", string]> = [
-    ["first", "1st place"],
-    ["second", "2nd place"],
-    ["third", "3rd place"],
+  const rows: Array<{ key: "first" | "second" | "third"; label: string; user: PickedUser | null; setUser: (u: PickedUser | null) => void }> = [
+    { key: "first", label: "1st place", user: first, setUser: setFirst },
+    { key: "second", label: "2nd place", user: second, setUser: setSecond },
+    { key: "third", label: "3rd place", user: third, setUser: setThird },
   ];
 
   return (
@@ -493,15 +496,10 @@ function AnnounceWinners() {
       <p className="text-xs text-muted-foreground">
         Sends a winners banner to every user on the home page. Usernames must already exist on the platform.
       </p>
-      {rows.map(([key, label]) => (
-        <div key={key} className="grid grid-cols-[1fr_110px] gap-3">
-          <Field label={`${label} — username`}>
-            <Input
-              placeholder="username"
-              autoCapitalize="none"
-              value={(form as any)[`${key}_username`]}
-              onChange={(e) => setForm({ ...form, [`${key}_username`]: e.target.value })}
-            />
+      {rows.map(({ key, label, user, setUser }) => (
+        <div key={key} className="space-y-2">
+          <Field label={`${label} — user`}>
+            <UsernamePicker value={user} onChange={setUser} />
           </Field>
           <Field label="Prize $">
             <Input

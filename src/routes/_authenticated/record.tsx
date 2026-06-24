@@ -31,6 +31,7 @@ function Record() {
   const [visibility, setVisibility] = useState<Visibility | null>(null);
   const [explainOpen, setExplainOpen] = useState<Visibility | null>(null);
   const [challenge, setChallenge] = useState<any>(null);
+  const [suspension, setSuspension] = useState<{ until: string; reason: string | null } | null>(null);
 
   useEffect(() => {
     supabase
@@ -42,6 +43,22 @@ function Record() {
       .maybeSingle()
       .then(({ data }) => setChallenge(data));
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("suspended_until, suspension_reason")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.suspended_until && new Date(data.suspended_until).getTime() > Date.now()) {
+          setSuspension({ until: data.suspended_until, reason: data.suspension_reason ?? null });
+        } else {
+          setSuspension(null);
+        }
+      });
+  }, [user]);
 
   useEffect(() => {
     return () => {
@@ -243,7 +260,9 @@ function Record() {
           </div>
 
           <button
+            disabled={!!suspension}
             onClick={() => {
+              if (suspension) return;
               const seen = JSON.parse(localStorage.getItem(SEEN_VIS_KEY) ?? "{}");
               if (!seen.public) setExplainOpen("public");
               else {
@@ -251,13 +270,22 @@ function Record() {
                 setStage("confirm");
               }
             }}
-            className="tap-44 koth-stripe w-full rounded-3xl bg-koth-red p-5 text-left text-koth-white"
+            className={`tap-44 koth-stripe w-full rounded-3xl p-5 text-left ${suspension ? "cursor-not-allowed bg-muted text-muted-foreground opacity-60" : "bg-koth-red text-koth-white"}`}
           >
-            <p className="label-broadcast text-koth-white/70">Recommended</p>
-            <p className="mt-1 text-lg font-bold">Enter Prize Pool</p>
-            <p className="mt-1 text-xs text-koth-white/80">
-              Public. Eligible for prize money and the public podium. Replaces your previous public attempt for this challenge.
+            <p className={`label-broadcast ${suspension ? "text-muted-foreground" : "text-koth-white/70"}`}>
+              {suspension ? "Unavailable" : "Recommended"}
             </p>
+            <p className="mt-1 text-lg font-bold">Enter Prize Pool</p>
+            {suspension ? (
+              <p className="mt-1 text-xs">
+                Suspended until {new Date(suspension.until).toLocaleString()}.
+                {suspension.reason ? ` Reason: ${suspension.reason}` : ""}
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-koth-white/80">
+                Public. Eligible for prize money and the public podium. Replaces your previous public attempt for this challenge.
+              </p>
+            )}
           </button>
 
           <button
