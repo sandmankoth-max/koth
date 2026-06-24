@@ -365,7 +365,7 @@ function AdminGradeSlide({
             disabled={busy}
             className="tap-44 flex items-center justify-center gap-1.5 rounded-full border border-koth-red bg-koth-red/15 py-2.5 text-xs font-bold text-koth-red backdrop-blur hover:bg-koth-red hover:text-white"
           >
-            <ShieldX className="h-4 w-4" /> Suspend
+            <ShieldX className="h-4 w-4" /> Reject
           </button>
           <button
             onClick={() => { setReason("Inappropriate content"); setBanOpen(true); }}
