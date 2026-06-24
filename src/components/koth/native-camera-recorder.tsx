@@ -223,7 +223,6 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
   }, [onCapture]);
 
   const switchCamera = useCallback(async () => {
-    if (recordingRef.current) return;
     const nextFacing = facing === "front" ? "rear" : "front";
     try {
       if (flashOn && facing === "rear") {
@@ -242,12 +241,19 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
         });
       }
       setFacing(nextFacing);
-      setFlashOn(false);
+      // Preserve flash intent across flips: if flash was on, re-apply for new cam.
+      // Rear cam: real torch; front cam: white overlay (handled by frontFlashOn).
+      if (flashOn && nextFacing === "rear") {
+        await runCameraOperation(async () => {
+          if (activeCameraOwner === ownerRef.current) {
+            await CameraPreview.setFlashMode({ flashMode: "torch" } as any).catch(() => {});
+          }
+        });
+      }
     } catch {
       await stopPreview();
       await startPreview(nextFacing);
       setFacing(nextFacing);
-      setFlashOn(false);
     }
   }, [facing, flashOn, startPreview, stopPreview]);
 
