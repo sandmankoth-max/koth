@@ -126,7 +126,7 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
 
   useEffect(() => {
     mountedRef.current = true;
-    startPreview("rear");
+    startPreview("front");
     return () => {
       mountedRef.current = false;
       void stopPreview();
