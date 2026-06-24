@@ -20,7 +20,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { VideoThumb } from "@/components/koth/video-thumb";
 import { getVideoSignedUrl, formatValue } from "@/lib/koth-utils";
-import { X, CheckCircle2, Ban, ShieldX, Trash2, UserPlus } from "lucide-react";
+import { X, CheckCircle2, Ban, ShieldX, Trash2, UserPlus, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { createModeratorAccount, listStaffAccounts } from "@/lib/admin-accounts.functions";
 
