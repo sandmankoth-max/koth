@@ -48,7 +48,7 @@ type Status = "pending_review" | "verified" | "disqualified";
 const STATUS_LABEL: Record<Status, string> = {
   pending_review: "Pending",
   verified: "Verified",
-  disqualified: "Suspended",
+  disqualified: "Rejected",
 };
 
 export function AdminSubmissions() {
@@ -280,7 +280,7 @@ function AdminGradeSlide({
     setSuspendOpen(false);
     setReason("");
     if (error) toast.error(error.message);
-    else { toast.success("Suspended"); onChanged(); }
+    else { toast.success("Rejected"); onChanged(); }
   }
 
   async function confirmBan() {
@@ -336,7 +336,7 @@ function AdminGradeSlide({
           s.status === "disqualified" ? "bg-koth-red text-white" :
           "bg-white/20 text-white"
         }`}>
-          {s.status === "pending_review" ? "Pending" : s.status === "verified" ? "Verified" : "Suspended"}
+          {s.status === "pending_review" ? "Pending" : s.status === "verified" ? "Verified" : "Rejected"}
         </span>
       </div>
 
@@ -365,7 +365,7 @@ function AdminGradeSlide({
             disabled={busy}
             className="tap-44 flex items-center justify-center gap-1.5 rounded-full border border-koth-red bg-koth-red/15 py-2.5 text-xs font-bold text-koth-red backdrop-blur hover:bg-koth-red hover:text-white"
           >
-            <ShieldX className="h-4 w-4" /> Suspend
+            <ShieldX className="h-4 w-4" /> Reject
           </button>
           <button
             onClick={() => { setReason("Inappropriate content"); setBanOpen(true); }}
@@ -387,9 +387,9 @@ function AdminGradeSlide({
       <ReasonDialog
         open={suspendOpen}
         onOpenChange={setSuspendOpen}
-        title="Suspend this submission?"
+        title="Reject this submission?"
         description="The reason you enter will be sent to the user in their notification center."
-        confirmLabel="Suspend"
+        confirmLabel="Reject"
         reason={reason}
         setReason={setReason}
         onConfirm={confirmSuspend}
@@ -456,7 +456,7 @@ export function ReasonDialog({
           placeholder="Reason (sent to user)"
           rows={3}
           className="resize-none rounded-xl"
-          autoFocus
+          
         />
         <AlertDialogFooter>
           <AlertDialogCancel disabled={busy}>Cancel</AlertDialogCancel>

@@ -48,7 +48,7 @@ export function WelcomeDialog() {
         <ul className="mt-2 space-y-2 text-sm text-foreground">
           <li>• One active entry per challenge — your best attempt counts.</li>
           <li>• Self-report your score; admins verify the leaderboard.</li>
-          <li>• Get notified the moment someone passes you.</li>
+          <li>• If you're on the podium and someone takes your spot, you'll get notified.</li>
         </ul>
         <DialogFooter className="mt-4">
           <Button onClick={close} className="w-full rounded-full">

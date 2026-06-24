@@ -34,7 +34,7 @@ function runCameraOperation<T>(operation: () => Promise<T>) {
 }
 
 export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
-  const [facing, setFacing] = useState<"front" | "rear">("rear");
+  const [facing, setFacing] = useState<"front" | "rear">("front");
   const [recording, setRecording] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [flashOn, setFlashOn] = useState(false);
@@ -126,7 +126,7 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
 
   useEffect(() => {
     mountedRef.current = true;
-    startPreview("rear");
+    startPreview("front");
     return () => {
       mountedRef.current = false;
       void stopPreview();
@@ -223,7 +223,6 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
   }, [onCapture]);
 
   const switchCamera = useCallback(async () => {
-    if (recordingRef.current) return;
     const nextFacing = facing === "front" ? "rear" : "front";
     try {
       if (flashOn && facing === "rear") {
@@ -242,12 +241,19 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
         });
       }
       setFacing(nextFacing);
-      setFlashOn(false);
+      // Preserve flash intent across flips: if flash was on, re-apply for new cam.
+      // Rear cam: real torch; front cam: white overlay (handled by frontFlashOn).
+      if (flashOn && nextFacing === "rear") {
+        await runCameraOperation(async () => {
+          if (activeCameraOwner === ownerRef.current) {
+            await CameraPreview.setFlashMode({ flashMode: "torch" } as any).catch(() => {});
+          }
+        });
+      }
     } catch {
       await stopPreview();
       await startPreview(nextFacing);
       setFacing(nextFacing);
-      setFlashOn(false);
     }
   }, [facing, flashOn, startPreview, stopPreview]);
 
@@ -308,9 +314,8 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
         <div className="flex shrink-0 flex-col items-center gap-3">
           <button
             onClick={switchCamera}
-            className="tap-44 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur disabled:opacity-50"
+            className="tap-44 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur"
             aria-label="Switch camera"
-            disabled={recording}
           >
             <RefreshCcw className="h-6 w-6" aria-hidden />
           </button>

@@ -327,6 +327,10 @@ export type Database = {
           date_of_birth: string
           display_name: string
           id: string
+          suspended_at: string | null
+          suspended_by: string | null
+          suspended_until: string | null
+          suspension_reason: string | null
           username: string
         }
         Insert: {
@@ -340,6 +344,10 @@ export type Database = {
           date_of_birth: string
           display_name: string
           id: string
+          suspended_at?: string | null
+          suspended_by?: string | null
+          suspended_until?: string | null
+          suspension_reason?: string | null
           username: string
         }
         Update: {
@@ -353,6 +361,10 @@ export type Database = {
           date_of_birth?: string
           display_name?: string
           id?: string
+          suspended_at?: string | null
+          suspended_by?: string | null
+          suspended_until?: string | null
+          suspension_reason?: string | null
           username?: string
         }
         Relationships: []
@@ -426,6 +438,7 @@ export type Database = {
           self_reported_value: number
           status: Database["public"]["Enums"]["submission_status"]
           submitted_at: string
+          thumb_path: string | null
           user_id: string
           video_path: string
           visibility: Database["public"]["Enums"]["submission_visibility"]
@@ -441,6 +454,7 @@ export type Database = {
           self_reported_value: number
           status?: Database["public"]["Enums"]["submission_status"]
           submitted_at?: string
+          thumb_path?: string | null
           user_id: string
           video_path: string
           visibility?: Database["public"]["Enums"]["submission_visibility"]
@@ -456,6 +470,7 @@ export type Database = {
           self_reported_value?: number
           status?: Database["public"]["Enums"]["submission_status"]
           submitted_at?: string
+          thumb_path?: string | null
           user_id?: string
           video_path?: string
           visibility?: Database["public"]["Enums"]["submission_visibility"]
@@ -611,16 +626,18 @@ export type Database = {
         Args: { p_message: string }
         Returns: number
       }
+      admin_clear_suspension: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
       admin_delete_submission: {
         Args: { p_submission_id: string }
         Returns: undefined
       }
-      admin_disqualify_submission:
-        | { Args: { p_submission_id: string }; Returns: undefined }
-        | {
-            Args: { p_reason?: string; p_submission_id: string }
-            Returns: undefined
-          }
+      admin_disqualify_submission: {
+        Args: { p_reason?: string; p_submission_id: string }
+        Returns: undefined
+      }
       admin_get_profile_moderation: {
         Args: { p_user_id: string }
         Returns: {
@@ -636,6 +653,14 @@ export type Database = {
       }
       admin_send_notification: {
         Args: { p_message: string; p_user_id: string }
+        Returns: undefined
+      }
+      admin_suspend_user: {
+        Args: { p_reason: string; p_until: string; p_user_id: string }
+        Returns: undefined
+      }
+      admin_update_suspension: {
+        Args: { p_reason: string; p_until: string; p_user_id: string }
         Returns: undefined
       }
       are_friends: { Args: { _a: string; _b: string }; Returns: boolean }
@@ -657,6 +682,10 @@ export type Database = {
           date_of_birth: string
           display_name: string
           id: string
+          suspended_at: string | null
+          suspended_by: string | null
+          suspended_until: string | null
+          suspension_reason: string | null
           username: string
         }
         SetofOptions: {
@@ -676,6 +705,7 @@ export type Database = {
       is_fingerprint_banned: { Args: { _fp: string }; Returns: boolean }
       is_profane: { Args: { _text: string }; Returns: boolean }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
+      is_suspended: { Args: { _user_id: string }; Returns: boolean }
       lifecycle_tick: { Args: never; Returns: Json }
       notify_rank_changes: {
         Args: { p_actor: string; p_challenge_id: string }
