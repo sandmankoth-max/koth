@@ -51,17 +51,19 @@ function Admin({ isAdmin }: { isAdmin: boolean }) {
       </section>
 
       <Tabs defaultValue={isAdmin ? "create" : "review"}>
-        <TabsList className="w-full flex-wrap">
-          {isAdmin && <TabsTrigger value="create" className="flex-1">Create</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="edit" className="flex-1">Edit</TabsTrigger>}
-          <TabsTrigger value="review" className="flex-1">Submissions</TabsTrigger>
-          {isAdmin && <TabsTrigger value="results" className="flex-1">Results</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="notify" className="flex-1">Notify</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="staff" className="flex-1">Staff</TabsTrigger>}
+        <TabsList className="grid h-auto w-full grid-cols-3 gap-1 p-1 sm:grid-cols-4">
+          {isAdmin && <TabsTrigger value="create" className="h-9 text-xs">Create</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="edit" className="h-9 text-xs">Edit</TabsTrigger>}
+          <TabsTrigger value="review" className="h-9 text-xs">Grade</TabsTrigger>
+          <TabsTrigger value="punish" className="h-9 text-xs">Punish</TabsTrigger>
+          {isAdmin && <TabsTrigger value="results" className="h-9 text-xs">Results</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="notify" className="h-9 text-xs">Notify</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="staff" className="h-9 text-xs">Staff</TabsTrigger>}
         </TabsList>
         {isAdmin && <TabsContent value="create"><CreateChallenge /></TabsContent>}
         {isAdmin && <TabsContent value="edit"><EditChallenge /></TabsContent>}
         <TabsContent value="review"><AdminSubmissions /></TabsContent>
+        <TabsContent value="punish"><PunishPanel /></TabsContent>
         {isAdmin && <TabsContent value="results"><AnnounceWinners /></TabsContent>}
         {isAdmin && <TabsContent value="notify"><SendNotification /></TabsContent>}
         {isAdmin && <TabsContent value="staff"><StaffManager /></TabsContent>}
