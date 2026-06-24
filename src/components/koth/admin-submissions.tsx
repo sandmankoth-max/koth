@@ -228,17 +228,20 @@ function AdminGradingFeed({
         <button
           onClick={onClose}
           aria-label="Back"
-          className="tap-44 absolute left-3 top-3 z-50 inline-flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-2 text-xs font-bold text-white backdrop-blur"
+          className="tap-44 absolute left-3 z-50 inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-xs font-bold text-black shadow-lg"
+          style={{ top: "calc(env(safe-area-inset-top) + 0.75rem)" }}
         >
-          <ArrowLeft className="h-5 w-5" /> Back
+          <ArrowLeft className="h-5 w-5" strokeWidth={2} /> Back
         </button>
         <button
           onClick={onClose}
           aria-label="Close"
-          className="tap-44 absolute right-3 top-3 z-50 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur"
+          className="tap-44 absolute right-3 z-50 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/70 text-white backdrop-blur"
+          style={{ top: "calc(env(safe-area-inset-top) + 0.75rem)" }}
         >
-          <X className="h-5 w-5" />
+          <X className="h-5 w-5" strokeWidth={1.75} />
         </button>
+
         <div
           ref={scrollerRef}
           className="h-[100dvh] w-full snap-y snap-mandatory overflow-y-auto overscroll-y-contain bg-black"
