@@ -437,12 +437,12 @@ function SubmissionRow({ s, onUpdate }: { s: any; onUpdate: (p: any) => Promise<
 }
 
 function AnnounceWinners() {
+  const [first, setFirst] = useState<PickedUser | null>(null);
+  const [second, setSecond] = useState<PickedUser | null>(null);
+  const [third, setThird] = useState<PickedUser | null>(null);
   const [form, setForm] = useState({
-    first_username: "",
     first_amount: "" as string,
-    second_username: "",
     second_amount: "" as string,
-    third_username: "",
     third_amount: "" as string,
     note: "",
     headline: "",
