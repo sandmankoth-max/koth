@@ -536,14 +536,19 @@ export function StaffManager() {
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [loadErr, setLoadErr] = useState<string | null>(null);
   const [staff, setStaff] = useState<Array<{ user_id: string; role: "admin" | "moderator"; username: string; display_name: string | null }>>([]);
 
   async function refresh() {
     try {
       const rows = await callList();
-      setStaff(rows);
+      const list = Array.isArray(rows) ? rows : (rows as any)?.data ?? [];
+      setStaff(Array.isArray(list) ? list : []);
+      setLoadErr(null);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to load staff");
+      const msg = e instanceof Error ? e.message : String(e ?? "Failed to load staff");
+      console.error("[StaffManager] load error:", e);
+      setLoadErr(msg);
     }
   }
 
@@ -566,14 +571,21 @@ export function StaffManager() {
     }
   }
 
+  const safeStaff = Array.isArray(staff) ? staff : [];
+
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-border bg-card p-4">
         <h3 className="text-sm font-bold">Current staff</h3>
+        {loadErr && (
+          <p className="mt-2 rounded-xl bg-koth-red/10 p-2 text-xs text-koth-red">
+            Could not load staff list: {loadErr}
+          </p>
+        )}
         <ul className="mt-3 space-y-2">
-          {staff.length === 0 ? (
-            <li className="text-xs text-muted-foreground">No staff yet.</li>
-          ) : staff.map((s) => (
+          {safeStaff.length === 0 ? (
+            <li className="text-xs text-muted-foreground">{loadErr ? "—" : "No staff yet."}</li>
+          ) : safeStaff.map((s) => (
             <li key={`${s.user_id}-${s.role}`} className="flex items-center justify-between rounded-xl bg-muted/40 px-3 py-2">
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold">@{s.username}</p>
@@ -620,4 +632,5 @@ export function StaffManager() {
     </div>
   );
 }
+
 
