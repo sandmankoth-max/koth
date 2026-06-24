@@ -44,11 +44,11 @@ const labelFor = (n: any) => {
     case "podium_gained":
       return `You're on the podium — #${n.payload?.new_rank}`;
     case "time_verified":
-      return `Your time was verified${n.payload?.value != null ? ` — ${n.payload.value}` : ""}`;
+      return `Your entry was verified${n.payload?.value != null ? ` — ${n.payload.value}` : ""}`;
     case "time_disqualified":
       return n.payload?.reason
-        ? `Your submission was suspended — ${n.payload.reason}`
-        : `Your submission was suspended`;
+        ? `Your submission was rejected — ${n.payload.reason}`
+        : `Your submission was rejected`;
     case "friend_request":
       return `${u} sent you a friend request`;
     case "friend_accepted":
