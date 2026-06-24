@@ -23,6 +23,8 @@ import { Avatar } from "@/components/koth/avatar";
 import { formatValue, getVideoSignedUrl } from "@/lib/koth-utils";
 import { toast } from "sonner";
 import { AdminSubmissions, StaffManager } from "@/components/koth/admin-submissions";
+import { PunishPanel } from "@/components/koth/punish-panel";
+import { UsernamePicker, type PickedUser } from "@/components/koth/username-picker";
 import { PromptDialog } from "@/components/koth/prompt-dialog";
 
 export const Route = createFileRoute("/_authenticated/admin")({
