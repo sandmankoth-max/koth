@@ -300,8 +300,8 @@ function FeedVideo({ row, scrollRoot }: { row: any; scrollRoot: React.RefObject<
       ref={containerRef}
       className="relative w-full snap-start snap-always bg-black"
       style={{
-        height: "calc(100dvh - 120px)",
-        minHeight: "calc(100dvh - 120px)",
+        height: "calc(100dvh - 9.5rem)",
+        minHeight: "calc(100dvh - 9.5rem)",
         scrollSnapStop: "always",
       }}
     >
