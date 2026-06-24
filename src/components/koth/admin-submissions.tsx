@@ -378,7 +378,10 @@ function AdminGradeSlide({
       )}
 
       {/* Top: status + user */}
-      <div className="absolute inset-x-0 top-0 z-10 flex items-center gap-2 bg-gradient-to-b from-black/75 to-transparent px-4 pt-12 pb-4 text-white">
+      <div
+        className="absolute inset-x-0 top-0 z-10 flex items-center gap-2 bg-gradient-to-b from-black/80 to-transparent px-4 pb-4 text-white"
+        style={{ paddingTop: "calc(env(safe-area-inset-top) + 4rem)" }}
+      >
         <Avatar name={s.profiles?.display_name ?? s.profiles?.username} avatarPath={s.profiles?.avatar_url} size={36} />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-bold">@{s.profiles?.username}</p>
