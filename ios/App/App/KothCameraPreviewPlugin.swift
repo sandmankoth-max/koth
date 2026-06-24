@@ -87,7 +87,28 @@ class KothCameraPreviewPlugin: CAPPlugin, CAPBridgedPlugin, AVCaptureFileOutputR
         sessionQueue.async { [weak self] in
             guard let self = self else { return }
             do {
-                try self.configureSession(position: self.cameraPosition, disableAudio: self.disableAudio)
+                // Live flip: if we're recording, only swap the video input so
+                // the in-progress AVCaptureMovieFileOutput keeps writing.
+                if self.movieOutput?.isRecording == true, let session = self.captureSession {
+                    session.beginConfiguration()
+                    if let oldInput = self.videoInput { session.removeInput(oldInput) }
+                    let newDevice = try self.cameraDevice(position: self.cameraPosition)
+                    let newInput = try AVCaptureDeviceInput(device: newDevice)
+                    if session.canAddInput(newInput) {
+                        session.addInput(newInput)
+                        self.videoInput = newInput
+                    }
+                    if let conn = self.movieOutput?.connection(with: .video) {
+                        self.applyOrientation(to: conn)
+                        if conn.isVideoMirroringSupported {
+                            conn.automaticallyAdjustsVideoMirroring = false
+                            conn.isVideoMirrored = self.cameraPosition == .front
+                        }
+                    }
+                    session.commitConfiguration()
+                } else {
+                    try self.configureSession(position: self.cameraPosition, disableAudio: self.disableAudio)
+                }
                 DispatchQueue.main.async {
                     self.updatePreviewConnection()
                     call.resolve()
