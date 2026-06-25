@@ -3,11 +3,12 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const createModeratorAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { username: string; password: string; displayName?: string }) => {
+  .inputValidator((data: { username: string; password: string; displayName: string }) => {
     const username = String(data.username ?? "").trim().toLowerCase();
     const password = String(data.password ?? "");
-    const displayName = data.displayName ? String(data.displayName).trim() : username;
+    const displayName = String(data.displayName ?? "").trim();
     if (!/^[a-z0-9_]{3,20}$/.test(username)) throw new Error("Username must be 3-20 lowercase letters, numbers, or underscores.");
+    if (displayName.length < 1 || displayName.length > 20) throw new Error("Display name is required (1-20 characters).");
     if (password.length < 8) throw new Error("Password must be at least 8 characters.");
     return { username, password, displayName };
   })
@@ -73,4 +74,33 @@ export const listStaffAccounts = createServerFn({ method: "GET" })
         display_name: p?.display_name ?? null,
       };
     });
+  });
+
+export const deleteModeratorAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { userId: string }) => {
+    const userId = String(data.userId ?? "").trim();
+    if (!userId) throw new Error("userId required");
+    return { userId };
+  })
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin } = await context.supabase
+      .rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    if (!isAdmin) throw new Error("Forbidden — only the admin can delete moderator accounts.");
+    if (data.userId === context.userId) throw new Error("You cannot delete your own account.");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Refuse to delete admins
+    const { data: roles } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.userId);
+    if ((roles ?? []).some((r: any) => r.role === "admin")) {
+      throw new Error("Cannot delete an admin account.");
+    }
+
+    const { error: delAuthErr } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
+    if (delAuthErr) throw new Error(delAuthErr.message);
+    return { ok: true };
   });

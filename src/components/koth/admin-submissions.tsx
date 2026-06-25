@@ -22,7 +22,7 @@ import { VideoThumb } from "@/components/koth/video-thumb";
 import { getVideoSignedUrl, formatValue } from "@/lib/koth-utils";
 import { X, CheckCircle2, Ban, ShieldX, Trash2, UserPlus, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import { createModeratorAccount, listStaffAccounts } from "@/lib/admin-accounts.functions";
+import { createModeratorAccount, listStaffAccounts, deleteModeratorAccount } from "@/lib/admin-accounts.functions";
 
 export const ADMIN_COLOR_MAP: Record<string, { label: string; dot: string; bg: string; text: string }> = {
   red:    { label: "Red",    dot: "bg-red-500",    bg: "bg-red-500/20",    text: "text-red-300" },
@@ -542,10 +542,12 @@ export function ReasonDialog({
 export function StaffManager() {
   const callCreate = useServerFn(createModeratorAccount);
   const callList = useServerFn(listStaffAccounts);
+  const callDelete = useServerFn(deleteModeratorAccount);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [loadErr, setLoadErr] = useState<string | null>(null);
   const [staff, setStaff] = useState<Array<{ user_id: string; role: "admin" | "moderator"; username: string; display_name: string | null }>>([]);
 
@@ -566,11 +568,16 @@ export function StaffManager() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    const u = username.trim();
+    const d = displayName.trim();
+    if (!u) return toast.error("Username is required.");
+    if (!/^[a-z0-9_]{3,20}$/.test(u)) return toast.error("Username must be 3-20 lowercase letters, numbers, or underscores.");
+    if (!d) return toast.error("Display name is required.");
+    if (d.length > 20) return toast.error("Display name must be 20 characters or less.");
+    if (password.length < 8) return toast.error("Password must be at least 8 characters.");
     setBusy(true);
     try {
-      const res = await callCreate({
-        data: { username: username.trim(), password, displayName: displayName.trim() || undefined },
-      });
+      const res = await callCreate({ data: { username: u, password, displayName: d } });
       toast.success(`Moderator @${res.username} created`);
       setUsername(""); setPassword(""); setDisplayName("");
       refresh();
@@ -581,29 +588,68 @@ export function StaffManager() {
     }
   }
 
+  async function handleDelete(s: { user_id: string; username: string }) {
+    if (!confirm(`Delete moderator @${s.username}? This cannot be undone.`)) return;
+    setDeletingId(s.user_id);
+    try {
+      await callDelete({ data: { userId: s.user_id } });
+      toast.success(`Deleted @${s.username}`);
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to delete moderator");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   const safeStaff = Array.isArray(staff) ? staff : [];
+  const mods = safeStaff.filter((s) => s.role === "moderator");
+  const admins = safeStaff.filter((s) => s.role === "admin");
 
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-border bg-card p-4">
-        <h3 className="text-sm font-bold">Current staff</h3>
+        <h3 className="text-sm font-bold">Admins</h3>
+        <ul className="mt-3 space-y-2">
+          {admins.length === 0 ? (
+            <li className="text-xs text-muted-foreground">—</li>
+          ) : admins.map((s) => (
+            <li key={s.user_id} className="flex items-center justify-between rounded-xl bg-muted/40 px-3 py-2">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold">@{s.username}</p>
+                {s.display_name && <p className="truncate text-[11px] text-muted-foreground">{s.display_name}</p>}
+              </div>
+              <span className="pill bg-koth-red text-white text-[10px]">admin</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="rounded-2xl border border-border bg-card p-4">
+        <h3 className="text-sm font-bold">Moderators ({mods.length})</h3>
         {loadErr && (
           <p className="mt-2 rounded-xl bg-koth-red/10 p-2 text-xs text-koth-red">
             Could not load staff list: {loadErr}
           </p>
         )}
         <ul className="mt-3 space-y-2">
-          {safeStaff.length === 0 ? (
-            <li className="text-xs text-muted-foreground">{loadErr ? "—" : "No staff yet."}</li>
-          ) : safeStaff.map((s) => (
-            <li key={`${s.user_id}-${s.role}`} className="flex items-center justify-between rounded-xl bg-muted/40 px-3 py-2">
-              <div className="min-w-0">
+          {mods.length === 0 ? (
+            <li className="text-xs text-muted-foreground">{loadErr ? "—" : "No moderators yet."}</li>
+          ) : mods.map((s) => (
+            <li key={s.user_id} className="flex items-center justify-between gap-2 rounded-xl bg-muted/40 px-3 py-2">
+              <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">@{s.username}</p>
                 {s.display_name && <p className="truncate text-[11px] text-muted-foreground">{s.display_name}</p>}
               </div>
-              <span className={`pill text-[10px] ${s.role === "admin" ? "bg-koth-red text-white" : "bg-blue-500/20 text-blue-300"}`}>
-                {s.role}
-              </span>
+              <Button
+                size="sm"
+                variant="destructive"
+                disabled={deletingId === s.user_id}
+                onClick={() => handleDelete(s)}
+                className="h-7 px-2 text-[11px]"
+              >
+                {deletingId === s.user_id ? "Deleting…" : "Delete"}
+              </Button>
             </li>
           ))}
         </ul>
@@ -618,29 +664,39 @@ export function StaffManager() {
           Moderators can grade submissions (verify, suspend, ban, delete) but cannot create challenges, send notifications, announce winners, or add new staff.
         </p>
         <Input
-          placeholder="username (lowercase, 3-20 chars)"
+          placeholder="username (lowercase, 3-20 chars) *"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           autoCapitalize="none"
           autoCorrect="off"
+          maxLength={20}
+          required
         />
         <Input
-          placeholder="display name (optional)"
+          placeholder="display name (required, max 20) *"
           value={displayName}
-          onChange={(e) => setDisplayName(e.target.value)}
+          onChange={(e) => setDisplayName(e.target.value.slice(0, 20))}
+          maxLength={20}
+          required
         />
         <Input
           type="password"
-          placeholder="password (min 8 chars)"
+          placeholder="password (min 8 chars) *"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          required
         />
-        <Button type="submit" disabled={busy} className="w-full bg-koth-red text-white hover:bg-koth-red/90">
+        <Button
+          type="submit"
+          disabled={busy || !username.trim() || !displayName.trim() || password.length < 8}
+          className="w-full bg-koth-red text-white hover:bg-koth-red/90"
+        >
           {busy ? "Creating…" : "Create moderator"}
         </Button>
       </form>
     </div>
   );
 }
+
 
 
