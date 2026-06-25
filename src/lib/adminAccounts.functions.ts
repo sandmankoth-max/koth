@@ -20,7 +20,7 @@ export const createModeratorAccount = createServerFn({ method: "POST" })
     if (!isAdmin) throw new Error("Forbidden — only the admin can create moderator accounts.");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const email = `${data.username}@mod.koth.local`;
+    const email = `${data.username}@koth.local`;
 
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
       email,
@@ -40,6 +40,7 @@ export const createModeratorAccount = createServerFn({ method: "POST" })
       .from("user_roles")
       .insert({ user_id: newUserId, role: "moderator" });
     if (roleInsertErr && !roleInsertErr.message.includes("duplicate")) {
+      await supabaseAdmin.auth.admin.deleteUser(newUserId);
       throw new Error(roleInsertErr.message);
     }
 
