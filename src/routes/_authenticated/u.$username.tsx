@@ -160,7 +160,7 @@ function UserProfile() {
                     onClick={() => { setPlayerIndex(i); setPlayerOpen(true); }}
                     badge={
                       s.status === "disqualified" ? (
-                        <span className="rounded-full bg-koth-red px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">Suspended</span>
+                        <span className="rounded-full bg-koth-red px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">Rejected</span>
                       ) : s.visibility === "friends_only" ? (
                         <span className="rounded-full bg-koth-black/70 px-1.5 py-0.5 text-[9px] font-bold uppercase text-koth-white">Friends</span>
                       ) : s.status === "verified" ? (
