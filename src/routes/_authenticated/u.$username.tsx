@@ -140,9 +140,10 @@ function UserProfile() {
 
       {!canSeeAll && (
         <div className="flex items-center gap-2 rounded-2xl border border-dashed border-border bg-card p-3 text-xs text-muted-foreground">
-          <Lock className="h-4 w-4" /> Add @{p.username} as a friend to see their full grid.
+          <Lock className="h-4 w-4" /> Add @{p.username} as a friend to see any of their content.
         </div>
       )}
+
 
       {canSeeAll && (
         <section>
