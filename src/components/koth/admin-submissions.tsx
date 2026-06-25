@@ -22,7 +22,7 @@ import { VideoThumb } from "@/components/koth/video-thumb";
 import { getVideoSignedUrl, formatValue } from "@/lib/koth-utils";
 import { X, CheckCircle2, Ban, ShieldX, Trash2, UserPlus, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import { createModeratorAccount, listStaffAccounts } from "@/lib/admin-accounts.functions";
+import { createModeratorAccount, listStaffAccounts, deleteModeratorAccount } from "@/lib/admin-accounts.functions";
 
 export const ADMIN_COLOR_MAP: Record<string, { label: string; dot: string; bg: string; text: string }> = {
   red:    { label: "Red",    dot: "bg-red-500",    bg: "bg-red-500/20",    text: "text-red-300" },
