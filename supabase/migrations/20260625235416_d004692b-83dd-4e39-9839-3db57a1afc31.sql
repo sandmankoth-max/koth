@@ -1,0 +1,1 @@
+DELETE FROM auth.users WHERE id IN (SELECT user_id FROM public.user_roles WHERE role='moderator');
