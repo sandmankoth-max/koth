@@ -12,6 +12,8 @@ type Props = {
   myValue?: number | null;
   /** True when the user has submitted but admin hasn't verified yet. */
   pendingVerification?: boolean;
+  /** True when the user's last submission was rejected/disqualified. */
+  rejected?: boolean;
   unitType: string;
   unitLabel: string;
 };
