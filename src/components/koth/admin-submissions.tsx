@@ -577,8 +577,9 @@ export function StaffManager() {
     if (password.length < 8) return toast.error("Password must be at least 8 characters.");
     setBusy(true);
     try {
-      const res = await callCreate({ data: { username: u, password, displayName: d } });
-      toast.success(`Moderator @${res.username} created`);
+      const res: any = await callCreate({ data: { username: u, password, displayName: d } });
+      const created = res?.username ?? res?.data?.username ?? u;
+      toast.success(`Moderator @${created} created`);
       setUsername(""); setPassword(""); setDisplayName("");
       refresh();
     } catch (e) {
