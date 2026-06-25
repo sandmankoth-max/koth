@@ -20,7 +20,7 @@ export const createModeratorAccount = createServerFn({ method: "POST" })
     if (!isAdmin) throw new Error("Forbidden — only the admin can create moderator accounts.");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const email = `${data.username}@mod.koth.local`;
+    const email = `${data.username}@koth.local`;
 
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
       email,
@@ -40,6 +40,7 @@ export const createModeratorAccount = createServerFn({ method: "POST" })
       .from("user_roles")
       .insert({ user_id: newUserId, role: "moderator" });
     if (roleInsertErr && !roleInsertErr.message.includes("duplicate")) {
+      await supabaseAdmin.auth.admin.deleteUser(newUserId);
       throw new Error(roleInsertErr.message);
     }
 
@@ -53,17 +54,20 @@ export const listStaffAccounts = createServerFn({ method: "GET" })
       .rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (!isAdmin) throw new Error("Forbidden");
 
-    const { data: roles, error } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: roles, error } = await supabaseAdmin
       .from("user_roles")
       .select("role, user_id")
       .in("role", ["admin", "moderator"]);
     if (error) throw new Error(error.message);
     const ids = Array.from(new Set((roles ?? []).map((r) => r.user_id)));
     if (ids.length === 0) return [] as Array<{ user_id: string; role: "admin" | "moderator"; username: string; display_name: string | null }>;
-    const { data: profs } = await context.supabase
+    const { data: profs, error: profErr } = await supabaseAdmin
       .from("profiles")
       .select("id, username, display_name")
       .in("id", ids);
+    if (profErr) throw new Error(profErr.message);
     const byId = new Map((profs ?? []).map((p: any) => [p.id, p]));
     return (roles ?? []).map((r) => {
       const p = byId.get(r.user_id) as any;
