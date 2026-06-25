@@ -75,3 +75,32 @@ export const listStaffAccounts = createServerFn({ method: "GET" })
       };
     });
   });
+
+export const deleteModeratorAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { userId: string }) => {
+    const userId = String(data.userId ?? "").trim();
+    if (!userId) throw new Error("userId required");
+    return { userId };
+  })
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin } = await context.supabase
+      .rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    if (!isAdmin) throw new Error("Forbidden — only the admin can delete moderator accounts.");
+    if (data.userId === context.userId) throw new Error("You cannot delete your own account.");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Refuse to delete admins
+    const { data: roles } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.userId);
+    if ((roles ?? []).some((r: any) => r.role === "admin")) {
+      throw new Error("Cannot delete an admin account.");
+    }
+
+    const { error: delAuthErr } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
+    if (delAuthErr) throw new Error(delAuthErr.message);
+    return { ok: true };
+  });
