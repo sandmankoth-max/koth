@@ -1,6 +1,8 @@
 import { createFileRoute, Navigate, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { SplashAnimation } from "@/components/koth/splash-animation";
+import { SplashLaunch } from "@/components/koth/splash-launch";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -17,6 +19,19 @@ export const Route = createFileRoute("/")({
 
 function Splash() {
   const { session, loading } = useAuth();
+  const [showLaunch, setShowLaunch] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const played = sessionStorage.getItem("koth-splash-played");
+    if (!played) setShowLaunch(true);
+  }, []);
+
+  const handleSplashDone = () => {
+    sessionStorage.setItem("koth-splash-played", "1");
+    setShowLaunch(false);
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-koth-black">
@@ -24,9 +39,11 @@ function Splash() {
       </div>
     );
   }
-  if (session) return <Navigate to="/home" />;
+  if (session && !showLaunch) return <Navigate to="/home" />;
 
   return (
+    <>
+      {showLaunch && <SplashLaunch onDone={handleSplashDone} />}
     <div
       className="relative flex min-h-screen flex-col bg-koth-black px-6 text-koth-white"
       style={{
@@ -73,5 +90,6 @@ function Splash() {
         </p>
       </div>
     </div>
+    </>
   );
 }
