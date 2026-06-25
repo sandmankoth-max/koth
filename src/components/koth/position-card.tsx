@@ -24,6 +24,7 @@ export function PositionCard({
   hasEntry,
   myValue,
   pendingVerification,
+  rejected,
   unitType,
   unitLabel,
 }: Props) {
