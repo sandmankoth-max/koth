@@ -42,6 +42,8 @@ function Splash() {
   if (session && !showLaunch) return <Navigate to="/home" />;
 
   return (
+    <>
+      {showLaunch && <SplashLaunch onDone={handleSplashDone} />}
     <div
       className="relative flex min-h-screen flex-col bg-koth-black px-6 text-koth-white"
       style={{
