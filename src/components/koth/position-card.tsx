@@ -12,6 +12,8 @@ type Props = {
   myValue?: number | null;
   /** True when the user has submitted but admin hasn't verified yet. */
   pendingVerification?: boolean;
+  /** True when the user's last submission was rejected/disqualified. */
+  rejected?: boolean;
   unitType: string;
   unitLabel: string;
 };
@@ -22,6 +24,7 @@ export function PositionCard({
   hasEntry,
   myValue,
   pendingVerification,
+  rejected,
   unitType,
   unitLabel,
 }: Props) {
@@ -79,6 +82,28 @@ export function PositionCard({
               className="tap-44 inline-flex items-center gap-1.5 rounded-full border border-koth-red px-3 py-2 text-xs font-bold text-koth-red"
             >
               Try again
+            </Link>
+          </div>
+        </section>
+      );
+    }
+    if (rejected) {
+      return (
+        <section className="rounded-3xl border border-border bg-card p-4">
+          <p className="label-broadcast text-muted-foreground">Your position</p>
+          <div className="mt-2 flex items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-base font-bold text-koth-red">Video rejected</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Your last submission was rejected by an admin. Record a new one to get back on the leaderboard.
+              </p>
+            </div>
+            <Link
+              to="/record"
+              className="tap-44 inline-flex items-center gap-1.5 rounded-full bg-koth-red px-3 py-2 text-xs font-bold text-koth-white"
+            >
+              <Video className="h-4 w-4" aria-hidden />
+              Record
             </Link>
           </div>
         </section>

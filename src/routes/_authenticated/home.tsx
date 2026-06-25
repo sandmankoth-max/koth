@@ -180,10 +180,12 @@ function Home() {
         <PositionCard
           challengeId={c.id}
           userId={user.id}
-          hasEntry={!!myEntryQ.data}
+          hasEntry={!!myEntryQ.data && myEntryQ.data.status !== "disqualified"}
           pendingVerification={
-            !!myEntryQ.data && myEntryQ.data.status !== "verified"
+            !!myEntryQ.data &&
+            (myEntryQ.data.status === "pending_review" || myEntryQ.data.status === "flagged")
           }
+          rejected={!!myEntryQ.data && myEntryQ.data.status === "disqualified"}
           myValue={
             myEntryQ.data
               ? Number(myEntryQ.data.admin_verified_value ?? myEntryQ.data.self_reported_value)
