@@ -144,43 +144,46 @@ function UserProfile() {
         </div>
       )}
 
-      <section>
-        {items.length === 0 ? (
-          <p className="text-center text-sm text-muted-foreground">No videos to show.</p>
-        ) : (
-          <div className="grid grid-cols-3 gap-[2px]">
-            {(videosQ.data ?? []).map((s: any, i: number) => {
-              const it = items[i];
-              const title = s.challenges?.title as string | undefined;
-              return (
-                <div key={it.id} className="relative">
-                  <VideoThumb
-                    videoPath={it.video_path}
-                    className="rounded-none"
-                    onClick={() => { setPlayerIndex(i); setPlayerOpen(true); }}
-                    badge={
-                      s.status === "disqualified" ? (
-                        <span className="rounded-full bg-koth-red px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">Rejected</span>
-                      ) : s.visibility === "friends_only" ? (
-                        <span className="rounded-full bg-koth-black/70 px-1.5 py-0.5 text-[9px] font-bold uppercase text-koth-white">Friends</span>
-                      ) : s.status === "verified" ? (
-                        <span className="rounded-full bg-koth-pr-bg px-1.5 py-0.5 text-[9px] font-bold uppercase text-koth-pr-text">Verified</span>
-                      ) : (
-                        <span className="rounded-full bg-koth-red/85 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">Attempt</span>
-                      )
-                    }
-                  />
-                  {title && (
-                    <div className="pointer-events-none absolute inset-x-1 bottom-1 rounded-md bg-black/60 px-1.5 py-0.5 text-center backdrop-blur">
-                      <p className="truncate text-[10px] font-bold uppercase tracking-wide text-white">{title}</p>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
+      {canSeeAll && (
+        <section>
+          {items.length === 0 ? (
+            <p className="text-center text-sm text-muted-foreground">No videos to show.</p>
+          ) : (
+            <div className="grid grid-cols-3 gap-[2px]">
+              {(videosQ.data ?? []).map((s: any, i: number) => {
+                const it = items[i];
+                const title = s.challenges?.title as string | undefined;
+                return (
+                  <div key={it.id} className="relative">
+                    <VideoThumb
+                      videoPath={it.video_path}
+                      className="rounded-none"
+                      onClick={() => { setPlayerIndex(i); setPlayerOpen(true); }}
+                      badge={
+                        s.status === "disqualified" ? (
+                          <span className="rounded-full bg-koth-red px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">Rejected</span>
+                        ) : s.visibility === "friends_only" ? (
+                          <span className="rounded-full bg-koth-black/70 px-1.5 py-0.5 text-[9px] font-bold uppercase text-koth-white">Friends</span>
+                        ) : s.status === "verified" ? (
+                          <span className="rounded-full bg-koth-pr-bg px-1.5 py-0.5 text-[9px] font-bold uppercase text-koth-pr-text">Verified</span>
+                        ) : (
+                          <span className="rounded-full bg-koth-red/85 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">Attempt</span>
+                        )
+                      }
+                    />
+                    {title && (
+                      <div className="pointer-events-none absolute inset-x-1 bottom-1 rounded-md bg-black/60 px-1.5 py-0.5 text-center backdrop-blur">
+                        <p className="truncate text-[10px] font-bold uppercase tracking-wide text-white">{title}</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
+
 
       <TikTokPlayer items={items} startIndex={playerIndex} open={playerOpen} onOpenChange={setPlayerOpen} />
       <FriendsDialog open={friendsOpen} onOpenChange={setFriendsOpen} userId={profileId ?? null} canView={canSeeAll} />
