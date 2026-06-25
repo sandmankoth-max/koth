@@ -225,22 +225,23 @@ function AdminGradingFeed({
     <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
       <DialogContent className="fixed left-1/2 top-1/2 h-[100dvh] w-screen max-w-md -translate-x-1/2 -translate-y-1/2 gap-0 border-0 bg-black p-0 sm:rounded-none [&>button]:hidden">
         <DialogTitle className="sr-only">Admin grading — {challenge.title}</DialogTitle>
-        <button
-          onClick={onClose}
-          aria-label="Back"
-          className="tap-44 absolute left-3 z-50 inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-xs font-bold text-black shadow-lg"
-          style={{ top: "calc(env(safe-area-inset-top) + 0.75rem)" }}
-        >
-          <ArrowLeft className="h-5 w-5" strokeWidth={2} /> Back
-        </button>
-        <button
-          onClick={onClose}
-          aria-label="Close"
-          className="tap-44 absolute right-3 z-50 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/70 text-white backdrop-blur"
-          style={{ top: "calc(env(safe-area-inset-top) + 0.75rem)" }}
-        >
-          <X className="h-5 w-5" strokeWidth={1.75} />
-        </button>
+        <div className="pointer-events-none absolute inset-x-0 z-50 flex items-start justify-between px-3" style={{ top: "calc(env(safe-area-inset-top) + 0.75rem)" }}>
+          <button
+            onClick={onClose}
+            aria-label="Back"
+            className="tap-44 pointer-events-auto inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-xs font-bold text-black shadow-lg"
+          >
+            <ArrowLeft className="h-5 w-5" strokeWidth={2} /> Back
+          </button>
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            className="tap-44 pointer-events-auto inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/70 text-white backdrop-blur"
+          >
+            <X className="h-5 w-5" strokeWidth={1.75} />
+          </button>
+        </div>
+
 
         <div
           ref={scrollerRef}
