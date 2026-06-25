@@ -66,17 +66,17 @@ function UserProfile() {
 
   const videosQ = useQuery({
     queryKey: ["user-videos", profileId, canSeeAll],
-    enabled: !!profileId,
+    enabled: !!profileId && canSeeAll,
     queryFn: async () => {
-      const q = supabase.from("submissions").select(
+      const { data } = await supabase.from("submissions").select(
         "id, video_path, self_reported_value, admin_verified_value, submitted_at, visibility, is_active_entry, status, admin_color, challenges(id, title, unit_type, unit_label)",
       ).eq("user_id", profileId!).order("submitted_at", { ascending: false });
-      const { data } = canSeeAll ? await q : await q.limit(1);
       return (data ?? []).filter((s: any) =>
         s.challenges && (s.visibility === "friends_only" || s.is_active_entry || s.status === "disqualified"),
       );
     },
   });
+
 
   async function sendRequest() {
     if (!user || !profileId) return;
