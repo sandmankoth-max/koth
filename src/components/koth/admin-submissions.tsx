@@ -75,15 +75,18 @@ export function AdminSubmissions() {
 
   async function refetch() {
     if (!challengeId) return;
-    const { data } = await supabase
+    let q = supabase
       .from("submissions")
       .select(
-        "id, user_id, video_path, self_reported_value, admin_verified_value, submitted_at, status, visibility, admin_color, profiles!submissions_user_id_fkey(username, display_name, avatar_url)",
+        "id, user_id, video_path, self_reported_value, admin_verified_value, submitted_at, status, visibility, admin_color, is_active_entry, profiles!submissions_user_id_fkey(username, display_name, avatar_url)",
       )
       .eq("challenge_id", challengeId)
       .eq("visibility", "public")
-      .eq("status", status)
-      .order("submitted_at", { ascending: false });
+      .eq("status", status);
+    // Pending queue should only show the user's CURRENT active entry —
+    // older replaced submissions stay in the DB but vanish from grading.
+    if (status === "pending_review") q = q.eq("is_active_entry", true);
+    const { data } = await q.order("submitted_at", { ascending: false });
     setSubs(data ?? []);
   }
 
