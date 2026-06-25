@@ -401,18 +401,19 @@ function RailButton({
   return (
     <button
       onClick={(e) => { e.stopPropagation(); onClick(); }}
-      className="tap-44 flex flex-col items-center gap-1 active:scale-95 transition-transform"
+      className="tap-44 flex flex-col items-center gap-0.5 transition-transform duration-150 ease-out active:scale-90 will-change-transform"
       aria-label={label}
     >
       {icon}
       {count > 0 && (
-        <span className="text-[12px] font-semibold leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]">
+        <span className="text-[11px] font-semibold leading-none tracking-tight tabular-nums drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]">
           {formatCount(count)}
         </span>
       )}
     </button>
   );
 }
+
 
 
 function formatCount(n: number) {
