@@ -339,7 +339,7 @@ export function FriendsDialog({
   });
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
+      <DialogContent aria-describedby={undefined} className="max-w-sm">
         <DialogTitle>Friends</DialogTitle>
         {!canView ? (
           <p className="text-sm text-muted-foreground">Only friends of this user can see their friends list.</p>
