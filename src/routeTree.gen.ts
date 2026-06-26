@@ -24,7 +24,6 @@ import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/h
 import { Route as AuthenticatedFriendsRouteImport } from './routes/_authenticated/friends'
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
-import { Route as ApiPublicStaffRouteImport } from './routes/api/public/staff'
 import { Route as AuthenticatedUUsernameRouteImport } from './routes/_authenticated/u.$username'
 
 const LegalRoute = LegalRouteImport.update({
@@ -103,11 +102,6 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const ApiPublicStaffRoute = ApiPublicStaffRouteImport.update({
-  id: '/api/public/staff',
-  path: '/api/public/staff',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthenticatedUUsernameRoute = AuthenticatedUUsernameRouteImport.update({
   id: '/u/$username',
   path: '/u/$username',
@@ -130,7 +124,6 @@ export interface FileRoutesByFullPath {
   '/legal/rules': typeof LegalRulesRoute
   '/legal/terms': typeof LegalTermsRoute
   '/u/$username': typeof AuthenticatedUUsernameRoute
-  '/api/public/staff': typeof ApiPublicStaffRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -148,7 +141,6 @@ export interface FileRoutesByTo {
   '/legal/rules': typeof LegalRulesRoute
   '/legal/terms': typeof LegalTermsRoute
   '/u/$username': typeof AuthenticatedUUsernameRoute
-  '/api/public/staff': typeof ApiPublicStaffRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -168,7 +160,6 @@ export interface FileRoutesById {
   '/legal/rules': typeof LegalRulesRoute
   '/legal/terms': typeof LegalTermsRoute
   '/_authenticated/u/$username': typeof AuthenticatedUUsernameRoute
-  '/api/public/staff': typeof ApiPublicStaffRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -188,7 +179,6 @@ export interface FileRouteTypes {
     | '/legal/rules'
     | '/legal/terms'
     | '/u/$username'
-    | '/api/public/staff'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -206,7 +196,6 @@ export interface FileRouteTypes {
     | '/legal/rules'
     | '/legal/terms'
     | '/u/$username'
-    | '/api/public/staff'
   id:
     | '__root__'
     | '/'
@@ -225,7 +214,6 @@ export interface FileRouteTypes {
     | '/legal/rules'
     | '/legal/terms'
     | '/_authenticated/u/$username'
-    | '/api/public/staff'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -233,7 +221,6 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AuthRoute: typeof AuthRoute
   LegalRoute: typeof LegalRouteWithChildren
-  ApiPublicStaffRoute: typeof ApiPublicStaffRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -343,13 +330,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/api/public/staff': {
-      id: '/api/public/staff'
-      path: '/api/public/staff'
-      fullPath: '/api/public/staff'
-      preLoaderRoute: typeof ApiPublicStaffRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_authenticated/u/$username': {
       id: '/_authenticated/u/$username'
       path: '/u/$username'
@@ -407,7 +387,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AuthRoute: AuthRoute,
   LegalRoute: LegalRouteWithChildren,
-  ApiPublicStaffRoute: ApiPublicStaffRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
