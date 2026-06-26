@@ -6,7 +6,6 @@
  *   In-feed actions: enter adjusted value + Verify, Suspend (in-app dialog), Ban user.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar } from "@/components/koth/avatar";
 import { Button } from "@/components/ui/button";
@@ -22,7 +21,6 @@ import { VideoThumb } from "@/components/koth/video-thumb";
 import { getVideoSignedUrl, formatValue } from "@/lib/koth-utils";
 import { X, CheckCircle2, Ban, ShieldX, Trash2, UserPlus, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import { createModeratorAccount, listStaffAccounts, deleteModeratorAccount } from "@/lib/adminAccounts.functions";
 
 export const ADMIN_COLOR_MAP: Record<string, { label: string; dot: string; bg: string; text: string }> = {
   red:    { label: "Red",    dot: "bg-red-500",    bg: "bg-red-500/20",    text: "text-red-300" },
@@ -540,9 +538,6 @@ export function ReasonDialog({
 }
 
 export function StaffManager() {
-  const callCreate = useServerFn(createModeratorAccount);
-  const callList = useServerFn(listStaffAccounts);
-  const callDelete = useServerFn(deleteModeratorAccount);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -551,10 +546,49 @@ export function StaffManager() {
   const [loadErr, setLoadErr] = useState<string | null>(null);
   const [staff, setStaff] = useState<Array<{ user_id: string; role: "admin" | "moderator"; username: string; display_name: string | null }>>([]);
 
+  const staffApiUrl = () => {
+    const path = "/api/public/staff";
+    const cap = typeof window !== "undefined" ? (window as any).Capacitor : null;
+    const isNative = typeof window !== "undefined" && (
+      window.location.protocol === "capacitor:" ||
+      window.location.protocol === "ionic:" ||
+      window.location.protocol === "file:" ||
+      Boolean(cap?.isNativePlatform?.())
+    );
+    return isNative ? `https://pixel-perfect-clone-25865.lovable.app${path}` : path;
+  };
+
+  async function staffRequest(method: "GET" | "POST" | "DELETE", body?: unknown) {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    if (!token) throw new Error("Sign in again to manage staff.");
+
+    let response: Response;
+    try {
+      response = await fetch(staffApiUrl(), {
+        method,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          ...(body ? { "Content-Type": "application/json" } : {}),
+        },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+    } catch (error) {
+      console.error("[StaffManager] fetch failed", error);
+      throw new Error("Network request failed. Rebuild/sync the native app and try again.");
+    }
+
+    const payload = await response.json().catch(() => null);
+    if (!response.ok || payload?.error) {
+      throw new Error(payload?.error || `Staff request failed (${response.status})`);
+    }
+    return payload;
+  }
+
   async function refresh() {
     try {
-      const rows = await callList();
-      const list = Array.isArray(rows) ? rows : (rows as any)?.data ?? [];
+      const rows = await staffRequest("GET");
+      const list = Array.isArray(rows) ? rows : rows?.staff ?? rows?.data ?? [];
       setStaff(Array.isArray(list) ? list : []);
       setLoadErr(null);
     } catch (e) {
@@ -577,7 +611,7 @@ export function StaffManager() {
     if (password.length < 8) return toast.error("Password must be at least 8 characters.");
     setBusy(true);
     try {
-      const res: any = await callCreate({ data: { username: u, password, displayName: d } });
+      const res: any = await staffRequest("POST", { username: u, password, displayName: d });
       const created = res?.username ?? res?.data?.username ?? u;
       toast.success(`Moderator @${created} created`);
       setUsername(""); setPassword(""); setDisplayName("");
@@ -593,7 +627,7 @@ export function StaffManager() {
     if (!confirm(`Delete moderator @${s.username}? This cannot be undone.`)) return;
     setDeletingId(s.user_id);
     try {
-      await callDelete({ data: { userId: s.user_id } });
+      await staffRequest("DELETE", { userId: s.user_id });
       toast.success(`Deleted @${s.username}`);
       refresh();
     } catch (e) {
