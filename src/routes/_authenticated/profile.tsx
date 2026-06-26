@@ -166,7 +166,7 @@ function Profile() {
 
       {/* Settings sheet */}
       <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <SheetContent side="right" className="w-[88%] max-w-sm border-l border-border bg-card p-0" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+        <SheetContent aria-describedby={undefined} side="right" className="w-[88%] max-w-sm border-l border-border bg-card p-0" style={{ paddingTop: "env(safe-area-inset-top)" }}>
           <SheetHeader className="border-b border-border px-5 py-4">
             <SheetTitle className="text-left text-foreground">Settings</SheetTitle>
           </SheetHeader>
