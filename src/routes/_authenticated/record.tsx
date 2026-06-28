@@ -121,12 +121,10 @@ function Record() {
         .single();
       if (insErr) throw insErr;
       if (!submission) throw new Error("Submission failed");
-      await deletePreviousSubmissions({
-        data: {
-          challengeId: challenge.id,
-          keepSubmissionId: submission.id,
-          visibility: visibility ?? "public",
-        },
+      await cleanupPreviousSubmissionsApi({
+        challengeId: challenge.id,
+        keepSubmissionId: submission.id,
+        visibility: visibility ?? "public",
       });
 
       toast.success("Submission locked in. Good luck.");
