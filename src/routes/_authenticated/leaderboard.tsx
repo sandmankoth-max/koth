@@ -154,6 +154,18 @@ function Leaderboard() {
         </div>
       </section>
 
+      <div className="flex items-center justify-between rounded-2xl border border-border bg-card px-4 py-2.5">
+        <Label htmlFor="friends-board" className="text-sm font-semibold text-foreground">
+          Friends board
+        </Label>
+        <Switch
+          id="friends-board"
+          checked={friendsOnly}
+          onCheckedChange={setFriendsOnly}
+        />
+      </div>
+
+
       {rowsQ.isLoading ? (
         <div className="rounded-3xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
           Loading…
