@@ -1,9 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
-import { deletePreviousSubmissionsForChallenge } from "@/lib/submissions.functions";
+import { cleanupPreviousSubmissionsApi } from "@/lib/submissions-api";
 import { CameraRecorder, type CapturedVideo } from "@/components/koth/camera-recorder";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +22,6 @@ const SEEN_VIS_KEY = "koth.seenVisibilityExplainer";
 
 function Record() {
   const navigate = useNavigate();
-  const deletePreviousSubmissions = useServerFn(deletePreviousSubmissionsForChallenge);
   const { user } = useAuth();
   const [stage, setStage] = useState<Stage>("intro");
   const [captured, setCaptured] = useState<CapturedVideo | null>(null);
@@ -123,12 +121,10 @@ function Record() {
         .single();
       if (insErr) throw insErr;
       if (!submission) throw new Error("Submission failed");
-      await deletePreviousSubmissions({
-        data: {
-          challengeId: challenge.id,
-          keepSubmissionId: submission.id,
-          visibility: visibility ?? "public",
-        },
+      await cleanupPreviousSubmissionsApi({
+        challengeId: challenge.id,
+        keepSubmissionId: submission.id,
+        visibility: visibility ?? "public",
       });
 
       toast.success("Submission locked in. Good luck.");

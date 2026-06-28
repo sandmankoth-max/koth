@@ -4,7 +4,7 @@ import type { Database } from "@/integrations/supabase/types";
 
 const corsHeaders = {
   "access-control-allow-origin": "*",
-  "access-control-allow-methods": "DELETE,OPTIONS",
+  "access-control-allow-methods": "POST,DELETE,OPTIONS",
   "access-control-allow-headers": "authorization,content-type",
   "access-control-max-age": "86400",
   vary: "Origin",
@@ -52,6 +52,68 @@ export const Route = createFileRoute("/api/public/submissions")({
   server: {
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: corsHeaders }),
+      POST: async ({ request }) => {
+        try {
+          const { userId } = await requireUser(request);
+          const body = await request.json().catch(() => ({}));
+          const action = String(body?.action ?? "").trim();
+          if (action !== "cleanup_previous") throw new Error("Unknown action");
+          const challengeId = String(body?.challengeId ?? "").trim();
+          const keepSubmissionId = String(body?.keepSubmissionId ?? "").trim();
+          const visibility = body?.visibility === "friends_only" ? "friends_only" : "public";
+          if (!/^[0-9a-f-]{36}$/i.test(challengeId)) throw new Error("challengeId required");
+          if (!/^[0-9a-f-]{36}$/i.test(keepSubmissionId)) throw new Error("keepSubmissionId required");
+
+          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+          const { data: suspended, error: suspErr } = await supabaseAdmin
+            .from("submissions")
+            .select("id, video_path")
+            .eq("user_id", userId)
+            .eq("challenge_id", challengeId)
+            .eq("status", "disqualified")
+            .neq("id", keepSubmissionId);
+          if (suspErr) throw new Error(suspErr.message);
+
+          let toDelete = suspended ?? [];
+
+          if (visibility !== "friends_only") {
+            const { data: pubs, error: pubErr } = await supabaseAdmin
+              .from("submissions")
+              .select("id, video_path")
+              .eq("user_id", userId)
+              .eq("challenge_id", challengeId)
+              .eq("visibility", "public")
+              .neq("status", "disqualified")
+              .neq("id", keepSubmissionId);
+            if (pubErr) throw new Error(pubErr.message);
+            toDelete = [...toDelete, ...(pubs ?? [])];
+          }
+
+          if (toDelete.length === 0) return json({ ok: true, deleted: 0 });
+
+          const paths = [...new Set(toDelete.map((s) => s.video_path).filter(Boolean))];
+          if (paths.length > 0) {
+            const { error: storageError } = await supabaseAdmin.storage
+              .from("koth-videos")
+              .remove(paths);
+            if (storageError) console.error("[submissions:cleanup] storage error", storageError);
+          }
+
+          const ids = toDelete.map((s) => s.id);
+          const { error: deleteError } = await supabaseAdmin
+            .from("submissions")
+            .delete()
+            .in("id", ids)
+            .eq("user_id", userId);
+          if (deleteError) throw new Error(deleteError.message);
+
+          return json({ ok: true, deleted: toDelete.length });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Failed";
+          return json({ error: message }, statusFor(message));
+        }
+      },
       DELETE: async ({ request }) => {
         try {
           const { userId } = await requireUser(request);
