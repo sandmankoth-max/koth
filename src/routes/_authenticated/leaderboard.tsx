@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { formatDistanceToNowStrict } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { Countdown } from "@/components/koth/countdown";
@@ -8,6 +8,9 @@ import { RankBadge } from "@/components/koth/rank-badge";
 import { Avatar } from "@/components/koth/avatar";
 import { formatValue, shortUnitLabel } from "@/lib/koth-utils";
 import { TikTokPlayer, type PlayerItem } from "@/components/koth/tiktok-player";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { useAuth } from "@/lib/auth-context";
 import { Crown, Play, Sparkles, Trophy } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/leaderboard")({
