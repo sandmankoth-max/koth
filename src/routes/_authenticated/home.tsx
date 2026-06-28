@@ -1,10 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
-import { deleteOwnSubmission } from "@/lib/submissions.functions";
+import { deleteOwnSubmissionApi } from "@/lib/submissions-api";
 import { Countdown } from "@/components/koth/countdown";
 import { RankBadge } from "@/components/koth/rank-badge";
 import { ProfileAvatar } from "@/components/koth/profile-avatar";
@@ -29,7 +28,7 @@ export const Route = createFileRoute("/_authenticated/home")({
 function Home() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const deleteSubmission = useServerFn(deleteOwnSubmission);
+  
   const [deletingEntry, setDeletingEntry] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -81,7 +80,7 @@ function Home() {
     if (!myEntryQ.data) return;
     setDeletingEntry(true);
     try {
-      await deleteSubmission({ data: { submissionId: myEntryQ.data.id } });
+      await deleteOwnSubmissionApi(myEntryQ.data.id);
       toast.success("Video deleted");
       await queryClient.invalidateQueries({ queryKey: ["my-entry", c?.id, user?.id] });
       await queryClient.invalidateQueries({ queryKey: ["my-rank", c?.id, user?.id] });
