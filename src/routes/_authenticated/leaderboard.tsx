@@ -89,15 +89,21 @@ function Leaderboard() {
       if (!data) return [];
       return data
         .map((r) => ({ ...r, val: Number(r.admin_verified_value ?? r.self_reported_value) }))
-        .sort((a, b) => b.val - a.val)
-        .slice(0, 10);
+        .sort((a, b) => b.val - a.val);
     },
   });
 
   const [playerOpen, setPlayerOpen] = useState(false);
   const [playerIndex, setPlayerIndex] = useState(0);
 
-  const rows = rowsQ.data ?? [];
+  const allRows = rowsQ.data ?? [];
+  const rows = useMemo(() => {
+    if (friendsOnly) {
+      const allowed = new Set<string>([...(friendsQ.data ?? []), user?.id].filter(Boolean) as string[]);
+      return allRows.filter((r: any) => allowed.has(r.user_id));
+    }
+    return allRows.slice(0, 10);
+  }, [allRows, friendsOnly, friendsQ.data, user?.id]);
   const items: PlayerItem[] = rows.map((r: any) => ({
     id: r.id,
     video_path: r.video_path,
