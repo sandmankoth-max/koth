@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { formatDistanceToNowStrict } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { Countdown } from "@/components/koth/countdown";
@@ -8,6 +8,9 @@ import { RankBadge } from "@/components/koth/rank-badge";
 import { Avatar } from "@/components/koth/avatar";
 import { formatValue, shortUnitLabel } from "@/lib/koth-utils";
 import { TikTokPlayer, type PlayerItem } from "@/components/koth/tiktok-player";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { useAuth } from "@/lib/auth-context";
 import { Crown, Play, Sparkles, Trophy } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/leaderboard")({
@@ -29,6 +32,22 @@ function shortRel(ts: string) {
 }
 
 function Leaderboard() {
+  const { user } = useAuth();
+  const [friendsOnly, setFriendsOnly] = useState(false);
+
+  const friendsQ = useQuery({
+    queryKey: ["lb-friends", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("friendships")
+        .select("requester_id, addressee_id")
+        .eq("status", "accepted")
+        .or(`requester_id.eq.${user!.id},addressee_id.eq.${user!.id}`);
+      return (data ?? []).map((f) => (f.requester_id === user!.id ? f.addressee_id : f.requester_id));
+    },
+  });
+
   const challengeQ = useQuery({
     queryKey: ["leaderboard-challenge"],
     queryFn: async () => {
@@ -70,15 +89,21 @@ function Leaderboard() {
       if (!data) return [];
       return data
         .map((r) => ({ ...r, val: Number(r.admin_verified_value ?? r.self_reported_value) }))
-        .sort((a, b) => b.val - a.val)
-        .slice(0, 10);
+        .sort((a, b) => b.val - a.val);
     },
   });
 
   const [playerOpen, setPlayerOpen] = useState(false);
   const [playerIndex, setPlayerIndex] = useState(0);
 
-  const rows = rowsQ.data ?? [];
+  const allRows = rowsQ.data ?? [];
+  const rows = useMemo(() => {
+    if (friendsOnly) {
+      const allowed = new Set<string>([...(friendsQ.data ?? []), user?.id].filter(Boolean) as string[]);
+      return allRows.filter((r: any) => allowed.has(r.user_id));
+    }
+    return allRows.slice(0, 10);
+  }, [allRows, friendsOnly, friendsQ.data, user?.id]);
   const items: PlayerItem[] = rows.map((r: any) => ({
     id: r.id,
     video_path: r.video_path,
@@ -86,6 +111,7 @@ function Leaderboard() {
     unit_type: c?.unit_type,
     unit_label: c?.unit_label,
     challenge_title: c?.title ?? null,
+    on_leaderboard: true,
     admin_color: r.admin_color,
     user: {
       id: r.user_id,
@@ -127,6 +153,18 @@ function Leaderboard() {
           <Countdown target={c.ends_at} />
         </div>
       </section>
+
+      <div className="flex items-center justify-between rounded-2xl border border-border bg-card px-4 py-2.5">
+        <Label htmlFor="friends-board" className="text-sm font-semibold text-foreground">
+          Friends board
+        </Label>
+        <Switch
+          id="friends-board"
+          checked={friendsOnly}
+          onCheckedChange={setFriendsOnly}
+        />
+      </div>
+
 
       {rowsQ.isLoading ? (
         <div className="rounded-3xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">

@@ -32,6 +32,7 @@ export type PlayerItem = {
   unit_type?: string;
   unit_label?: string;
   challenge_title?: string | null;
+  on_leaderboard?: boolean;
   admin_color?: string | null;
   user: {
     id: string;
@@ -368,7 +369,9 @@ function PlayerSlide({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this video?</AlertDialogTitle>
             <AlertDialogDescription>
-              This cannot be undone. Your entry will be removed from the leaderboard.
+              {item.on_leaderboard
+                ? "This cannot be undone. Your entry will be removed from the leaderboard."
+                : "This cannot be undone."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

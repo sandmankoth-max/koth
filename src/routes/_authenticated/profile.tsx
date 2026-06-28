@@ -268,6 +268,7 @@ function VideoGallery() {
     unit_type: s.challenges?.unit_type,
     unit_label: s.challenges?.unit_label,
     challenge_title: s.challenges?.title,
+    on_leaderboard: !!s.is_active_entry && s.status === "verified",
     admin_color: s.admin_color,
     user: {
       id: user!.id,
