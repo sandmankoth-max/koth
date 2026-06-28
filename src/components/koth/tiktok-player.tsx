@@ -368,7 +368,9 @@ function PlayerSlide({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this video?</AlertDialogTitle>
             <AlertDialogDescription>
-              This cannot be undone. Your entry will be removed from the leaderboard.
+              {item.challenge_title
+                ? "This cannot be undone. If this is a challenge submission, your entry will be removed from the leaderboard."
+                : "This cannot be undone."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
