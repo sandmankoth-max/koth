@@ -407,7 +407,7 @@ function VisibilityExplainer({
   if (!kind) return null;
   const isPublic = kind === "public";
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 sm:items-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="w-full max-w-md rounded-3xl bg-card p-5 shadow-xl">
         <p className="label-broadcast text-muted-foreground">
           {isPublic ? "Enter Prize Pool" : "Friends Feed Only"}
