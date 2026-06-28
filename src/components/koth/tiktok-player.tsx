@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +22,7 @@ import { AdminColorBadge } from "@/components/koth/admin-submissions";
 import { cn } from "@/lib/utils";
 import { CommentDrawer } from "@/components/koth/comment-drawer";
 import { VideoScrubber } from "@/components/koth/video-scrubber";
-import { deleteOwnSubmission } from "@/lib/submissions.functions";
+import { deleteOwnSubmissionApi } from "@/lib/submissions-api";
 
 export type PlayerItem = {
   id: string;
@@ -131,7 +131,7 @@ function PlayerSlide({
 }) {
   const { user, isAdmin } = useAuth();
   const qc = useQueryClient();
-  const deleteSubmission = useServerFn(deleteOwnSubmission);
+  
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [url, setUrl] = useState<string | null>(null);
@@ -224,7 +224,7 @@ function PlayerSlide({
     if (!isOwner || deleting) return;
     setDeleting(true);
     try {
-      await deleteSubmission({ data: { submissionId: item.id } });
+      await deleteOwnSubmissionApi(item.id);
       toast.success("Video deleted");
       qc.invalidateQueries({ queryKey: ["my-videos"] });
       qc.invalidateQueries({ queryKey: ["my-entry"] });
