@@ -1,9 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
-import { deletePreviousSubmissionsForChallenge } from "@/lib/submissions.functions";
+import { cleanupPreviousSubmissionsApi } from "@/lib/submissions-api";
 import { CameraRecorder, type CapturedVideo } from "@/components/koth/camera-recorder";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
