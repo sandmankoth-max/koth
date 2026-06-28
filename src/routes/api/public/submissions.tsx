@@ -4,7 +4,7 @@ import type { Database } from "@/integrations/supabase/types";
 
 const corsHeaders = {
   "access-control-allow-origin": "*",
-  "access-control-allow-methods": "DELETE,OPTIONS",
+  "access-control-allow-methods": "POST,DELETE,OPTIONS",
   "access-control-allow-headers": "authorization,content-type",
   "access-control-max-age": "86400",
   vary: "Origin",
