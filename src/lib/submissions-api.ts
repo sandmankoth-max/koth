@@ -13,20 +13,20 @@ function apiUrl(path: string) {
   return isNative ? `${PROD_ORIGIN}${path}` : path;
 }
 
-export async function deleteOwnSubmissionApi(submissionId: string) {
+async function authedFetch(path: string, init: RequestInit) {
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.access_token;
-  if (!token) throw new Error("Sign in again to delete.");
+  if (!token) throw new Error("Sign in again.");
 
   let response: Response;
   try {
-    response = await fetch(apiUrl("/api/public/submissions"), {
-      method: "DELETE",
+    response = await fetch(apiUrl(path), {
+      ...init,
       headers: {
+        ...(init.headers || {}),
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ submissionId }),
     });
   } catch (error) {
     console.error("[submissions-api] fetch failed", error);
@@ -35,7 +35,25 @@ export async function deleteOwnSubmissionApi(submissionId: string) {
 
   const payload = await response.json().catch(() => null);
   if (!response.ok || payload?.error) {
-    throw new Error(payload?.error || `Delete failed (${response.status})`);
+    throw new Error(payload?.error || `Request failed (${response.status})`);
   }
   return payload;
+}
+
+export async function deleteOwnSubmissionApi(submissionId: string) {
+  return authedFetch("/api/public/submissions", {
+    method: "DELETE",
+    body: JSON.stringify({ submissionId }),
+  });
+}
+
+export async function cleanupPreviousSubmissionsApi(input: {
+  challengeId: string;
+  keepSubmissionId: string;
+  visibility: "public" | "friends_only";
+}) {
+  return authedFetch("/api/public/submissions", {
+    method: "POST",
+    body: JSON.stringify({ action: "cleanup_previous", ...input }),
+  });
 }
