@@ -22,7 +22,6 @@ const SEEN_VIS_KEY = "koth.seenVisibilityExplainer";
 
 function Record() {
   const navigate = useNavigate();
-  const deletePreviousSubmissions = useServerFn(deletePreviousSubmissionsForChallenge);
   const { user } = useAuth();
   const [stage, setStage] = useState<Stage>("intro");
   const [captured, setCaptured] = useState<CapturedVideo | null>(null);
