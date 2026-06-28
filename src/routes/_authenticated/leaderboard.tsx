@@ -32,6 +32,22 @@ function shortRel(ts: string) {
 }
 
 function Leaderboard() {
+  const { user } = useAuth();
+  const [friendsOnly, setFriendsOnly] = useState(false);
+
+  const friendsQ = useQuery({
+    queryKey: ["lb-friends", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("friendships")
+        .select("requester_id, addressee_id")
+        .eq("status", "accepted")
+        .or(`requester_id.eq.${user!.id},addressee_id.eq.${user!.id}`);
+      return (data ?? []).map((f) => (f.requester_id === user!.id ? f.addressee_id : f.requester_id));
+    },
+  });
+
   const challengeQ = useQuery({
     queryKey: ["leaderboard-challenge"],
     queryFn: async () => {
