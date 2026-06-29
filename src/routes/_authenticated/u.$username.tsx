@@ -7,9 +7,11 @@ import { Avatar } from "@/components/koth/avatar";
 import { Button } from "@/components/ui/button";
 import { TikTokPlayer, type PlayerItem } from "@/components/koth/tiktok-player";
 import { VideoThumb } from "@/components/koth/video-thumb";
-import { UserPlus, Lock, ArrowLeft, Users } from "lucide-react";
+import { UserPlus, Lock, ArrowLeft, Users, Flag } from "lucide-react";
 import { toast } from "sonner";
 import { FriendsDialog } from "./profile";
+import { PromptDialog } from "@/components/koth/prompt-dialog";
+
 
 export const Route = createFileRoute("/_authenticated/u/$username")({
   head: ({ params }) => ({ meta: [{ title: `@${params.username} — KOTH` }] }),
@@ -23,6 +25,8 @@ function UserProfile() {
   const [playerOpen, setPlayerOpen] = useState(false);
   const [playerIndex, setPlayerIndex] = useState(0);
   const [friendsOpen, setFriendsOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+
 
   const profileQ = useQuery({
     queryKey: ["profile-by-username", username],
@@ -124,7 +128,7 @@ function UserProfile() {
         {canSeeAll && p.bio && <p className="mt-2 max-w-[240px] text-xs text-foreground/85 line-clamp-2">{p.bio}</p>}
 
         {!isSelf && (
-          <div className="mt-3 w-full max-w-xs">
+          <div className="mt-3 w-full max-w-xs space-y-2">
             {friendQ.data?.status === "accepted" ? (
               <span className="pill bg-koth-pr-bg text-koth-pr-text">Friends</span>
             ) : friendQ.data?.status === "pending" ? (
@@ -134,8 +138,15 @@ function UserProfile() {
                 <UserPlus className="mr-2 h-4 w-4" /> Add friend
               </Button>
             )}
+            <button
+              onClick={() => setReportOpen(true)}
+              className="tap-44 inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-border bg-card px-3 py-2 text-xs font-semibold text-muted-foreground hover:text-koth-red"
+            >
+              <Flag className="h-3.5 w-3.5" /> Report user
+            </button>
           </div>
         )}
+
       </section>
 
       {!canSeeAll && (
@@ -188,6 +199,27 @@ function UserProfile() {
 
       <TikTokPlayer items={items} startIndex={playerIndex} open={playerOpen} onOpenChange={setPlayerOpen} />
       <FriendsDialog open={friendsOpen} onOpenChange={setFriendsOpen} userId={profileId ?? null} canView={canSeeAll} />
+      <PromptDialog
+        open={reportOpen}
+        onOpenChange={setReportOpen}
+        title={`Report @${p.username}?`}
+        description="Tell us what's going on. Reports are reviewed by our moderation team."
+        placeholder="Describe the issue (3–1000 characters)"
+        confirmLabel="Submit report"
+        destructive
+        required
+        onConfirm={async (reason) => {
+          if (!reason.trim() || !profileId) return;
+          setReportOpen(false);
+          const { error } = await supabase.rpc("submit_user_report" as any, {
+            p_reported_user_id: profileId,
+            p_reason: reason.trim(),
+          });
+          if (error) toast.error(error.message);
+          else toast.success("Report submitted. Thank you.");
+        }}
+      />
+
 
       {isSelf && (
         <Link to="/profile" className="tap-44 block rounded-2xl border border-border bg-card px-4 py-3 text-center text-sm font-semibold text-foreground">

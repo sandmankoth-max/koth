@@ -492,6 +492,42 @@ export type Database = {
           },
         ]
       }
+      user_reports: {
+        Row: {
+          created_at: string
+          id: string
+          reason: string
+          reported_user_id: string
+          reporter_id: string
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reason: string
+          reported_user_id: string
+          reporter_id: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reason?: string
+          reported_user_id?: string
+          reporter_id?: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -647,6 +683,26 @@ export type Database = {
           user_id: string
         }[]
       }
+      admin_list_reports: {
+        Args: { p_status?: string }
+        Returns: {
+          created_at: string
+          id: string
+          reason: string
+          reported_avatar_url: string
+          reported_user_id: string
+          reported_username: string
+          reporter_id: string
+          reporter_username: string
+          resolution_note: string
+          resolved_at: string
+          status: string
+        }[]
+      }
+      admin_resolve_report: {
+        Args: { p_note?: string; p_report_id: string }
+        Returns: undefined
+      }
       admin_restore_submission: {
         Args: { p_submission_id: string }
         Returns: undefined
@@ -710,6 +766,10 @@ export type Database = {
       notify_rank_changes: {
         Args: { p_actor: string; p_challenge_id: string }
         Returns: undefined
+      }
+      submit_user_report: {
+        Args: { p_reason: string; p_reported_user_id: string }
+        Returns: string
       }
       username_exists: { Args: { _username: string }; Returns: boolean }
     }

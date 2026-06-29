@@ -102,7 +102,30 @@ function Notifications() {
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(100);
-      if (active) setItems(data ?? []);
+      const list = data ?? [];
+
+      // Resolve friend_request notifications against current friendship state
+      const fids = Array.from(new Set(
+        list.filter((n: any) => n.type === "friend_request" && n.payload?.friendship_id)
+          .map((n: any) => n.payload.friendship_id as string)
+      ));
+      let statusByFid = new Map<string, string>();
+      if (fids.length) {
+        const { data: fs } = await supabase.from("friendships").select("id, status").in("id", fids);
+        statusByFid = new Map((fs ?? []).map((f: any) => [f.id, f.status]));
+      }
+      const resolved = list.map((n: any) => {
+        if (n.type !== "friend_request") return n;
+        const fid = n.payload?.friendship_id;
+        if (!fid) return n;
+        const st = statusByFid.get(fid);
+        if (!st) return { ...n, _resolved: "rejected" };
+        if (st === "accepted") return { ...n, _resolved: "accepted" };
+        if (st !== "pending") return { ...n, _resolved: "rejected" };
+        return n;
+      });
+
+      if (active) setItems(resolved);
       await supabase
         .from("notifications")
         .update({ read: true })
@@ -111,6 +134,7 @@ function Notifications() {
     })();
     return () => { active = false; };
   }, [user]);
+
 
   async function accept(n: any) {
     const fid = n.payload?.friendship_id;
