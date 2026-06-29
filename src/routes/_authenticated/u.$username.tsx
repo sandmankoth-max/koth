@@ -149,12 +149,6 @@ function UserProfile() {
                 <UserPlus className="mr-2 h-4 w-4" /> Add friend
               </Button>
             )}
-            <button
-              onClick={() => setReportOpen(true)}
-              className="tap-44 inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-border bg-card px-3 py-2 text-xs font-semibold text-muted-foreground hover:text-koth-red"
-            >
-              <Flag className="h-3.5 w-3.5" /> Report user
-            </button>
           </div>
         )}
 
