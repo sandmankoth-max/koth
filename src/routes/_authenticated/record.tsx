@@ -127,7 +127,7 @@ function Record() {
         visibility: visibility ?? "public",
       });
 
-      toast.success(visibility === "friends_only" ? "Submission locked in" : "Submission locked in. Good luck.");
+      toast.success("Submission locked in");
       navigate({ to: "/home" });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Upload failed");
