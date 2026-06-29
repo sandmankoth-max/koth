@@ -296,7 +296,7 @@ function PlayerSlide({
                 {formatValue(item.value, item.unit_type, item.unit_label ?? "")}
               </span>
             )}
-            {isAdmin && item.admin_color && <AdminColorBadge color={item.admin_color} />}
+            {isStaff && item.admin_color && <AdminColorBadge color={item.admin_color} />}
           </div>
         )}
         {item.caption && <p className="mt-2 line-clamp-2 text-sm text-white/90">{item.caption}</p>}
