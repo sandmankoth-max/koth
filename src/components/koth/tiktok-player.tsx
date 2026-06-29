@@ -130,7 +130,7 @@ function PlayerSlide({
   scrollRoot: React.RefObject<HTMLDivElement | null>;
   onClose: () => void;
 }) {
-  const { user, isAdmin } = useAuth();
+  const { user, isStaff } = useAuth();
   const qc = useQueryClient();
   
   const videoRef = useRef<HTMLVideoElement>(null);
