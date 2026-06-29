@@ -24,8 +24,10 @@ import { formatValue, getVideoSignedUrl } from "@/lib/koth-utils";
 import { toast } from "sonner";
 import { AdminSubmissions, StaffManager } from "@/components/koth/admin-submissions";
 import { PunishPanel } from "@/components/koth/punish-panel";
+import { ReportsPanel } from "@/components/koth/reports-panel";
 import { UsernamePicker, type PickedUser } from "@/components/koth/username-picker";
 import { PromptDialog } from "@/components/koth/prompt-dialog";
+
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Admin — KOTH" }] }),
@@ -56,6 +58,7 @@ function Admin({ isAdmin }: { isAdmin: boolean }) {
           {isAdmin && <TabsTrigger value="edit" className="h-9 text-xs">Edit</TabsTrigger>}
           <TabsTrigger value="review" className="h-9 text-xs">Grade</TabsTrigger>
           <TabsTrigger value="punish" className="h-9 text-xs">Punish</TabsTrigger>
+          <TabsTrigger value="reports" className="h-9 text-xs">Reports</TabsTrigger>
           {isAdmin && <TabsTrigger value="results" className="h-9 text-xs">Results</TabsTrigger>}
           {isAdmin && <TabsTrigger value="notify" className="h-9 text-xs">Notify</TabsTrigger>}
           {isAdmin && <TabsTrigger value="staff" className="h-9 text-xs">Staff</TabsTrigger>}
@@ -64,9 +67,11 @@ function Admin({ isAdmin }: { isAdmin: boolean }) {
         {isAdmin && <TabsContent value="edit"><EditChallenge /></TabsContent>}
         <TabsContent value="review"><AdminSubmissions /></TabsContent>
         <TabsContent value="punish"><PunishPanel /></TabsContent>
+        <TabsContent value="reports"><ReportsPanel /></TabsContent>
         {isAdmin && <TabsContent value="results"><AnnounceWinners /></TabsContent>}
         {isAdmin && <TabsContent value="notify"><SendNotification /></TabsContent>}
         {isAdmin && <TabsContent value="staff"><StaffManager /></TabsContent>}
+
       </Tabs>
     </div>
   );
