@@ -105,19 +105,30 @@ function UserProfile() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between">
         <button onClick={() => navigate({ to: "/feed" })} className="tap-44 -ml-2 inline-flex items-center gap-1 text-sm text-muted-foreground">
           <ArrowLeft className="h-4 w-4" /> Back
         </button>
-        <button
-          onClick={() => { if (canSeeAll) setFriendsOpen(true); else toast.message("Add as friend to see their friends list"); }}
-          className="tap-44 inline-flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-[11px] font-semibold text-foreground"
-        >
-          <Users className="h-3 w-3 text-koth-red" />
-          <span className="mono-stat font-bold">{countsQ.data ?? 0}</span>
-          <span className="text-muted-foreground">friends</span>
-          {!canSeeAll && <Lock className="h-3 w-3 text-muted-foreground" />}
-        </button>
+        <div className="flex flex-col items-end gap-1">
+          <button
+            onClick={() => { if (canSeeAll) setFriendsOpen(true); else toast.message("Add as friend to see their friends list"); }}
+            className="tap-44 inline-flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-[11px] font-semibold text-foreground"
+          >
+            <Users className="h-3 w-3 text-koth-red" />
+            <span className="mono-stat font-bold">{countsQ.data ?? 0}</span>
+            <span className="text-muted-foreground">friends</span>
+            {!canSeeAll && <Lock className="h-3 w-3 text-muted-foreground" />}
+          </button>
+          {!isSelf && (
+            <button
+              onClick={() => setReportOpen(true)}
+              className="tap-44 inline-flex items-center justify-center rounded-full border border-border bg-card p-1.5 text-muted-foreground hover:text-koth-red"
+              aria-label="Report user"
+            >
+              <Flag className="h-4 w-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       <section className="flex flex-col items-center text-center">
@@ -138,12 +149,6 @@ function UserProfile() {
                 <UserPlus className="mr-2 h-4 w-4" /> Add friend
               </Button>
             )}
-            <button
-              onClick={() => setReportOpen(true)}
-              className="tap-44 inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-border bg-card px-3 py-2 text-xs font-semibold text-muted-foreground hover:text-koth-red"
-            >
-              <Flag className="h-3.5 w-3.5" /> Report user
-            </button>
           </div>
         )}
 
