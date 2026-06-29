@@ -8,7 +8,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -16,7 +16,6 @@ import { AuthProvider } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
 import { useNativePush } from "@/hooks/use-native-push";
-import { SplashIntro } from "@/components/koth/splash-intro";
 
 function NotFoundComponent() {
   return (
@@ -139,11 +138,6 @@ function NativePushBridge() {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  // Play once per app load. Skip on SSR so the static launch screen
-  // continues to be the very first paint on native.
-  const [showSplash, setShowSplash] = useState(
-    typeof window !== "undefined",
-  );
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
@@ -155,7 +149,6 @@ function RootComponent() {
           offset="calc(env(safe-area-inset-top) + 16px)"
           mobileOffset="calc(env(safe-area-inset-top) + 16px)"
         />
-        {showSplash ? <SplashIntro onDone={() => setShowSplash(false)} /> : null}
       </AuthProvider>
     </QueryClientProvider>
   );
