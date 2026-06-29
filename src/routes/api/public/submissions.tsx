@@ -64,6 +64,13 @@ export const Route = createFileRoute("/api/public/submissions")({
           if (!/^[0-9a-f-]{36}$/i.test(challengeId)) throw new Error("challengeId required");
           if (!/^[0-9a-f-]{36}$/i.test(keepSubmissionId)) throw new Error("keepSubmissionId required");
 
+          // Friends-only uploads never replace or delete any prior submission
+          // (including rejected/disqualified challenge attempts). Only a new
+          // public challenge attempt supersedes prior public + disqualified entries.
+          if (visibility === "friends_only") {
+            return json({ ok: true, deleted: 0 });
+          }
+
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
           const { data: suspended, error: suspErr } = await supabaseAdmin
@@ -77,18 +84,16 @@ export const Route = createFileRoute("/api/public/submissions")({
 
           let toDelete = suspended ?? [];
 
-          if (visibility !== "friends_only") {
-            const { data: pubs, error: pubErr } = await supabaseAdmin
-              .from("submissions")
-              .select("id, video_path")
-              .eq("user_id", userId)
-              .eq("challenge_id", challengeId)
-              .eq("visibility", "public")
-              .neq("status", "disqualified")
-              .neq("id", keepSubmissionId);
-            if (pubErr) throw new Error(pubErr.message);
-            toDelete = [...toDelete, ...(pubs ?? [])];
-          }
+          const { data: pubs, error: pubErr } = await supabaseAdmin
+            .from("submissions")
+            .select("id, video_path")
+            .eq("user_id", userId)
+            .eq("challenge_id", challengeId)
+            .eq("visibility", "public")
+            .neq("status", "disqualified")
+            .neq("id", keepSubmissionId);
+          if (pubErr) throw new Error(pubErr.message);
+          toDelete = [...toDelete, ...(pubs ?? [])];
 
           if (toDelete.length === 0) return json({ ok: true, deleted: 0 });
 
