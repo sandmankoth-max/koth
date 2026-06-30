@@ -19,6 +19,14 @@ class BridgeViewController: CAPBridgeViewController {
         }
     }
 
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        configureTransparentWebView()
+        if !SplashVideoViewController.didPlayThisProcess {
+            webView?.alpha = 0
+        }
+    }
+
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         configureTransparentWebView()
