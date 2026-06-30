@@ -76,6 +76,8 @@
 				504EC3071FED79650016851F /* AppDelegate.swift */,
 				A7B8B3002FE8AB6700490590 /* BridgeViewController.swift */,
 				A7B8B3022FE8AB6700490590 /* KothCameraPreviewPlugin.swift */,
+				A7B8B4002FE8AB6700490591 /* SplashVideoViewController.swift */,
+				A7B8B4022FE8AB6700490591 /* splash.mp4 */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
 				504EC3101FED79650016851F /* LaunchScreen.storyboard */,
