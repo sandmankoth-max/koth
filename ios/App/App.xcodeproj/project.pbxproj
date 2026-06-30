@@ -162,6 +162,7 @@
 				504EC30D1FED79650016851F /* Main.storyboard in Resources */,
 				2FAD9763203C412B000D30F8 /* config.xml in Resources */,
 				A7B8B2A82FE8AB6700490589 /* GoogleService-Info.plist in Resources */,
+				A7B8B4032FE8AB6700490591 /* splash.mp4 in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
