@@ -3,7 +3,7 @@ import UIKit
 /// Plays the splash animation fullscreen above the Capacitor WebView on COLD launch only.
 /// The WebView stays hidden until this native controller finishes, so the home
 /// screen cannot flash before the animation starts.
-final class SplashVideoViewController: UIViewController {
+final class SplashAnimationViewController: UIViewController {
 
     static var didPlayThisProcess = false
 
@@ -28,7 +28,7 @@ final class SplashVideoViewController: UIViewController {
 
         webView?.alpha = 0
 
-        let overlay = SplashVideoViewController()
+        let overlay = SplashAnimationViewController()
         host.addChild(overlay)
         host.view.addSubview(overlay.view)
         overlay.view.translatesAutoresizingMaskIntoConstraints = false
