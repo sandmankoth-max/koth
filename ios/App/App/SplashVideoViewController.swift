@@ -13,6 +13,7 @@ final class SplashVideoViewController: UIViewController {
     private static let fallbackPadding: TimeInterval = 1.0
 
     private var player: AVPlayer?
+    private var playerItem: AVPlayerItem?
     private var playerLayer: AVPlayerLayer?
     private var endObserver: NSObjectProtocol?
     private var failedObserver: NSObjectProtocol?
@@ -76,7 +77,8 @@ final class SplashVideoViewController: UIViewController {
 
         try? AVAudioSession.sharedInstance().setCategory(.ambient, mode: .default, options: [.mixWithOthers])
 
-        let item = AVPlayerItem(url: url)
+        let asset = AVURLAsset(url: url, options: [AVURLAssetPreferPreciseDurationAndTimingKey: true])
+        let item = AVPlayerItem(asset: asset)
         let player = AVPlayer(playerItem: item)
         player.isMuted = true
         player.actionAtItemEnd = .pause
@@ -88,6 +90,7 @@ final class SplashVideoViewController: UIViewController {
         view.layer.addSublayer(layer)
 
         self.player = player
+        self.playerItem = item
         self.playerLayer = layer
 
         endObserver = NotificationCenter.default.addObserver(
@@ -115,7 +118,19 @@ final class SplashVideoViewController: UIViewController {
         }
 
         statusObservation = item.observe(\.status, options: [.initial, .new]) { [weak self] item, _ in
-            if item.status == .failed { DispatchQueue.main.async { self?.finish() } }
+            DispatchQueue.main.async {
+                guard let self else { return }
+                switch item.status {
+                case .readyToPlay:
+                    player.playImmediately(atRate: Self.playbackRate)
+                case .failed:
+                    self.finish()
+                case .unknown:
+                    break
+                @unknown default:
+                    self.finish()
+                }
+            }
         }
 
         timeObserver = player.addPeriodicTimeObserver(
@@ -134,7 +149,9 @@ final class SplashVideoViewController: UIViewController {
         timeoutWork = work
         DispatchQueue.main.asyncAfter(deadline: .now() + maxDuration, execute: work)
 
-        player.playImmediately(atRate: Self.playbackRate)
+        if item.status == .readyToPlay {
+            player.playImmediately(atRate: Self.playbackRate)
+        }
     }
 
     private func finish() {
@@ -161,6 +178,10 @@ final class SplashVideoViewController: UIViewController {
             timeObserver = nil
         }
         player?.pause()
+        playerLayer?.removeFromSuperlayer()
+        playerLayer = nil
+        playerItem = nil
+        player = nil
         let cb = onFinish
         onFinish = nil
         cb?()
