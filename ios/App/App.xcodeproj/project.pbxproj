@@ -176,6 +176,7 @@
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 				A7B8B3012FE8AB6700490590 /* BridgeViewController.swift in Sources */,
 				A7B8B3032FE8AB6700490590 /* KothCameraPreviewPlugin.swift in Sources */,
+				A7B8B4012FE8AB6700490591 /* SplashVideoViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
