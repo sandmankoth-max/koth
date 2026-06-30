@@ -2,55 +2,60 @@ import UIKit
 import AVFoundation
 
 /// Plays splash.mp4 fullscreen above the Capacitor WebView on COLD launch only.
-///
-/// Flow: native LaunchScreen (held for at least `minLaunchScreenDuration`) →
-/// this video → web view revealed when playback ends (or after a hard
-/// timeout fallback so a stuck player never freezes the app).
-///
-/// `didPlayThisProcess` is a process-lifetime flag, so backgrounding and
-/// returning to the app never replays the video — only a true cold launch
-/// (process re-spawn) resets it.
+/// The WebView stays hidden until this native controller finishes, so the home
+/// screen cannot flash before the video starts.
 final class SplashVideoViewController: UIViewController {
 
     static var didPlayThisProcess = false
 
-    /// Minimum time the native LaunchScreen image is visible before the video
-    /// overlay is attached. Guarantees branding doesn't flash by.
-    private static let minLaunchScreenDuration: TimeInterval = 1.0
-
-    /// Hard ceiling on how long the splash overlay stays up, in case the
-    /// player stalls or the end notification never fires.
-    private static let maxOverlayDuration: TimeInterval = 6.0
+    private static let playbackRate: Float = 2.0
+    private static let defaultMaxOverlayDuration: TimeInterval = 6.0
+    private static let fallbackPadding: TimeInterval = 1.0
 
     private var player: AVPlayer?
     private var playerLayer: AVPlayerLayer?
     private var endObserver: NSObjectProtocol?
+    private var failedObserver: NSObjectProtocol?
+    private var stallObserver: NSObjectProtocol?
     private var statusObservation: NSKeyValueObservation?
+    private var timeObserver: Any?
     private var timeoutWork: DispatchWorkItem?
     private var onFinish: (() -> Void)?
     private var finished = false
 
     @discardableResult
-    static func presentIfNeeded(over host: UIView) -> Bool {
+    static func presentIfNeeded(over host: UIViewController, revealing webView: UIView?) -> Bool {
         guard !didPlayThisProcess else { return false }
         guard let url = Bundle.main.url(forResource: "splash", withExtension: "mp4") else {
             didPlayThisProcess = true
+            webView?.alpha = 1
             return false
         }
         didPlayThisProcess = true
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + minLaunchScreenDuration) {
-            let overlay = SplashVideoViewController()
-            overlay.view.frame = host.bounds
-            overlay.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-            host.addSubview(overlay.view)
-            overlay.start(url: url) { [weak overlay] in
-                UIView.animate(withDuration: 0.25, animations: {
-                    overlay?.view.alpha = 0
-                }, completion: { _ in
-                    overlay?.view.removeFromSuperview()
-                })
-            }
+        webView?.alpha = 0
+
+        let overlay = SplashVideoViewController()
+        host.addChild(overlay)
+        host.view.addSubview(overlay.view)
+        overlay.view.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            overlay.view.leadingAnchor.constraint(equalTo: host.view.leadingAnchor),
+            overlay.view.trailingAnchor.constraint(equalTo: host.view.trailingAnchor),
+            overlay.view.topAnchor.constraint(equalTo: host.view.topAnchor),
+            overlay.view.bottomAnchor.constraint(equalTo: host.view.bottomAnchor)
+        ])
+        overlay.didMove(toParent: host)
+
+        overlay.start(url: url) { [weak overlay, weak webView] in
+            webView?.alpha = 1
+            UIView.animate(withDuration: 0.18, animations: {
+                overlay?.view.alpha = 0
+            }, completion: { _ in
+                overlay?.willMove(toParent: nil)
+                overlay?.view.removeFromSuperview()
+                overlay?.removeFromParent()
+            })
         }
         return true
     }
@@ -86,24 +91,50 @@ final class SplashVideoViewController: UIViewController {
         self.playerLayer = layer
 
         endObserver = NotificationCenter.default.addObserver(
-            forName: .AVPlayerItemDidPlayToEndTime,
+            forName: AVPlayerItem.didPlayToEndTimeNotification,
             object: item,
             queue: .main
         ) { [weak self] _ in
             self?.finish()
         }
 
-        // Fallback: also dismiss on playback failure or stall.
-        statusObservation = item.observe(\.status, options: [.new]) { [weak self] item, _ in
+        failedObserver = NotificationCenter.default.addObserver(
+            forName: AVPlayerItem.failedToPlayToEndTimeNotification,
+            object: item,
+            queue: .main
+        ) { [weak self] _ in
+            self?.finish()
+        }
+
+        stallObserver = NotificationCenter.default.addObserver(
+            forName: AVPlayerItem.playbackStalledNotification,
+            object: item,
+            queue: .main
+        ) { [weak self] _ in
+            self?.finish()
+        }
+
+        statusObservation = item.observe(\.status, options: [.initial, .new]) { [weak self] item, _ in
             if item.status == .failed { DispatchQueue.main.async { self?.finish() } }
         }
 
-        // Absolute timeout so the overlay can never strand the app.
+        timeObserver = player.addPeriodicTimeObserver(
+            forInterval: CMTime(seconds: 0.05, preferredTimescale: 600),
+            queue: .main
+        ) { [weak self, weak item] currentTime in
+            guard let self, let duration = item?.duration.seconds, duration.isFinite, duration > 0 else { return }
+            if currentTime.seconds >= max(0, duration - 0.08) { self.finish() }
+        }
+
+        let naturalDuration = item.asset.duration.seconds
+        let maxDuration = naturalDuration.isFinite && naturalDuration > 0
+            ? min(Self.defaultMaxOverlayDuration, (naturalDuration / Double(Self.playbackRate)) + Self.fallbackPadding)
+            : Self.defaultMaxOverlayDuration
         let work = DispatchWorkItem { [weak self] in self?.finish() }
         timeoutWork = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + Self.maxOverlayDuration, execute: work)
+        DispatchQueue.main.asyncAfter(deadline: .now() + maxDuration, execute: work)
 
-        player.play()
+        player.playImmediately(atRate: Self.playbackRate)
     }
 
     private func finish() {
@@ -117,6 +148,18 @@ final class SplashVideoViewController: UIViewController {
             NotificationCenter.default.removeObserver(obs)
             endObserver = nil
         }
+        if let obs = failedObserver {
+            NotificationCenter.default.removeObserver(obs)
+            failedObserver = nil
+        }
+        if let obs = stallObserver {
+            NotificationCenter.default.removeObserver(obs)
+            stallObserver = nil
+        }
+        if let observer = timeObserver {
+            player?.removeTimeObserver(observer)
+            timeObserver = nil
+        }
         player?.pause()
         let cb = onFinish
         onFinish = nil
@@ -126,6 +169,15 @@ final class SplashVideoViewController: UIViewController {
     deinit {
         if let obs = endObserver {
             NotificationCenter.default.removeObserver(obs)
+        }
+        if let obs = failedObserver {
+            NotificationCenter.default.removeObserver(obs)
+        }
+        if let obs = stallObserver {
+            NotificationCenter.default.removeObserver(obs)
+        }
+        if let observer = timeObserver {
+            player?.removeTimeObserver(observer)
         }
         statusObservation?.invalidate()
         timeoutWork?.cancel()
