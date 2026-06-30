@@ -13,6 +13,8 @@
 		504EC3081FED79650016851F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3071FED79650016851F /* AppDelegate.swift */; };
 		A7B8B3012FE8AB6700490590 /* BridgeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7B8B3002FE8AB6700490590 /* BridgeViewController.swift */; };
 		A7B8B3032FE8AB6700490590 /* KothCameraPreviewPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7B8B3022FE8AB6700490590 /* KothCameraPreviewPlugin.swift */; };
+		A7B8B4012FE8AB6700490591 /* SplashVideoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7B8B4002FE8AB6700490591 /* SplashVideoViewController.swift */; };
+		A7B8B4032FE8AB6700490591 /* splash.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = A7B8B4022FE8AB6700490591 /* splash.mp4 */; };
 		504EC30D1FED79650016851F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30B1FED79650016851F /* Main.storyboard */; };
 		504EC30F1FED79650016851F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30E1FED79650016851F /* Assets.xcassets */; };
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
