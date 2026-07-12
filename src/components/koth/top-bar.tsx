@@ -103,7 +103,7 @@ export function TopBar() {
             <p className="mt-1.5 text-xs text-muted-foreground">
               For support questions or business contact:
             </p>
-            <p className="mt-1 text-xs font-semibold text-koth-red">sandmankoth@gmail.com</p>
+            <p className="mt-1 text-xs font-semibold text-koth-red">support@playkoth.app</p>
             <button
               onClick={() => setShowHelp(false)}
               className="mt-4 inline-flex h-9 items-center justify-center rounded-full bg-koth-red px-5 text-xs font-semibold text-koth-white"
