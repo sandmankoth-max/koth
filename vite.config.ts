@@ -49,5 +49,13 @@ export default defineConfig({
   },
   vite: {
     plugins: [nitroPreviewEntryShim()],
+    resolve: {
+      alias: [
+        {
+          find: /^@capacitor-firebase\/messaging$/,
+          replacement: resolve(process.cwd(), "src/lib/capacitor-firebase-messaging.web-stub.ts"),
+        },
+      ],
+    },
   },
 });
