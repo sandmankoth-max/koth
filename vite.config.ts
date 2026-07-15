@@ -56,7 +56,7 @@ export default defineConfig({
       alias: [
         {
           find: /^firebase\/messaging$/,
-          replacement: resolve(process.cwd(), "node_modules/firebase/messaging/dist/index.esm.js"),
+          replacement: resolve(process.cwd(), "node_modules/firebase/messaging/dist/esm/index.esm.js"),
         },
       ],
     },
