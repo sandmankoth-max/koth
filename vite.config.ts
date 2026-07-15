@@ -54,7 +54,10 @@ export default defineConfig({
       // to resolve to the real package so @capacitor-firebase/messaging's
       // web wrapper can import `isSupported` from it.
       alias: [
-        { find: /^firebase\/messaging$/, replacement: "firebase/messaging" },
+        {
+          find: /^firebase\/messaging$/,
+          replacement: resolve(process.cwd(), "node_modules/firebase/messaging/dist/index.esm.js"),
+        },
       ],
     },
     optimizeDeps: {
