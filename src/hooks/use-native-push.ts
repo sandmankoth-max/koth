@@ -29,22 +29,35 @@ export function useNativePush() {
     }
 
     async function setup() {
+      console.log("[push] setup() starting");
       const { data: sessionData } = await supabase.auth.getSession();
-      if (cancelled || !sessionData.session) return;
+      if (cancelled || !sessionData.session) {
+        console.log("[push] no session, aborting", { cancelled, hasSession: !!sessionData.session });
+        return;
+      }
+      console.log("[push] session found, proceeding");
 
       const { FirebaseMessaging } = await import("@capacitor-firebase/messaging");
+      console.log("[push] FirebaseMessaging imported");
 
       const perm = await FirebaseMessaging.checkPermissions();
       let status = perm.receive;
+      console.log("[push] permission status:", status);
       if (status === "prompt" || status === "prompt-with-rationale") {
         status = (await FirebaseMessaging.requestPermissions()).receive;
+        console.log("[push] permission after request:", status);
       }
-      if (status !== "granted") return;
+      if (status !== "granted") {
+        console.log("[push] permission not granted, aborting:", status);
+        return;
+      }
 
       try {
         const { token } = await FirebaseMessaging.getToken();
+        console.log("[push] got token:", token ? `${token.slice(0, 12)}…` : "(empty)");
         if (token) await saveToken(token);
       } catch (e) {
+        console.log("[push] getToken error:", e);
         console.error("[push] getToken failed", e);
       }
 
@@ -56,6 +69,7 @@ export function useNativePush() {
         if (n) toast(n.title ?? "Notification", { description: n.body ?? undefined });
       });
       removeListeners = [() => tokenSub.remove(), () => recvSub.remove()];
+      console.log("[push] setup complete, listeners attached");
     }
 
     setup();
