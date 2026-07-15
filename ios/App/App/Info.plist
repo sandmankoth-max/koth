@@ -4,12 +4,6 @@
 <dict>
 	<key>CAPACITOR_DEBUG</key>
 	<string>$(CAPACITOR_DEBUG)</string>
-	<key>NSCameraUsageDescription</key>
-	<string>This app uses the camera to record challenge videos.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>If you would like to upload a pfp, this app requires the photo library.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>This app records audio with your videos.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
@@ -30,6 +24,16 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>This app uses the camera to record challenge videos.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app records audio with your videos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>If you would like to upload a pfp, this app requires the photo library.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
