@@ -50,12 +50,15 @@ export default defineConfig({
   vite: {
     plugins: [nitroPreviewEntryShim()],
     resolve: {
+      // Lovable's config stubs optional peer deps; force firebase/messaging
+      // to resolve to the real package so @capacitor-firebase/messaging's
+      // web wrapper can import `isSupported` from it.
       alias: [
-        {
-          find: /^@capacitor-firebase\/messaging$/,
-          replacement: resolve(process.cwd(), "src/lib/capacitor-firebase-messaging.web-stub.ts"),
-        },
+        { find: /^firebase\/messaging$/, replacement: "firebase/messaging" },
       ],
+    },
+    optimizeDeps: {
+      include: ["firebase/messaging"],
     },
   },
 });
