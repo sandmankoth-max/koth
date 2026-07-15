@@ -8,7 +8,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { Component, useEffect, type ErrorInfo, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -136,20 +136,69 @@ function NativePushBridge() {
   return null;
 }
 
+/**
+ * Catches errors from any child so a failure (e.g. native push init)
+ * never blanks out the whole app. Silent by default — logs to console.
+ */
+class SafeBoundary extends Component<
+  { children: ReactNode; fallback?: ReactNode; name?: string },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error(`[SafeBoundary${this.props.name ? ":" + this.props.name : ""}]`, error, info);
+    try {
+      reportLovableError(error, { boundary: `safe_boundary_${this.props.name ?? "anon"}` });
+    } catch {}
+  }
+  render() {
+    if (this.state.hasError) return this.props.fallback ?? null;
+    return this.props.children;
+  }
+}
+
+function AppErrorFallback() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="max-w-md text-center">
+        <h1 className="text-xl font-bold text-foreground">Something went wrong</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Please reload the app. If the problem persists, contact support.
+        </p>
+        <button
+          onClick={() => {
+            if (typeof window !== "undefined") window.location.reload();
+          }}
+          className="tap-44 mt-6 inline-flex items-center justify-center rounded-full bg-koth-red px-5 py-2 text-sm font-bold text-koth-white"
+        >
+          Reload
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <AuthRefetcher />
-        <NativePushBridge />
-        <Outlet />
-        <Toaster
-          position="top-center"
-          offset="calc(env(safe-area-inset-top) + 16px)"
-          mobileOffset="calc(env(safe-area-inset-top) + 16px)"
-        />
-      </AuthProvider>
-    </QueryClientProvider>
+    <SafeBoundary name="app_root" fallback={<AppErrorFallback />}>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <AuthRefetcher />
+          <SafeBoundary name="native_push">
+            <NativePushBridge />
+          </SafeBoundary>
+          <Outlet />
+          <Toaster
+            position="top-center"
+            offset="calc(env(safe-area-inset-top) + 16px)"
+            mobileOffset="calc(env(safe-area-inset-top) + 16px)"
+          />
+        </AuthProvider>
+      </QueryClientProvider>
+    </SafeBoundary>
   );
 }
