@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { Capacitor } from "@capacitor/core";
-import { FirebaseMessaging } from "@capacitor-firebase/messaging";
 import { supabase } from "@/integrations/supabase/client";
 import { registerDeviceToken } from "@/lib/device-tokens.functions";
 import { toast } from "sonner";
@@ -9,7 +8,8 @@ import { toast } from "sonner";
  * Registers the native iOS/Android device for FCM push notifications and
  * stores the FCM registration token in `device_tokens` so the `send-push`
  * edge function can deliver pushes that mirror in-app notifications.
- * No-op on the web.
+ * No-op on the web. FirebaseMessaging is imported dynamically so its
+ * optional `firebase/messaging` peer dep never enters the web build.
  */
 export function useNativePush() {
   useEffect(() => {
@@ -32,6 +32,8 @@ export function useNativePush() {
       const { data: sessionData } = await supabase.auth.getSession();
       if (cancelled || !sessionData.session) return;
 
+      const { FirebaseMessaging } = await import("@capacitor-firebase/messaging");
+
       const perm = await FirebaseMessaging.checkPermissions();
       let status = perm.receive;
       if (status === "prompt" || status === "prompt-with-rationale") {
@@ -39,8 +41,6 @@ export function useNativePush() {
       }
       if (status !== "granted") return;
 
-      // On iOS this triggers APNs registration under the hood; FCM SDK then
-      // exchanges the APNs token for an FCM registration token.
       try {
         const { token } = await FirebaseMessaging.getToken();
         if (token) await saveToken(token);
@@ -48,10 +48,10 @@ export function useNativePush() {
         console.error("[push] getToken failed", e);
       }
 
-      const tokenSub = await FirebaseMessaging.addListener("tokenReceived", (e) => {
+      const tokenSub = await FirebaseMessaging.addListener("tokenReceived", (e: { token?: string }) => {
         if (e?.token) void saveToken(e.token);
       });
-      const recvSub = await FirebaseMessaging.addListener("notificationReceived", (e) => {
+      const recvSub = await FirebaseMessaging.addListener("notificationReceived", (e: { notification?: { title?: string; body?: string } }) => {
         const n = e?.notification;
         if (n) toast(n.title ?? "Notification", { description: n.body ?? undefined });
       });
