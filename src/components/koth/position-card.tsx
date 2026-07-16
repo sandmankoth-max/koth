@@ -67,7 +67,7 @@ export function PositionCard({
           <p className="label-broadcast text-muted-foreground">Your position</p>
           <div className="mt-2 flex items-center gap-3">
             <div className="min-w-0 flex-1">
-              <p className="text-base font-bold text-foreground">Entered — awaiting verification</p>
+              <p className="text-base font-bold text-foreground">Entered. Awaiting verification</p>
               {myValue != null && (
                 <p className="mono-stat mt-0.5 text-sm font-semibold text-foreground">
                   Your time: {formatValue(myValue, unitType, unitLabel)}
