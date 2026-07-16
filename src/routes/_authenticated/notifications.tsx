@@ -70,7 +70,7 @@ const labelFor = (n: any) => {
     case "admin_message":
       return n.payload?.message ?? "Message from admin";
     case "winners_announcement":
-      return `Winners announced — 1st @${n.payload?.first_username} ($${Number(n.payload?.first_amount ?? 0)}), 2nd @${n.payload?.second_username} ($${Number(n.payload?.second_amount ?? 0)}), 3rd @${n.payload?.third_username} ($${Number(n.payload?.third_amount ?? 0)})`;
+      return `Winners announced. 1st @${n.payload?.first_username} ($${Number(n.payload?.first_amount ?? 0)}), 2nd @${n.payload?.second_username} ($${Number(n.payload?.second_amount ?? 0)}), 3rd @${n.payload?.third_username} ($${Number(n.payload?.third_amount ?? 0)})`;
     default:
       return "Notification";
   }
