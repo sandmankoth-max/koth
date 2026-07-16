@@ -72,7 +72,7 @@ export default defineConfig({
     },
   },
   vite: {
-    plugins: [nitroPreviewEntryShim()],
+    plugins: [nitroPreviewEntryShim(), mirrorSpaToDistClient()],
     resolve: {
       // Lovable's config stubs optional peer deps; force firebase/messaging
       // to resolve to the real package so @capacitor-firebase/messaging's
