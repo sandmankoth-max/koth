@@ -41,14 +41,21 @@ const corsMiddleware = createMiddleware().server(async ({ next, request }) => {
     });
   }
 
-  const response = await next();
+  const result = await next();
 
   if (isAllowedOrigin) {
-    response.headers.set("Access-Control-Allow-Origin", origin);
-    response.headers.set("Vary", "Origin");
+    const maybeResponse = (result as any)?.response;
+    if (maybeResponse instanceof Response) {
+      maybeResponse.headers.set("Access-Control-Allow-Origin", origin);
+      maybeResponse.headers.set("Vary", "Origin");
+    } else if (result instanceof Response) {
+      result.headers.set("Access-Control-Allow-Origin", origin);
+      result.headers.set("Vary", "Origin");
+    }
   }
 
-  return response;
+  return result;
+
 });
 
 /**
