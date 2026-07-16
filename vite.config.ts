@@ -5,7 +5,7 @@
 //     error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
-import { existsSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -27,8 +27,14 @@ function nitroPreviewEntryShim() {
       handler() {
         const cwd = process.cwd();
         const rawEntry = resolve(cwd, "node_modules/.nitro/vite/services/ssr/index.js");
+        if (!existsSync(rawEntry)) return;
         const distServer = resolve(cwd, "dist/server");
-        if (!existsSync(rawEntry) || !existsSync(distServer)) return;
+        // Create dist/server if missing — a clean build has no leftover folder,
+        // and without this the prerender step crashes with ERR_MODULE_NOT_FOUND
+        // and .output/public/index.html is never generated.
+        if (!existsSync(distServer)) {
+          mkdirSync(distServer, { recursive: true });
+        }
         const serverShim = resolve(distServer, "server.js");
         if (existsSync(serverShim)) return;
         const rawUrl = pathToFileURL(rawEntry).href;

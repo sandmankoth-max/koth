@@ -14,27 +14,16 @@ class BridgeViewController: CAPBridgeViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         configureTransparentWebView()
-        if !SplashAnimationViewController.didPlayThisProcess {
-            webView?.alpha = 0
-        }
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         configureTransparentWebView()
-        if !SplashAnimationViewController.didPlayThisProcess {
-            webView?.alpha = 0
-        }
     }
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         configureTransparentWebView()
-        // Cold-launch only: keep the WebView hidden until the native splash animation finishes,
-        // preventing the home screen from flashing before it starts.
-        if !SplashAnimationViewController.presentIfNeeded(over: self, revealing: webView) {
-            webView?.alpha = 1
-        }
     }
 
     override func viewDidLayoutSubviews() {

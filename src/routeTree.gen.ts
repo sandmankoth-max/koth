@@ -26,6 +26,7 @@ import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/f
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as ApiPublicSubmissionsRouteImport } from './routes/api/public/submissions'
 import { Route as ApiPublicStaffRouteImport } from './routes/api/public/staff'
+import { Route as ApiPublicSendPushRouteImport } from './routes/api/public/send-push'
 import { Route as AuthenticatedUUsernameRouteImport } from './routes/_authenticated/u.$username'
 
 const LegalRoute = LegalRouteImport.update({
@@ -114,6 +115,11 @@ const ApiPublicStaffRoute = ApiPublicStaffRouteImport.update({
   path: '/api/public/staff',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicSendPushRoute = ApiPublicSendPushRouteImport.update({
+  id: '/api/public/send-push',
+  path: '/api/public/send-push',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedUUsernameRoute = AuthenticatedUUsernameRouteImport.update({
   id: '/u/$username',
   path: '/u/$username',
@@ -136,6 +142,7 @@ export interface FileRoutesByFullPath {
   '/legal/rules': typeof LegalRulesRoute
   '/legal/terms': typeof LegalTermsRoute
   '/u/$username': typeof AuthenticatedUUsernameRoute
+  '/api/public/send-push': typeof ApiPublicSendPushRoute
   '/api/public/staff': typeof ApiPublicStaffRoute
   '/api/public/submissions': typeof ApiPublicSubmissionsRoute
 }
@@ -155,6 +162,7 @@ export interface FileRoutesByTo {
   '/legal/rules': typeof LegalRulesRoute
   '/legal/terms': typeof LegalTermsRoute
   '/u/$username': typeof AuthenticatedUUsernameRoute
+  '/api/public/send-push': typeof ApiPublicSendPushRoute
   '/api/public/staff': typeof ApiPublicStaffRoute
   '/api/public/submissions': typeof ApiPublicSubmissionsRoute
 }
@@ -176,6 +184,7 @@ export interface FileRoutesById {
   '/legal/rules': typeof LegalRulesRoute
   '/legal/terms': typeof LegalTermsRoute
   '/_authenticated/u/$username': typeof AuthenticatedUUsernameRoute
+  '/api/public/send-push': typeof ApiPublicSendPushRoute
   '/api/public/staff': typeof ApiPublicStaffRoute
   '/api/public/submissions': typeof ApiPublicSubmissionsRoute
 }
@@ -197,6 +206,7 @@ export interface FileRouteTypes {
     | '/legal/rules'
     | '/legal/terms'
     | '/u/$username'
+    | '/api/public/send-push'
     | '/api/public/staff'
     | '/api/public/submissions'
   fileRoutesByTo: FileRoutesByTo
@@ -216,6 +226,7 @@ export interface FileRouteTypes {
     | '/legal/rules'
     | '/legal/terms'
     | '/u/$username'
+    | '/api/public/send-push'
     | '/api/public/staff'
     | '/api/public/submissions'
   id:
@@ -236,6 +247,7 @@ export interface FileRouteTypes {
     | '/legal/rules'
     | '/legal/terms'
     | '/_authenticated/u/$username'
+    | '/api/public/send-push'
     | '/api/public/staff'
     | '/api/public/submissions'
   fileRoutesById: FileRoutesById
@@ -245,6 +257,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AuthRoute: typeof AuthRoute
   LegalRoute: typeof LegalRouteWithChildren
+  ApiPublicSendPushRoute: typeof ApiPublicSendPushRoute
   ApiPublicStaffRoute: typeof ApiPublicStaffRoute
   ApiPublicSubmissionsRoute: typeof ApiPublicSubmissionsRoute
 }
@@ -370,6 +383,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicStaffRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/send-push': {
+      id: '/api/public/send-push'
+      path: '/api/public/send-push'
+      fullPath: '/api/public/send-push'
+      preLoaderRoute: typeof ApiPublicSendPushRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/u/$username': {
       id: '/_authenticated/u/$username'
       path: '/u/$username'
@@ -427,6 +447,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AuthRoute: AuthRoute,
   LegalRoute: LegalRouteWithChildren,
+  ApiPublicSendPushRoute: ApiPublicSendPushRoute,
   ApiPublicStaffRoute: ApiPublicStaffRoute,
   ApiPublicSubmissionsRoute: ApiPublicSubmissionsRoute,
 }
