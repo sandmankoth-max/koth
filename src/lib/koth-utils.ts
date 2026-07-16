@@ -109,8 +109,16 @@ export async function getAvatarSignedUrl(path: string | null, expiresIn = 3600):
   if (path.startsWith("http")) return path;
   const cached = getCachedAvatarUrl(path);
   if (cached) return cached;
-  const { data } = await supabase.storage.from("koth-avatars").createSignedUrl(path, expiresIn);
-  const signedUrl = data?.signedUrl ?? null;
+  // Route signing through a server function so cross-user avatar reads don't
+  // require a broad storage.objects SELECT policy for every authenticated user.
+  const { signAvatarUrl } = await import("@/lib/avatars.functions");
+  let signedUrl: string | null = null;
+  try {
+    const res = await signAvatarUrl({ data: { path, expiresIn } });
+    signedUrl = res?.signedUrl ?? null;
+  } catch {
+    signedUrl = null;
+  }
   primeAvatarSignedUrl(path, signedUrl, expiresIn);
   return signedUrl;
 }
