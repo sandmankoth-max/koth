@@ -409,7 +409,7 @@ function VisibilityExplainer({
           {isPublic ? "Enter Prize Pool" : "Friends Feed Only"}
         </p>
         <h3 className="mt-1 text-lg font-bold text-foreground">
-          {isPublic ? "Heads up — this goes public" : "Heads up — friends only"}
+          {isPublic ? "Heads up: this goes public" : "Heads up: friends only"}
         </h3>
         <p className="mt-2 text-sm text-muted-foreground">
           {isPublic
