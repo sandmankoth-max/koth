@@ -21,7 +21,7 @@ import { PositionCard } from "@/components/koth/position-card";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/home")({
-  head: () => ({ meta: [{ title: "KOTH — This week's challenge" }] }),
+  head: () => ({ meta: [{ title: "KOTH: This week's challenge" }] }),
   component: Home,
 });
 

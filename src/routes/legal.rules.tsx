@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/legal/rules")({
-  head: () => ({ meta: [{ title: "Official Rules — KOTH" }] }),
+  head: () => ({ meta: [{ title: "Official Rules | KOTH" }] }),
   component: () => (
     <article className="mt-4 space-y-4">
       <header>

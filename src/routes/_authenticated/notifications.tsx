@@ -7,7 +7,7 @@ import { Bell, Crown, ArrowDown, Flag, UserPlus, UserCheck, Check, X, Heart, Mes
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/notifications")({
-  head: () => ({ meta: [{ title: "Notifications — KOTH" }] }),
+  head: () => ({ meta: [{ title: "Notifications | KOTH" }] }),
   component: Notifications,
 });
 

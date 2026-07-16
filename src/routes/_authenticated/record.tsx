@@ -11,7 +11,7 @@ import { Video, RotateCcw, Check } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/record")({
-  head: () => ({ meta: [{ title: "Record — KOTH" }] }),
+  head: () => ({ meta: [{ title: "Record | KOTH" }] }),
   component: Record,
 });
 

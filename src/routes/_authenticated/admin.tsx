@@ -30,7 +30,7 @@ import { PromptDialog } from "@/components/koth/prompt-dialog";
 
 
 export const Route = createFileRoute("/_authenticated/admin")({
-  head: () => ({ meta: [{ title: "Admin — KOTH" }] }),
+  head: () => ({ meta: [{ title: "Admin | KOTH" }] }),
   component: AdminGate,
 });
 
