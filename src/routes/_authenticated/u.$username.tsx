@@ -14,7 +14,7 @@ import { PromptDialog } from "@/components/koth/prompt-dialog";
 
 
 export const Route = createFileRoute("/_authenticated/u/$username")({
-  head: ({ params }) => ({ meta: [{ title: `@${params.username} — KOTH` }] }),
+  head: ({ params }) => ({ meta: [{ title: `@${params.username} | KOTH` }] }),
   component: UserProfile,
 });
 

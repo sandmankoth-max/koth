@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { TikTokPlayer, type PlayerItem } from "@/components/koth/tiktok-player";
 
 export const Route = createFileRoute("/_authenticated/friends")({
-  head: () => ({ meta: [{ title: "Friends — KOTH" }] }),
+  head: () => ({ meta: [{ title: "Friends | KOTH" }] }),
   component: Friends,
 });
 
