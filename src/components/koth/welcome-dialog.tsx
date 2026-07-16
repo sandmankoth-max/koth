@@ -40,13 +40,13 @@ export function WelcomeDialog() {
         <DialogHeader>
           <DialogTitle className="text-xl">Welcome to KOTH</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
-            Challenges usually drop Monday at 10am and close Sunday at 5pm —
+            Challenges usually drop Monday at 10am and close Sunday at 5pm, but
             timing can shift per challenge. Record your attempt, climb the
             leaderboard, and the top 3 win cash.
           </DialogDescription>
         </DialogHeader>
         <ul className="mt-2 space-y-2 text-sm text-foreground">
-          <li>• One active entry per challenge — your best attempt counts.</li>
+          <li>• One active entry per challenge. Your best attempt counts.</li>
           <li>• Self-report your score; admins verify the leaderboard.</li>
           <li>• If you're on the podium and someone takes your spot, you'll get notified.</li>
         </ul>
