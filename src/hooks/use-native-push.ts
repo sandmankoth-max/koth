@@ -16,6 +16,7 @@ export function useNativePush() {
     let removeListeners: Array<() => void> = [];
     let cancelled = false;
     let didSetup = false;
+    let setupTimer: ReturnType<typeof window.setTimeout> | undefined;
 
     async function saveToken(token: string) {
       try {
@@ -25,6 +26,14 @@ export function useNativePush() {
       } catch (e) {
         console.error("[push] failed to register token", e);
       }
+    }
+
+    function scheduleSetup(delay = 1200) {
+      if (didSetup || cancelled || setupTimer) return;
+      setupTimer = window.setTimeout(() => {
+        setupTimer = undefined;
+        void setup();
+      }, delay);
     }
 
     async function setup() {
@@ -40,7 +49,6 @@ export function useNativePush() {
           return;
         }
         console.log("[push] session found, proceeding");
-        didSetup = true;
 
         let FirebaseMessaging: typeof import("@capacitor-firebase/messaging").FirebaseMessaging;
         try {
@@ -50,6 +58,29 @@ export function useNativePush() {
         } catch (e) {
           console.error("[push] failed to import FirebaseMessaging", e);
           return;
+        }
+
+        try {
+          const tokenSub = await FirebaseMessaging.addListener(
+            "tokenReceived",
+            (e: { token?: string }) => {
+              if (e?.token) void saveToken(e.token);
+            },
+          );
+          const apnsSub = await FirebaseMessaging.addListener("apnsTokenReceived", () => {
+            void retryFcmToken(FirebaseMessaging);
+          });
+          const recvSub = await FirebaseMessaging.addListener(
+            "notificationReceived",
+            (e: { notification?: { title?: string; body?: string } }) => {
+              const n = e?.notification;
+              if (n) toast(n.title ?? "Notification", { description: n.body ?? undefined });
+            },
+          );
+          removeListeners = [() => tokenSub.remove(), () => apnsSub.remove(), () => recvSub.remove()];
+          console.log("[push] listeners attached");
+        } catch (e) {
+          console.error("[push] addListener error:", e);
         }
 
         let status: string;
@@ -77,52 +108,52 @@ export function useNativePush() {
           return;
         }
 
+        didSetup = true;
+
         try {
-          const { token } = await FirebaseMessaging.getToken();
-          console.log("[push] got token:", token ? `${token.slice(0, 12)}…` : "(empty)");
-          if (token) await saveToken(token);
+          await retryFcmToken(FirebaseMessaging);
         } catch (e) {
           console.log("[push] getToken error:", e);
           console.error("[push] getToken failed", e);
         }
 
-        try {
-          const tokenSub = await FirebaseMessaging.addListener(
-            "tokenReceived",
-            (e: { token?: string }) => {
-              if (e?.token) void saveToken(e.token);
-            },
-          );
-          const recvSub = await FirebaseMessaging.addListener(
-            "notificationReceived",
-            (e: { notification?: { title?: string; body?: string } }) => {
-              const n = e?.notification;
-              if (n) toast(n.title ?? "Notification", { description: n.body ?? undefined });
-            },
-          );
-          removeListeners = [() => tokenSub.remove(), () => recvSub.remove()];
-          console.log("[push] setup complete, listeners attached");
-        } catch (e) {
-          console.error("[push] addListener error:", e);
-        }
+        console.log("[push] setup complete");
       } catch (e) {
         console.error("[push] setup() unexpected error:", e);
       }
     }
 
-    // Kick off initial attempt (may no-op if not signed in yet)
-    void setup();
+    async function retryFcmToken(
+      FirebaseMessaging: typeof import("@capacitor-firebase/messaging").FirebaseMessaging,
+    ) {
+      for (let attempt = 1; attempt <= 4 && !cancelled; attempt += 1) {
+        try {
+          const { token } = await FirebaseMessaging.getToken();
+          if (token) {
+            await saveToken(token);
+            return;
+          }
+        } catch (e) {
+          if (attempt === 4) throw e;
+        }
+        await new Promise((resolve) => window.setTimeout(resolve, 800));
+      }
+    }
+
+    // Kick off after the first render has had time to settle (may no-op if not signed in yet)
+    scheduleSetup();
 
     // Also retry on SIGNED_IN so users who log in after mount get registered
     const { data: authSub } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_IN") {
         console.log("[push] SIGNED_IN event, running setup()");
-        void setup();
+        scheduleSetup(250);
       }
     });
 
     return () => {
       cancelled = true;
+      if (setupTimer) window.clearTimeout(setupTimer);
       try {
         authSub.subscription.unsubscribe();
       } catch {}
