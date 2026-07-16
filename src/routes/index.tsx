@@ -5,7 +5,7 @@ import { SplashAnimation } from "@/components/koth/splash-animation";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "KOTH: King of the Hill" },
+      { title: "KOTH — King of the Hill" },
       {
         name: "description",
         content: "Weekly skill challenges. Record your attempt. Top 3 win cash.",

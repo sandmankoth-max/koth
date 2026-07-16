@@ -8,7 +8,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { Component, useEffect, type ErrorInfo, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -79,17 +79,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" },
       { name: "theme-color", content: "#0D0D0D" },
-      { title: "KOTH: King of the Hill" },
+      { title: "KOTH — King of the Hill" },
       {
         name: "description",
         content:
           "KOTH is a weekly skill-challenge competition. Record your attempt, climb the leaderboard, win cash.",
       },
-      { property: "og:title", content: "KOTH: King of the Hill" },
+      { property: "og:title", content: "KOTH — King of the Hill" },
       { property: "og:description", content: "Pixel Perfect builds applications from screenshots, replicating designs precisely." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "KOTH: King of the Hill" },
+      { name: "twitter:title", content: "KOTH — King of the Hill" },
       { name: "description", content: "Pixel Perfect builds applications from screenshots, replicating designs precisely." },
       { name: "twitter:description", content: "Pixel Perfect builds applications from screenshots, replicating designs precisely." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5e808f0e-13ab-49db-a0ac-d9bdc6a4d86c/id-preview-63d9bcb7--c9bd69d3-6c49-4f3b-98ac-1695c2d8c121.lovable.app-1781981021727.png" },
@@ -136,69 +136,20 @@ function NativePushBridge() {
   return null;
 }
 
-/**
- * Catches errors from any child so a failure (e.g. native push init)
- * never blanks out the whole app. Silent by default — logs to console.
- */
-class SafeBoundary extends Component<
-  { children: ReactNode; fallback?: ReactNode; name?: string },
-  { hasError: boolean }
-> {
-  state = { hasError: false };
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-  componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error(`[SafeBoundary${this.props.name ? ":" + this.props.name : ""}]`, error, info);
-    try {
-      reportLovableError(error, { boundary: `safe_boundary_${this.props.name ?? "anon"}` });
-    } catch {}
-  }
-  render() {
-    if (this.state.hasError) return this.props.fallback ?? null;
-    return this.props.children;
-  }
-}
-
-function AppErrorFallback() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-xl font-bold text-foreground">Something went wrong</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Please reload the app. If the problem persists, contact support.
-        </p>
-        <button
-          onClick={() => {
-            if (typeof window !== "undefined") window.location.reload();
-          }}
-          className="tap-44 mt-6 inline-flex items-center justify-center rounded-full bg-koth-red px-5 py-2 text-sm font-bold text-koth-white"
-        >
-          Reload
-        </button>
-      </div>
-    </div>
-  );
-}
-
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
-    <SafeBoundary name="app_root" fallback={<AppErrorFallback />}>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <AuthRefetcher />
-          <SafeBoundary name="native_push">
-            <NativePushBridge />
-          </SafeBoundary>
-          <Outlet />
-          <Toaster
-            position="top-center"
-            offset="calc(env(safe-area-inset-top) + 16px)"
-            mobileOffset="calc(env(safe-area-inset-top) + 16px)"
-          />
-        </AuthProvider>
-      </QueryClientProvider>
-    </SafeBoundary>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <AuthRefetcher />
+        <NativePushBridge />
+        <Outlet />
+        <Toaster
+          position="top-center"
+          offset="calc(env(safe-area-inset-top) + 16px)"
+          mobileOffset="calc(env(safe-area-inset-top) + 16px)"
+        />
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }

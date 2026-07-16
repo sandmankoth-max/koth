@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/legal/rules")({
-  head: () => ({ meta: [{ title: "Official Rules | KOTH" }] }),
+  head: () => ({ meta: [{ title: "Official Rules — KOTH" }] }),
   component: () => (
     <article className="mt-4 space-y-4">
       <header>
@@ -14,7 +14,7 @@ export const Route = createFileRoute("/legal/rules")({
       </Section>
       <Section title="How challenges work">
         Challenges usually start Monday at 10:00am local time and close the following Sunday at 5:00pm,
-        though the exact schedule can change depending on the challenge. Always check the in-app countdown
+        though the exact schedule can change depending on the challenge — always check the in-app countdown
         for the active challenge. You may record and submit as many attempts as you want before the deadline.
         Only your most recent submission counts toward your leaderboard position.
       </Section>

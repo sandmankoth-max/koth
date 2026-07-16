@@ -24,7 +24,7 @@ import { deleteOwnAccount } from "@/lib/account.functions";
 import { primeAvatarSignedUrl } from "@/lib/koth-utils";
 
 export const Route = createFileRoute("/_authenticated/profile")({
-  head: () => ({ meta: [{ title: "Profile | KOTH" }] }),
+  head: () => ({ meta: [{ title: "Profile — KOTH" }] }),
   component: Profile,
 });
 

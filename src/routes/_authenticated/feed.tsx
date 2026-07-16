@@ -8,7 +8,7 @@ import { formatValue, getVideoSignedUrl } from "@/lib/koth-utils";
 import { Users } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/feed")({
-  head: () => ({ meta: [{ title: "Friends feed | KOTH" }] }),
+  head: () => ({ meta: [{ title: "Friends feed — KOTH" }] }),
   component: Feed,
 });
 

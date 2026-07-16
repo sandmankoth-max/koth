@@ -30,7 +30,7 @@ import { PromptDialog } from "@/components/koth/prompt-dialog";
 
 
 export const Route = createFileRoute("/_authenticated/admin")({
-  head: () => ({ meta: [{ title: "Admin | KOTH" }] }),
+  head: () => ({ meta: [{ title: "Admin — KOTH" }] }),
   component: AdminGate,
 });
 
@@ -503,7 +503,7 @@ function AnnounceWinners() {
       </p>
       {rows.map(({ key, label, user, setUser }) => (
         <div key={key} className="space-y-2">
-          <Field label={`${label} user`}>
+          <Field label={`${label} — user`}>
             <UsernamePicker value={user} onChange={setUser} />
           </Field>
           <Field label="Prize $">
@@ -521,7 +521,7 @@ function AnnounceWinners() {
         <Input value={form.headline} onChange={(e) => setForm({ ...form, headline: e.target.value })} placeholder="e.g. Congrats to the podium" />
       </Field>
       <Field label="Note (optional)">
-        <Textarea rows={2} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="e.g. Congrats, prizes sent." />
+        <Textarea rows={2} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="e.g. Congrats — prizes sent." />
       </Field>
       <Button
         onClick={() => setConfirmOpen(true)}

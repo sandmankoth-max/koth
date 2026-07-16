@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/legal/terms")({
-  head: () => ({ meta: [{ title: "Terms of Service | KOTH" }] }),
+  head: () => ({ meta: [{ title: "Terms of Service — KOTH" }] }),
   component: () => (
     <article className="mt-4 space-y-4">
       <header>

@@ -1,4 +1,1 @@
 project_id = "xpftyvrivwwhcnlnlldu"
-
-[functions.send-push]
-verify_jwt = false

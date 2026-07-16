@@ -238,7 +238,7 @@ function WebCameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
 
       {facing === "environment" && flashOn && !hasTorch && !recording && (
         <p className="absolute inset-x-0 bottom-32 z-10 text-center text-[11px] text-koth-white/70">
-          Torch not supported on this device. Flash will be ignored.
+          Torch not supported on this device — flash will be ignored.
         </p>
       )}
     </div>

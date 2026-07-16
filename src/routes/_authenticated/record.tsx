@@ -11,7 +11,7 @@ import { Video, RotateCcw, Check } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/record")({
-  head: () => ({ meta: [{ title: "Record | KOTH" }] }),
+  head: () => ({ meta: [{ title: "Record — KOTH" }] }),
   component: Record,
 });
 
@@ -141,7 +141,7 @@ function Record() {
         <p className="label-broadcast text-koth-white/60">Recording for</p>
         <h1 className="mt-1 text-xl font-bold">{challenge.title}</h1>
         <p className="mt-2 text-xs text-koth-white/70">
-          Live capture only. No uploads from camera roll.
+          Live capture only — no uploads from camera roll.
           {challenge.max_video_seconds ? ` Max ${challenge.max_video_seconds}s.` : ""}
         </p>
       </section>
@@ -356,7 +356,7 @@ function Record() {
           </div>
           {visibility === "public" && (
             <div className="rounded-2xl border border-koth-red/40 bg-koth-red/5 p-3 text-xs text-foreground">
-              <p className="label-broadcast text-koth-red">Heads up: retake warning</p>
+              <p className="label-broadcast text-koth-red">Heads up — retake warning</p>
               <p className="mt-1">
                 If this is a retake of a challenge you have already submitted for, your <span className="font-bold">old challenge video will be fully wiped</span> and replaced with this one. The new attempt appears on the leaderboard once an admin verifies it.
               </p>
@@ -409,7 +409,7 @@ function VisibilityExplainer({
           {isPublic ? "Enter Prize Pool" : "Friends Feed Only"}
         </p>
         <h3 className="mt-1 text-lg font-bold text-foreground">
-          {isPublic ? "Heads up: this goes public" : "Heads up: friends only"}
+          {isPublic ? "Heads up — this goes public" : "Heads up — friends only"}
         </h3>
         <p className="mt-2 text-sm text-muted-foreground">
           {isPublic

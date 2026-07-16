@@ -14,7 +14,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Crown, Play, Sparkles, Trophy } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/leaderboard")({
-  head: () => ({ meta: [{ title: "Leaderboard | KOTH" }] }),
+  head: () => ({ meta: [{ title: "Leaderboard — KOTH" }] }),
   component: Leaderboard,
 });
 

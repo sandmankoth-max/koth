@@ -15,7 +15,8 @@ let package = Package(
         .package(name: "CapacitorCommunityCameraPreview", path: "../../../node_modules/@capacitor-community/camera-preview"),
         .package(name: "CapacitorFirebaseMessaging", path: "../../../node_modules/@capacitor-firebase/messaging"),
         .package(name: "CapacitorCamera", path: "../../../node_modules/@capacitor/camera"),
-        .package(name: "CapacitorFilesystem", path: "../../../node_modules/@capacitor/filesystem")
+        .package(name: "CapacitorFilesystem", path: "../../../node_modules/@capacitor/filesystem"),
+        .package(name: "CapacitorPushNotifications", path: "../../../node_modules/@capacitor/push-notifications")
     ],
     targets: [
         .target(
@@ -26,7 +27,8 @@ let package = Package(
                 .product(name: "CapacitorCommunityCameraPreview", package: "CapacitorCommunityCameraPreview"),
                 .product(name: "CapacitorFirebaseMessaging", package: "CapacitorFirebaseMessaging"),
                 .product(name: "CapacitorCamera", package: "CapacitorCamera"),
-                .product(name: "CapacitorFilesystem", package: "CapacitorFilesystem")
+                .product(name: "CapacitorFilesystem", package: "CapacitorFilesystem"),
+                .product(name: "CapacitorPushNotifications", package: "CapacitorPushNotifications")
             ]
         )
     ]
