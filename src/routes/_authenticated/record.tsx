@@ -356,7 +356,7 @@ function Record() {
           </div>
           {visibility === "public" && (
             <div className="rounded-2xl border border-koth-red/40 bg-koth-red/5 p-3 text-xs text-foreground">
-              <p className="label-broadcast text-koth-red">Heads up — retake warning</p>
+              <p className="label-broadcast text-koth-red">Heads up: retake warning</p>
               <p className="mt-1">
                 If this is a retake of a challenge you have already submitted for, your <span className="font-bold">old challenge video will be fully wiped</span> and replaced with this one. The new attempt appears on the leaderboard once an admin verifies it.
               </p>
