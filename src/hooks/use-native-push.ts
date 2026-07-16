@@ -16,7 +16,7 @@ export function useNativePush() {
     let removeListeners: Array<() => void> = [];
     let cancelled = false;
     let didSetup = false;
-    let setupTimer: ReturnType<typeof window.setTimeout> | undefined;
+    let setupTimer: number | undefined;
 
     async function saveToken(token: string) {
       try {
