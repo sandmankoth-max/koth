@@ -31,15 +31,16 @@ async function getNativeRouter(): Promise<AnyRouter> {
   startOptions.serializationAdapters = startOptions.serializationAdapters ?? [];
   window.__TSS_START_OPTIONS__ = startOptions;
 
-  router.options.defaultSsr = startOptions.defaultSsr;
-  router.update({
+  const nativeRouter = router as AnyRouter;
+  nativeRouter.options.defaultSsr = startOptions.defaultSsr;
+  nativeRouter.update({
     serializationAdapters: [
       ...startOptions.serializationAdapters,
       ...(router.options.serializationAdapters ?? []),
     ],
-  });
+  } as Parameters<AnyRouter["update"]>[0]);
 
-  return router;
+  return nativeRouter;
 }
 
 function NativeStartClient() {
