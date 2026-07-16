@@ -13,12 +13,12 @@ import { pathToFileURL } from "node:url";
 // a $_TSR hydration payload, and inline scroll-restoration/toaster nodes.
 // In a Capacitor bundle there is no server to complete the stream, so
 // hydration wedges on the barrier and the WKWebView shows a grey screen.
-// Rewrite the file into a bare SPA shell: keep <head> (title, meta,
-// stylesheets, modulepreloads) and reduce <body> to just the client
-// entry <script>. TanStack Router's client entry mounts a fresh render
-// into the empty document, which is exactly what a static Capacitor
-// build needs. Only affects dist/client / .output/public static files;
-// the Cloudflare Worker keeps rendering pages through its SSR entry.
+// Rewrite the static files into a client-only shell: keep <head> (title,
+// meta, stylesheets, modulepreloads) and reduce <body> to the client entry
+// script. Our custom client entry detects Capacitor and mounts a fresh
+// document render instead of trying to hydrate $_TSR. Only affects
+// dist/client / .output/public static files; the Cloudflare Worker keeps
+// rendering pages through its SSR entry.
 function capacitorSpaShell() {
   let scheduled = false;
   const rewrite = () => {
@@ -124,6 +124,7 @@ function nitroPreviewEntryShim() {
 
 export default defineConfig({
   tanstackStart: {
+    client: { entry: "client" },
     spa: {
       enabled: true,
       prerender: {
