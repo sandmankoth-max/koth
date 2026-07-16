@@ -414,7 +414,7 @@ function RankNotifications() {
               : "bg-koth-black text-koth-white";
         const msg =
           n.type === "podium_gained"
-            ? `You're on the podium — #${n.payload?.new_rank}`
+            ? `You're on the podium at #${n.payload?.new_rank}`
             : `You were kicked off the podium${n.payload?.overtaken_by_username ? ` by @${n.payload.overtaken_by_username}` : ""}`;
         return (
           <div key={n.id} className={`flex items-center gap-2 rounded-2xl px-4 py-3 ${palette}`}>
