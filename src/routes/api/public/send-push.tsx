@@ -24,7 +24,7 @@ export const Route = createFileRoute("/api/public/send-push")({
 
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-          const { data: cfg, error: cfgErr } = await supabaseAdmin
+          const { data: cfg, error: cfgErr } = await (supabaseAdmin as any)
             .from("push_config")
             .select("secret, enabled")
             .eq("id", 1)
