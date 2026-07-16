@@ -18,6 +18,46 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
   }
 });
 
+const NATIVE_ORIGINS = new Set([
+  "capacitor://localhost",
+  "https://localhost",
+  "http://localhost",
+]);
+
+const corsMiddleware = createMiddleware().server(async ({ next, request }) => {
+  const origin = request.headers.get("origin");
+  const isAllowedOrigin = origin != null && NATIVE_ORIGINS.has(origin);
+
+  if (request.method === "OPTIONS" && isAllowedOrigin) {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": origin,
+        "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+        "Access-Control-Allow-Headers": "authorization, content-type, x-tsr-serverfn",
+        "Access-Control-Max-Age": "86400",
+        Vary: "Origin",
+      },
+    });
+  }
+
+  const result = await next();
+
+  if (isAllowedOrigin) {
+    const maybeResponse = (result as any)?.response;
+    if (maybeResponse instanceof Response) {
+      maybeResponse.headers.set("Access-Control-Allow-Origin", origin);
+      maybeResponse.headers.set("Vary", "Origin");
+    } else if (result instanceof Response) {
+      result.headers.set("Access-Control-Allow-Origin", origin);
+      result.headers.set("Vary", "Origin");
+    }
+  }
+
+  return result;
+
+});
+
 /**
  * Published web origin where the TanStack server functions actually run.
  * The native iOS app is bundled (capacitor:// origin) and has no backend
@@ -55,6 +95,6 @@ const nativeServerFnFetch: typeof fetch = (input, init) => {
 
 export const startInstance = createStart(() => ({
   functionMiddleware: [attachSupabaseAuth],
-  requestMiddleware: [errorMiddleware],
+  requestMiddleware: [corsMiddleware, errorMiddleware],
   serverFns: { fetch: nativeServerFnFetch },
 }));
