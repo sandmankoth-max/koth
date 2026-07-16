@@ -20,36 +20,50 @@ import { pathToFileURL } from "node:url";
 // build needs. Only affects dist/client / .output/public static files;
 // the Cloudflare Worker keeps rendering pages through its SSR entry.
 function capacitorSpaShell() {
+  let scheduled = false;
+  const rewrite = () => {
+    const targets = [
+      resolve(process.cwd(), "dist/client/index.html"),
+      resolve(process.cwd(), ".output/public/index.html"),
+    ];
+    for (const file of targets) {
+      if (!existsSync(file)) continue;
+      const html = readFileSync(file, "utf8");
+      // Already rewritten: no SSR fences present.
+      if (!html.includes("<!--$-->") && !html.includes("$_TSR")) continue;
+      const headMatch = html.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
+      const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+      if (!headMatch || !bodyMatch) continue;
+      const scripts = Array.from(
+        bodyMatch[1].matchAll(
+          /<script\b[^>]*type="module"[^>]*src="\/assets\/[^"]+"[^>]*>\s*<\/script>/g,
+        ),
+      ).map((m) => m[0]);
+      if (scripts.length === 0) continue;
+      const htmlTagMatch = html.match(/<html[^>]*>/i);
+      const htmlOpen = htmlTagMatch ? htmlTagMatch[0] : '<html lang="en">';
+      const shell =
+        `<!DOCTYPE html>${htmlOpen}<head>${headMatch[1]}</head>` +
+        `<body>${scripts.join("")}</body></html>`;
+      writeFileSync(file, shell);
+    }
+  };
+  const schedule = () => {
+    if (scheduled) return;
+    scheduled = true;
+    // Nitro's prerender runs asynchronously after Vite's closeBundle.
+    // beforeExit fires once the event loop drains, after prerender writes
+    // its final index.html, so the rewrite always sees the fresh file.
+    process.on("beforeExit", rewrite);
+  };
   return {
     name: "koth:capacitor-spa-shell",
     apply: "build" as const,
     closeBundle: {
       order: "post" as const,
-      sequential: true,
       handler() {
-        const targets = [
-          resolve(process.cwd(), "dist/client/index.html"),
-          resolve(process.cwd(), ".output/public/index.html"),
-        ];
-        for (const file of targets) {
-          if (!existsSync(file)) continue;
-          const html = readFileSync(file, "utf8");
-          const headMatch = html.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
-          const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-          if (!headMatch || !bodyMatch) continue;
-          const scripts = Array.from(
-            bodyMatch[1].matchAll(
-              /<script\b[^>]*type="module"[^>]*src="\/assets\/[^"]+"[^>]*>\s*<\/script>/g,
-            ),
-          ).map((m) => m[0]);
-          if (scripts.length === 0) continue;
-          const htmlTagMatch = html.match(/<html[^>]*>/i);
-          const htmlOpen = htmlTagMatch ? htmlTagMatch[0] : '<html lang="en">';
-          const shell =
-            `<!DOCTYPE html>${htmlOpen}<head>${headMatch[1]}</head>` +
-            `<body>${scripts.join("")}</body></html>`;
-          writeFileSync(file, shell);
-        }
+        rewrite();
+        schedule();
       },
     },
   };
