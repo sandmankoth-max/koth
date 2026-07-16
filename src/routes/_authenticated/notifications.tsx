@@ -34,20 +34,20 @@ const labelFor = (n: any) => {
     case "new_challenge":
       return `New challenge is live: ${n.payload?.title ?? "this week's challenge"}`;
     case "challenge_closed":
-      return `Challenge closed — ${n.payload?.title ?? "this week's challenge"}. New one drops Monday at 10am.`;
+      return `Challenge closed: ${n.payload?.title ?? "this week's challenge"}. New one drops Monday at 10am.`;
     case "deadline_reminder_24h":
-      return `1 day left to submit — ${n.payload?.title ?? "today's challenge"}`;
+      return `1 day left to submit ${n.payload?.title ?? "today's challenge"}`;
     case "deadline_reminder":
-      return `1 hour left to submit — ${n.payload?.title ?? "today's challenge closes soon"}`;
+      return `1 hour left to submit ${n.payload?.title ?? "today's challenge closes soon"}`;
     case "podium_lost":
       return `You were kicked off the podium${n.payload?.overtaken_by_username ? ` by @${n.payload.overtaken_by_username}` : ""}`;
     case "podium_gained":
-      return `You're on the podium — #${n.payload?.new_rank}`;
+      return `You're on the podium at #${n.payload?.new_rank}`;
     case "time_verified":
-      return `Your entry was verified${n.payload?.value != null ? ` — ${n.payload.value}` : ""}`;
+      return `Your entry was verified${n.payload?.value != null ? `: ${n.payload.value}` : ""}`;
     case "time_disqualified":
       return n.payload?.reason
-        ? `Your submission was rejected — ${n.payload.reason}`
+        ? `Your submission was rejected: ${n.payload.reason}`
         : `Your submission was rejected`;
     case "friend_request":
       return `${u} sent you a friend request`;
