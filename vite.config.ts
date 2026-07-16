@@ -5,9 +5,55 @@
 //     error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
-import { cpSync, existsSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+
+// The prerendered index.html includes SSR streaming markers (<!--$-->),
+// a $_TSR hydration payload, and inline scroll-restoration/toaster nodes.
+// In a Capacitor bundle there is no server to complete the stream, so
+// hydration wedges on the barrier and the WKWebView shows a grey screen.
+// Rewrite the file into a bare SPA shell: keep <head> (title, meta,
+// stylesheets, modulepreloads) and reduce <body> to just the client
+// entry <script>. TanStack Router's client entry mounts a fresh render
+// into the empty document, which is exactly what a static Capacitor
+// build needs. Only affects dist/client / .output/public static files;
+// the Cloudflare Worker keeps rendering pages through its SSR entry.
+function capacitorSpaShell() {
+  return {
+    name: "koth:capacitor-spa-shell",
+    apply: "build" as const,
+    closeBundle: {
+      order: "post" as const,
+      sequential: true,
+      handler() {
+        const targets = [
+          resolve(process.cwd(), "dist/client/index.html"),
+          resolve(process.cwd(), ".output/public/index.html"),
+        ];
+        for (const file of targets) {
+          if (!existsSync(file)) continue;
+          const html = readFileSync(file, "utf8");
+          const headMatch = html.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
+          const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+          if (!headMatch || !bodyMatch) continue;
+          const scripts = Array.from(
+            bodyMatch[1].matchAll(
+              /<script\b[^>]*type="module"[^>]*src="\/assets\/[^"]+"[^>]*>\s*<\/script>/g,
+            ),
+          ).map((m) => m[0]);
+          if (scripts.length === 0) continue;
+          const htmlTagMatch = html.match(/<html[^>]*>/i);
+          const htmlOpen = htmlTagMatch ? htmlTagMatch[0] : '<html lang="en">';
+          const shell =
+            `<!DOCTYPE html>${htmlOpen}<head>${headMatch[1]}</head>` +
+            `<body>${scripts.join("")}</body></html>`;
+          writeFileSync(file, shell);
+        }
+      },
+    },
+  };
+}
 
 // Capacitor (iOS) is configured with `webDir: '.output/public'` in
 // capacitor.config.ts, but historically it pointed at `dist/client`. To keep
