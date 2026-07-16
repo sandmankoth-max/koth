@@ -5,9 +5,33 @@
 //     error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
-import { existsSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, rmSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+
+// Capacitor (iOS) is configured with `webDir: '.output/public'` in
+// capacitor.config.ts, but historically it pointed at `dist/client`. To keep
+// both paths working (and to guarantee dev machines with an older
+// capacitor.config never load stale bundles), mirror the freshly-built SPA
+// output from `.output/public` into `dist/client` after each production build.
+function mirrorSpaToDistClient() {
+  return {
+    name: "koth:mirror-spa-to-dist-client",
+    apply: "build" as const,
+    closeBundle: {
+      order: "post" as const,
+      handler() {
+        const cwd = process.cwd();
+        const src = resolve(cwd, ".output/public");
+        const dest = resolve(cwd, "dist/client");
+        if (!existsSync(src)) return;
+        if (existsSync(dest)) rmSync(dest, { recursive: true, force: true });
+        cpSync(src, dest, { recursive: true });
+      },
+    },
+  };
+}
+
 
 // TanStack Start's SPA prerender boots a Node preview server that loads
 // `dist/server/<entry>.js`. Our nitro target is Cloudflare, which emits an
