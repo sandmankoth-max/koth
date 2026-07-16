@@ -13,7 +13,6 @@ declare global {
     Capacitor?: {
       isNativePlatform?: () => boolean;
     };
-    __TSS_START_OPTIONS__?: unknown;
   }
 }
 
@@ -29,7 +28,7 @@ async function getNativeRouter(): Promise<AnyRouter> {
   const router = await getRouter();
   const startOptions = await startInstance.getOptions();
   startOptions.serializationAdapters = startOptions.serializationAdapters ?? [];
-  window.__TSS_START_OPTIONS__ = startOptions;
+  (window as Window & { __TSS_START_OPTIONS__?: typeof startOptions }).__TSS_START_OPTIONS__ = startOptions;
 
   const nativeRouter = router as AnyRouter;
   nativeRouter.options.defaultSsr = startOptions.defaultSsr;
