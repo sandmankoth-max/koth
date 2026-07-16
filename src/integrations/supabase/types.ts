@@ -369,6 +369,30 @@ export type Database = {
         }
         Relationships: []
       }
+      push_config: {
+        Row: {
+          enabled: boolean
+          id: number
+          secret: string
+          updated_at: string
+          webhook_url: string
+        }
+        Insert: {
+          enabled?: boolean
+          id?: number
+          secret: string
+          updated_at?: string
+          webhook_url: string
+        }
+        Update: {
+          enabled?: boolean
+          id?: number
+          secret?: string
+          updated_at?: string
+          webhook_url?: string
+        }
+        Relationships: []
+      }
       results: {
         Row: {
           challenge_id: string
