@@ -57,6 +57,32 @@ export const Route = createFileRoute("/api/public/submissions")({
           const { userId } = await requireUser(request);
           const body = await request.json().catch(() => ({}));
           const action = String(body?.action ?? "").trim();
+          if (action === "delete") {
+            const submissionId = String(body?.submissionId ?? "").trim();
+            if (!/^[0-9a-f-]{36}$/i.test(submissionId)) throw new Error("submissionId required");
+            const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+            const { data: sub, error: fetchError } = await supabaseAdmin
+              .from("submissions")
+              .select("id, user_id, video_path")
+              .eq("id", submissionId)
+              .maybeSingle();
+            if (fetchError) throw new Error(fetchError.message);
+            if (!sub) throw new Error("Not found");
+            if (sub.user_id !== userId) throw new Error("Forbidden");
+            if (sub.video_path) {
+              const { error: storageError } = await supabaseAdmin.storage
+                .from("koth-videos")
+                .remove([sub.video_path]);
+              if (storageError) console.error("[submissions:delete] storage error", storageError);
+            }
+            const { error: deleteError } = await supabaseAdmin
+              .from("submissions")
+              .delete()
+              .eq("id", submissionId)
+              .eq("user_id", userId);
+            if (deleteError) throw new Error(deleteError.message);
+            return json({ ok: true });
+          }
           if (action !== "cleanup_previous") throw new Error("Unknown action");
           const challengeId = String(body?.challengeId ?? "").trim();
           const keepSubmissionId = String(body?.keepSubmissionId ?? "").trim();
