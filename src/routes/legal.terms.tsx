@@ -25,6 +25,18 @@ export const Route = createFileRoute("/legal/terms")({
         challenge attempt. KOTH is not liable for any injury, loss, or damage that results from your
         participation. Do not attempt anything that exceeds your physical ability or your environment.
       </Section>
+      <Section title="Contest Winners and Prize Determination">
+        Winners for each challenge are determined solely by skill-based judging criteria and/or community
+        voting on performance, not by chance, random selection, or wagering. All challenges are skill-based
+        competitions.
+        <br className="block mb-2" />
+        KOTH reserves the right, in its sole discretion, to disqualify any video submission or entry that it
+        determines does not fairly comply with the applicable challenge rules or community guidelines,
+        including but not limited to submissions that are fraudulent, manipulated, staged in a misleading way,
+        or otherwise fail to meet the standards of the challenge. KOTH further reserves the right to
+        disqualify any entry that violates these Terms or applicable local, state, or federal contest and
+        sweepstakes laws.
+      </Section>
       <Section title="Changes">
         We may update these terms; continued use after changes constitutes acceptance.
       </Section>
