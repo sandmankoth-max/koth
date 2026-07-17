@@ -107,12 +107,12 @@ export function TikTokPlayer({
         <button
           onClick={() => onOpenChange(false)}
           aria-label="Back"
-          className="tap-44 absolute left-3 top-3 z-50 text-white"
+          className="tap-44 absolute left-3 top-4 z-50 text-white"
         >
           <ArrowLeft className="h-6 w-6" />
         </button>
       )}
-      {topLeftAction && <div className="absolute left-3 top-3 z-50">{topLeftAction}</div>}
+      {topLeftAction && <div className="absolute left-3 top-4 z-50">{topLeftAction}</div>}
 
       <div
         ref={scrollerRef}

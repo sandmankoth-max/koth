@@ -168,7 +168,7 @@ function FeedTab({ setTab, onAdd }: { tab: Tab; setTab: (t: Tab) => void; onAdd:
       topLeftAction={(
         <button
           onClick={() => setTab("add")}
-          className="tap-44 inline-flex items-center gap-1.5 rounded-full bg-koth-red px-3 py-2 text-xs font-bold text-koth-white shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
+          className="tap-44 inline-flex items-center gap-1.5 rounded-full border border-koth-white/20 bg-black/30 px-3 py-2 text-xs font-bold text-koth-white backdrop-blur-md shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
           aria-label="Add friends"
         >
           <UserPlus className="h-4 w-4" aria-hidden />
