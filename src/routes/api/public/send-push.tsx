@@ -52,48 +52,94 @@ export const Route = createFileRoute("/api/public/send-push")({
             return Response.json({ sent: 0, reason: "no devices" });
           }
 
-          const svcJson = process.env.FCM_SERVICE_ACCOUNT_JSON;
-          if (!svcJson) {
-            console.error("[send-push] FCM_SERVICE_ACCOUNT_JSON not set");
-            return new Response("fcm not configured", { status: 500 });
-          }
-          const svc = JSON.parse(svcJson) as {
-            client_email: string;
-            private_key: string;
-            project_id: string;
-          };
+          const iosTokens = tokens.filter((t) => t.platform === "ios");
+          const androidTokens = tokens.filter((t) => t.platform === "android");
 
           const { title, body: bodyText } = formatPush(notif.type as string, notif.payload as Record<string, unknown>);
-          const accessToken = await getFcmAccessToken(svc);
+          const dataPayload = {
+            notification_id: body.notification_id!,
+            type: notif.type as string,
+          };
 
-          const results = await Promise.allSettled(
-            tokens.map((t) =>
-              sendFcm(svc.project_id, accessToken, t.token, title, bodyText, {
-                notification_id: body.notification_id!,
-                type: notif.type as string,
-              }),
-            ),
-          );
+          type SendResult = { token: string; ok: boolean; bad: boolean; error?: string };
+          const allResults: SendResult[] = [];
 
-          const badTokens: string[] = [];
-          let sent = 0;
-          results.forEach((r, i) => {
-            if (r.status === "fulfilled") {
-              sent++;
+          // Android → FCM
+          if (androidTokens.length > 0) {
+            const svcJson = process.env.FCM_SERVICE_ACCOUNT_JSON;
+            if (!svcJson) {
+              console.error("[send-push] FCM_SERVICE_ACCOUNT_JSON not set");
             } else {
-              const msg = String(r.reason ?? "");
-              if (msg.includes("UNREGISTERED") || msg.includes("INVALID_ARGUMENT") || msg.includes("NOT_FOUND")) {
-                badTokens.push(tokens[i].token);
+              try {
+                const svc = JSON.parse(svcJson) as {
+                  client_email: string;
+                  private_key: string;
+                  project_id: string;
+                };
+                const accessToken = await getFcmAccessToken(svc);
+                const results = await Promise.allSettled(
+                  androidTokens.map((t) =>
+                    sendFcm(svc.project_id, accessToken, t.token, title, bodyText, dataPayload),
+                  ),
+                );
+                results.forEach((r, i) => {
+                  if (r.status === "fulfilled") {
+                    allResults.push({ token: androidTokens[i].token, ok: true, bad: false });
+                  } else {
+                    const msg = String(r.reason ?? "");
+                    const bad = msg.includes("UNREGISTERED") || msg.includes("INVALID_ARGUMENT") || msg.includes("NOT_FOUND");
+                    console.error("[send-push] fcm error", msg);
+                    allResults.push({ token: androidTokens[i].token, ok: false, bad, error: msg });
+                  }
+                });
+              } catch (e) {
+                console.error("[send-push] fcm setup error", e);
               }
-              console.error("[send-push] fcm error", msg);
             }
-          });
+          }
+
+          // iOS → APNs (direct)
+          if (iosTokens.length > 0) {
+            try {
+              const jwt = await getApnsJwt();
+              const bundleId = process.env.APNS_BUNDLE_ID;
+              const host = process.env.APNS_ENVIRONMENT === "production"
+                ? "api.push.apple.com"
+                : "api.sandbox.push.apple.com";
+              if (!bundleId) {
+                console.error("[send-push] APNS_BUNDLE_ID not set");
+              } else {
+                const results = await Promise.allSettled(
+                  iosTokens.map((t) =>
+                    sendApns(host, jwt, bundleId, t.token, title, bodyText, dataPayload),
+                  ),
+                );
+                results.forEach((r, i) => {
+                  if (r.status === "fulfilled") {
+                    allResults.push({ token: iosTokens[i].token, ok: true, bad: false });
+                  } else {
+                    const msg = String(r.reason ?? "");
+                    const bad = msg.includes("BadDeviceToken") || msg.includes("Unregistered") || msg.includes("DeviceTokenNotForTopic");
+                    console.error("[send-push] apns error", msg);
+                    allResults.push({ token: iosTokens[i].token, ok: false, bad, error: msg });
+                  }
+                });
+              }
+            } catch (e) {
+              console.error("[send-push] apns setup error", e);
+            }
+          }
+
+          const badTokens = allResults.filter((r) => r.bad).map((r) => r.token);
+          const sent = allResults.filter((r) => r.ok).length;
+          const failed = allResults.length - sent;
 
           if (badTokens.length) {
             await supabaseAdmin.from("device_tokens").delete().in("token", badTokens);
           }
 
-          return Response.json({ sent, failed: results.length - sent, pruned: badTokens.length });
+          return Response.json({ sent, failed, pruned: badTokens.length });
+
         } catch (e) {
           console.error("[send-push] fatal", e);
           return new Response("error", { status: 500 });
