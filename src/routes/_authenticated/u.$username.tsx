@@ -7,10 +7,15 @@ import { Avatar } from "@/components/koth/avatar";
 import { Button } from "@/components/ui/button";
 import { TikTokPlayer, type PlayerItem } from "@/components/koth/tiktok-player";
 import { VideoThumb } from "@/components/koth/video-thumb";
-import { UserPlus, Lock, ArrowLeft, Users, Flag } from "lucide-react";
+import { UserPlus, Lock, ArrowLeft, Users, Flag, Ban } from "lucide-react";
 import { toast } from "sonner";
 import { FriendsDialog } from "./profile";
 import { PromptDialog } from "@/components/koth/prompt-dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 
 
 export const Route = createFileRoute("/_authenticated/u/$username")({
