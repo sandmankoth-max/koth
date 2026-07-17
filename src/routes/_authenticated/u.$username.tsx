@@ -143,14 +143,25 @@ function UserProfile() {
             {!canSeeAll && <Lock className="h-3 w-3 text-muted-foreground" />}
           </button>
           {!isSelf && (
-            <button
-              onClick={() => setReportOpen(true)}
-              className="tap-44 inline-flex items-center justify-center rounded-full border border-border bg-card p-1.5 text-muted-foreground hover:text-koth-red"
-              aria-label="Report user"
-            >
-              <Flag className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setBlockOpen(true)}
+                className="tap-44 inline-flex items-center justify-center rounded-full border border-border bg-card p-1.5 text-muted-foreground hover:text-koth-red"
+                aria-label={isBlocked ? "Unblock user" : "Block user"}
+                title={isBlocked ? "Unblock user" : "Block user"}
+              >
+                <Ban className={`h-4 w-4 ${isBlocked ? "text-koth-red" : ""}`} />
+              </button>
+              <button
+                onClick={() => setReportOpen(true)}
+                className="tap-44 inline-flex items-center justify-center rounded-full border border-border bg-card p-1.5 text-muted-foreground hover:text-koth-red"
+                aria-label="Report user"
+              >
+                <Flag className="h-4 w-4" />
+              </button>
+            </div>
           )}
+
         </div>
       </div>
 
