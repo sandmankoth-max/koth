@@ -49,6 +49,8 @@ type Props = {
   onOpenChange: (v: boolean) => void;
   /** Hide the floating back button (e.g. when used as an embedded feed). */
   hideBack?: boolean;
+  /** Optional control rendered inside the player chrome, above the video layer. */
+  topLeftAction?: React.ReactNode;
 };
 
 /**
@@ -56,7 +58,14 @@ type Props = {
  * Renders all items in a snap-scroll list (same UX as the friends feed),
  * with IntersectionObserver driving play / load per slide.
  */
-export function TikTokPlayer({ items, startIndex = 0, open, onOpenChange, hideBack = false }: Props) {
+export function TikTokPlayer({
+  items,
+  startIndex = 0,
+  open,
+  onOpenChange,
+  hideBack = false,
+  topLeftAction,
+}: Props) {
   const scrollerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -103,6 +112,7 @@ export function TikTokPlayer({ items, startIndex = 0, open, onOpenChange, hideBa
           <ArrowLeft className="h-6 w-6" />
         </button>
       )}
+      {topLeftAction && <div className="absolute left-3 top-3 z-50">{topLeftAction}</div>}
 
       <div
         ref={scrollerRef}
