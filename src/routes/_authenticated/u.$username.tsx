@@ -61,6 +61,21 @@ function UserProfile() {
     },
   });
 
+  const blockQ = useQuery({
+    queryKey: ["block", user?.id, profileId],
+    enabled: !!user && !!profileId && !isSelf,
+    queryFn: async () => {
+      const { data } = await supabase.from("user_blocks")
+        .select("id")
+        .eq("blocker_id", user!.id)
+        .eq("blocked_id", profileId!)
+        .maybeSingle();
+      return !!data;
+    },
+  });
+  const isBlocked = !!blockQ.data;
+
+
   const isFriend = friendQ.data?.status === "accepted";
   const canSeeAll = isSelf || isFriend;
 
