@@ -327,17 +327,32 @@ function VideoGallery() {
 export function FriendsDialog({
   open, onOpenChange, userId, canView,
 }: { open: boolean; onOpenChange: (v: boolean) => void; userId: string | null; canView: boolean }) {
+  const { user } = useAuth();
+  const isOwner = !!user && user.id === userId;
   const friendsQ = useQuery({
     queryKey: ["friends-list", userId],
     enabled: open && !!userId && canView,
     queryFn: async () => {
       const { data } = await supabase.from("friendships")
-        .select("requester_id, addressee_id, req:profiles!friendships_requester_id_fkey(id, username, display_name, avatar_url), addr:profiles!friendships_addressee_id_fkey(id, username, display_name, avatar_url)")
+        .select("id, requester_id, addressee_id, req:profiles!friendships_requester_id_fkey(id, username, display_name, avatar_url), addr:profiles!friendships_addressee_id_fkey(id, username, display_name, avatar_url)")
         .eq("status", "accepted")
         .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
-      return (data ?? []).map((r: any) => r.requester_id === userId ? r.addr : r.req);
+      return (data ?? []).map((r: any) => ({
+        friendshipId: r.id,
+        ...(r.requester_id === userId ? r.addr : r.req),
+      }));
     },
   });
+
+  async function removeFriend(friendshipId: string) {
+    const { error } = await supabase.from("friendships").delete().eq("id", friendshipId);
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Friend removed");
+      friendsQ.refetch();
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent aria-describedby={undefined} className="max-w-sm">
@@ -351,12 +366,12 @@ export function FriendsDialog({
         ) : (
           <ul className="max-h-[60vh] divide-y divide-border overflow-y-auto">
             {friendsQ.data!.map((f: any) => (
-              <li key={f.id}>
+              <li key={f.id} className="flex items-center gap-2">
                 <Link
                   to="/u/$username"
                   params={{ username: f.username }}
                   onClick={() => onOpenChange(false)}
-                  className="tap-44 flex items-center gap-3 px-1 py-2"
+                  className="tap-44 flex flex-1 items-center gap-3 px-1 py-2"
                 >
                   <Avatar name={f.display_name ?? f.username} avatarPath={f.avatar_url} size={36} />
                   <div className="min-w-0 flex-1">
@@ -364,6 +379,16 @@ export function FriendsDialog({
                     <p className="truncate text-xs text-muted-foreground">@{f.username}</p>
                   </div>
                 </Link>
+                {isOwner && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => removeFriend(f.friendshipId)}
+                    className="tap-44 rounded-full"
+                  >
+                    Remove
+                  </Button>
+                )}
               </li>
             ))}
           </ul>

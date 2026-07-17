@@ -163,23 +163,15 @@ function FeedTab({ setTab, onAdd }: { tab: Tab; setTab: (t: Tab) => void; onAdd:
     <>
       <TikTokPlayer items={items} open={true} onOpenChange={() => {}} hideBack />
 
-      {/* Floating tab switcher */}
-      <div className="fixed left-1/2 top-16 z-40 -translate-x-1/2">
-        <div className="flex items-center gap-1 rounded-full bg-black/50 p-1 backdrop-blur">
-          <button
-            onClick={() => {}}
-            className="tap-44 rounded-full bg-koth-red px-4 py-1.5 text-xs font-bold text-koth-white"
-          >
-            Feed
-          </button>
-          <button
-            onClick={() => setTab("add")}
-            className="tap-44 rounded-full px-4 py-1.5 text-xs font-bold text-white/80"
-          >
-            Add
-          </button>
-        </div>
-      </div>
+      {/* Floating Add Friends button — always visible over feed */}
+      <button
+        onClick={() => setTab("add")}
+        className="tap-44 fixed left-3 top-16 z-40 inline-flex items-center gap-1.5 rounded-full bg-koth-red px-3 py-2 text-xs font-bold text-koth-white shadow-lg"
+        aria-label="Add friends"
+      >
+        <UserPlus className="h-4 w-4" aria-hidden />
+        Add friends
+      </button>
     </>
   );
 }
