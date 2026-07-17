@@ -65,7 +65,7 @@ function UserProfile() {
     queryKey: ["block", user?.id, profileId],
     enabled: !!user && !!profileId && !isSelf,
     queryFn: async () => {
-      const { data } = await supabase.from("user_blocks")
+      const { data } = await (supabase.from as any)("user_blocks")
         .select("id")
         .eq("blocker_id", user!.id)
         .eq("blocked_id", profileId!)
@@ -73,6 +73,7 @@ function UserProfile() {
       return !!data;
     },
   });
+
   const isBlocked = !!blockQ.data;
 
 
