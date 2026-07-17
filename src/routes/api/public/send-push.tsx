@@ -52,48 +52,94 @@ export const Route = createFileRoute("/api/public/send-push")({
             return Response.json({ sent: 0, reason: "no devices" });
           }
 
-          const svcJson = process.env.FCM_SERVICE_ACCOUNT_JSON;
-          if (!svcJson) {
-            console.error("[send-push] FCM_SERVICE_ACCOUNT_JSON not set");
-            return new Response("fcm not configured", { status: 500 });
-          }
-          const svc = JSON.parse(svcJson) as {
-            client_email: string;
-            private_key: string;
-            project_id: string;
-          };
+          const iosTokens = tokens.filter((t) => t.platform === "ios");
+          const androidTokens = tokens.filter((t) => t.platform === "android");
 
           const { title, body: bodyText } = formatPush(notif.type as string, notif.payload as Record<string, unknown>);
-          const accessToken = await getFcmAccessToken(svc);
+          const dataPayload = {
+            notification_id: body.notification_id!,
+            type: notif.type as string,
+          };
 
-          const results = await Promise.allSettled(
-            tokens.map((t) =>
-              sendFcm(svc.project_id, accessToken, t.token, title, bodyText, {
-                notification_id: body.notification_id!,
-                type: notif.type as string,
-              }),
-            ),
-          );
+          type SendResult = { token: string; ok: boolean; bad: boolean; error?: string };
+          const allResults: SendResult[] = [];
 
-          const badTokens: string[] = [];
-          let sent = 0;
-          results.forEach((r, i) => {
-            if (r.status === "fulfilled") {
-              sent++;
+          // Android → FCM
+          if (androidTokens.length > 0) {
+            const svcJson = process.env.FCM_SERVICE_ACCOUNT_JSON;
+            if (!svcJson) {
+              console.error("[send-push] FCM_SERVICE_ACCOUNT_JSON not set");
             } else {
-              const msg = String(r.reason ?? "");
-              if (msg.includes("UNREGISTERED") || msg.includes("INVALID_ARGUMENT") || msg.includes("NOT_FOUND")) {
-                badTokens.push(tokens[i].token);
+              try {
+                const svc = JSON.parse(svcJson) as {
+                  client_email: string;
+                  private_key: string;
+                  project_id: string;
+                };
+                const accessToken = await getFcmAccessToken(svc);
+                const results = await Promise.allSettled(
+                  androidTokens.map((t) =>
+                    sendFcm(svc.project_id, accessToken, t.token, title, bodyText, dataPayload),
+                  ),
+                );
+                results.forEach((r, i) => {
+                  if (r.status === "fulfilled") {
+                    allResults.push({ token: androidTokens[i].token, ok: true, bad: false });
+                  } else {
+                    const msg = String(r.reason ?? "");
+                    const bad = msg.includes("UNREGISTERED") || msg.includes("INVALID_ARGUMENT") || msg.includes("NOT_FOUND");
+                    console.error("[send-push] fcm error", msg);
+                    allResults.push({ token: androidTokens[i].token, ok: false, bad, error: msg });
+                  }
+                });
+              } catch (e) {
+                console.error("[send-push] fcm setup error", e);
               }
-              console.error("[send-push] fcm error", msg);
             }
-          });
+          }
+
+          // iOS → APNs (direct)
+          if (iosTokens.length > 0) {
+            try {
+              const jwt = await getApnsJwt();
+              const bundleId = process.env.APNS_BUNDLE_ID;
+              const host = process.env.APNS_ENVIRONMENT === "production"
+                ? "api.push.apple.com"
+                : "api.sandbox.push.apple.com";
+              if (!bundleId) {
+                console.error("[send-push] APNS_BUNDLE_ID not set");
+              } else {
+                const results = await Promise.allSettled(
+                  iosTokens.map((t) =>
+                    sendApns(host, jwt, bundleId, t.token, title, bodyText, dataPayload),
+                  ),
+                );
+                results.forEach((r, i) => {
+                  if (r.status === "fulfilled") {
+                    allResults.push({ token: iosTokens[i].token, ok: true, bad: false });
+                  } else {
+                    const msg = String(r.reason ?? "");
+                    const bad = msg.includes("BadDeviceToken") || msg.includes("Unregistered") || msg.includes("DeviceTokenNotForTopic");
+                    console.error("[send-push] apns error", msg);
+                    allResults.push({ token: iosTokens[i].token, ok: false, bad, error: msg });
+                  }
+                });
+              }
+            } catch (e) {
+              console.error("[send-push] apns setup error", e);
+            }
+          }
+
+          const badTokens = allResults.filter((r) => r.bad).map((r) => r.token);
+          const sent = allResults.filter((r) => r.ok).length;
+          const failed = allResults.length - sent;
 
           if (badTokens.length) {
             await supabaseAdmin.from("device_tokens").delete().in("token", badTokens);
           }
 
-          return Response.json({ sent, failed: results.length - sent, pruned: badTokens.length });
+          return Response.json({ sent, failed, pruned: badTokens.length });
+
         } catch (e) {
           console.error("[send-push] fatal", e);
           return new Response("error", { status: 500 });
@@ -133,6 +179,87 @@ async function importPkcs8(pem: string): Promise<CryptoKey> {
     ["sign"],
   );
 }
+
+async function importPkcs8Ecdsa(pem: string): Promise<CryptoKey> {
+  const b64 = pem.replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\s+/g, "");
+  const bin = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+  return crypto.subtle.importKey(
+    "pkcs8",
+    bin,
+    { name: "ECDSA", namedCurve: "P-256" },
+    false,
+    ["sign"],
+  );
+}
+
+// Cached APNs JWT (valid ~1h; refresh a bit early).
+let cachedApnsJwt: { token: string; expiresAt: number } | null = null;
+
+async function getApnsJwt(): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+  if (cachedApnsJwt && cachedApnsJwt.expiresAt > now + 60) {
+    return cachedApnsJwt.token;
+  }
+  const keyPem = process.env.APNS_AUTH_KEY_P8;
+  const keyId = process.env.APNS_KEY_ID;
+  const teamId = process.env.APNS_TEAM_ID;
+  if (!keyPem || !keyId || !teamId) {
+    throw new Error("APNS_AUTH_KEY_P8/APNS_KEY_ID/APNS_TEAM_ID not set");
+  }
+  const header = { alg: "ES256", typ: "JWT", kid: keyId };
+  const claim = { iss: teamId, iat: now };
+  const unsigned = `${b64url(JSON.stringify(header))}.${b64url(JSON.stringify(claim))}`;
+  const key = await importPkcs8Ecdsa(keyPem);
+  const sig = await crypto.subtle.sign(
+    { name: "ECDSA", hash: "SHA-256" },
+    key,
+    new TextEncoder().encode(unsigned),
+  );
+  const jwt = `${unsigned}.${b64url(sig)}`;
+  // APNs allows tokens up to 1 hour; refresh at ~50 min.
+  cachedApnsJwt = { token: jwt, expiresAt: now + 50 * 60 };
+  return jwt;
+}
+
+async function sendApns(
+  host: string,
+  jwt: string,
+  bundleId: string,
+  deviceToken: string,
+  title: string,
+  body: string,
+  data: Record<string, string>,
+): Promise<unknown> {
+  const res = await fetch(`https://${host}/3/device/${deviceToken}`, {
+    method: "POST",
+    headers: {
+      authorization: `bearer ${jwt}`,
+      "apns-topic": bundleId,
+      "apns-push-type": "alert",
+      "apns-priority": "10",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      aps: {
+        alert: { title, body },
+        sound: "default",
+      },
+      ...data,
+    }),
+  });
+  if (!res.ok) {
+    let reason = "";
+    try {
+      const j = (await res.json()) as { reason?: string };
+      reason = j.reason ?? "";
+    } catch {
+      reason = await res.text();
+    }
+    throw new Error(`apns ${res.status} ${reason}`);
+  }
+  return { ok: true };
+}
+
 
 async function getFcmAccessToken(svc: { client_email: string; private_key: string }): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
