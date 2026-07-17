@@ -49,8 +49,8 @@ async function authedFetch(path: string, init: RequestInit) {
 
 export async function deleteOwnSubmissionApi(submissionId: string) {
   return authedFetch("/api/public/submissions", {
-    method: "DELETE",
-    body: JSON.stringify({ submissionId }),
+    method: "POST",
+    body: JSON.stringify({ action: "delete", submissionId }),
   });
 }
 
