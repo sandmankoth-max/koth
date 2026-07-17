@@ -112,7 +112,7 @@ export function TikTokPlayer({
           <ArrowLeft className="h-6 w-6" />
         </button>
       )}
-      {topLeftAction && <div className="absolute left-3 top-4 z-50">{topLeftAction}</div>}
+      {topLeftAction && <div className="absolute left-3 top-5 z-50">{topLeftAction}</div>}
 
       <div
         ref={scrollerRef}
