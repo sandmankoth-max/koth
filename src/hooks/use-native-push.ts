@@ -44,9 +44,9 @@ export function useNativePush() {
         const errSub = await PushNotifications.addListener("registrationError", (e) => {
           console.error("[push] registration error", e);
         });
-        const recvSub = await PushNotifications.addListener("pushNotificationReceived", (n) => {
-          // Foreground notification — surface as toast
-          toast(n.title ?? "Notification", { description: n.body });
+        const recvSub = await PushNotifications.addListener("pushNotificationReceived", () => {
+          // Foreground push: suppress any UI. The in-app notification panel
+          // (and its realtime badge) already reflects the new activity.
         });
         removeListeners = [
           () => regSub.remove(),
