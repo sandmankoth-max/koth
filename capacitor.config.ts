@@ -9,7 +9,10 @@ const config: CapacitorConfig = {
   },
   plugins: {
     PushNotifications: {
-      presentationOptions: ['badge', 'sound', 'alert'],
+      // Empty array suppresses the system banner while the app is in the
+      // foreground. Push banners only appear when backgrounded/closed; the
+      // in-app notifications panel still updates in realtime.
+      presentationOptions: [],
     },
   },
 };
