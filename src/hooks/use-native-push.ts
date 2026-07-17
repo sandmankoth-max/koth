@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { Capacitor } from "@capacitor/core";
 import { supabase } from "@/integrations/supabase/client";
 import { registerDeviceToken } from "@/lib/device-tokens.functions";
-import { toast } from "sonner";
 
 /**
  * Registers the native iOS/Android device for push notifications and stores
