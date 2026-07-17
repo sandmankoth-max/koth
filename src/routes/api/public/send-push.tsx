@@ -133,12 +133,13 @@ export const Route = createFileRoute("/api/public/send-push")({
           const badTokens = allResults.filter((r) => r.bad).map((r) => r.token);
           const sent = allResults.filter((r) => r.ok).length;
           const failed = allResults.length - sent;
+          const errors = allResults.filter((r) => !r.ok && r.error).map((r) => r.error!);
 
           if (badTokens.length) {
             await supabaseAdmin.from("device_tokens").delete().in("token", badTokens);
           }
 
-          return Response.json({ sent, failed, pruned: badTokens.length });
+          return Response.json({ sent, failed, pruned: badTokens.length, errors });
 
         } catch (e) {
           console.error("[send-push] fatal", e);
