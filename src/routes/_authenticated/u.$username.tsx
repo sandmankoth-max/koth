@@ -174,7 +174,9 @@ function UserProfile() {
 
         {!isSelf && (
           <div className="mt-3 w-full max-w-xs space-y-2">
-            {friendQ.data?.status === "accepted" ? (
+            {isBlocked ? (
+              <span className="pill bg-koth-red/10 text-koth-red">Blocked</span>
+            ) : friendQ.data?.status === "accepted" ? (
               <span className="pill bg-koth-pr-bg text-koth-pr-text">Friends</span>
             ) : friendQ.data?.status === "pending" ? (
               <span className="pill bg-muted text-muted-foreground">Request pending</span>
@@ -187,6 +189,13 @@ function UserProfile() {
         )}
 
       </section>
+
+      {isBlocked && (
+        <div className="flex items-center gap-2 rounded-2xl border border-dashed border-border bg-card p-3 text-xs text-muted-foreground">
+          <Ban className="h-4 w-4 text-koth-red" /> You've blocked @{p.username}. They can't view your profile, videos, or interact with you.
+        </div>
+      )}
+
 
       {!canSeeAll && (
         <div className="flex items-center gap-2 rounded-2xl border border-dashed border-border bg-card p-3 text-xs text-muted-foreground">
