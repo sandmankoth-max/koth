@@ -28,17 +28,20 @@ export function useNativePush() {
         if (status === "prompt" || status === "prompt-with-rationale") {
           status = (await PushNotifications.requestPermissions()).receive;
         }
+        console.log("[push] permission status:", status);
         if (status !== "granted") return;
 
+        console.log("[push] calling register()");
         await PushNotifications.register();
 
         const regSub = await PushNotifications.addListener("registration", async (t) => {
+          console.log("[push] got token, registering:", t.value.slice(0, 20));
           try {
             await registerDeviceToken({
               data: { token: t.value, platform: Capacitor.getPlatform() as "ios" | "android" },
             });
           } catch (e) {
-            console.error("[push] failed to register token", e);
+            console.error("[push] failed to register token:", e instanceof Error ? e.message : String(e), e instanceof Error ? e.stack : "");
           }
         });
         const errSub = await PushNotifications.addListener("registrationError", (e) => {

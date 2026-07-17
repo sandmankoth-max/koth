@@ -9,7 +9,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>app.lovable.c9bd69d36c494f3b98ac1695c2d8c121</string>
+	<string>app.playkoth.koth</string>
 	<key>PROJECT_ID</key>
 	<string>koth-30a22</string>
 	<key>STORAGE_BUCKET</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:983632394634:ios:411ebdca41a3c05b5f7073</string>
+	<string>1:983632394634:ios:80e11ac01e60a2be5f7073</string>
 </dict>
 </plist>
