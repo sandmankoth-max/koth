@@ -516,6 +516,27 @@ export type Database = {
           },
         ]
       }
+      user_blocks: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
       user_reports: {
         Row: {
           created_at: string
@@ -782,6 +803,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_blocked: { Args: { _a: string; _b: string }; Returns: boolean }
       is_fingerprint_banned: { Args: { _fp: string }; Returns: boolean }
       is_profane: { Args: { _text: string }; Returns: boolean }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
