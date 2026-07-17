@@ -283,6 +283,7 @@ export type Database = {
       notifications: {
         Row: {
           created_at: string
+          dedupe_key: string | null
           id: string
           payload: Json
           read: boolean
@@ -291,6 +292,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          dedupe_key?: string | null
           id?: string
           payload?: Json
           read?: boolean
@@ -299,6 +301,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          dedupe_key?: string | null
           id?: string
           payload?: Json
           read?: boolean
