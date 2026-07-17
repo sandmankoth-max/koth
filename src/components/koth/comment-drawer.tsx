@@ -142,8 +142,8 @@ export function CommentDrawer({ kind, targetId, ownerId, open, onOpenChange }: P
 
   return (
     <>
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="flex h-[85dvh] max-h-[85dvh] flex-col">
+    <Drawer open={open} onOpenChange={onOpenChange} repositionInputs={false}>
+      <DrawerContent className="flex h-[60dvh] max-h-[60dvh] flex-col">
         <DrawerHeader className="px-4 pb-2 pt-3">
           <DrawerTitle className="text-sm font-bold">
             {tops.length} {tops.length === 1 ? "comment" : "comments"}
