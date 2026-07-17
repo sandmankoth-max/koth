@@ -10,8 +10,15 @@ function apiUrl(path: string) {
     window.location.protocol === "ionic:" ||
     window.location.protocol === "file:" ||
     Boolean(cap?.isNativePlatform?.());
-  return isNative ? `${PROD_ORIGIN}${path}` : path;
+  // The id-preview-*.lovable.app host gates ALL requests (including
+  // /api/public/*) behind an auth-bridge redirect that browser fetch can't
+  // follow cross-origin, so route through the stable published origin.
+  const host = window.location.hostname;
+  const isIdPreview = host.startsWith("id-preview--");
+  if (isNative || isIdPreview) return `${PROD_ORIGIN}${path}`;
+  return path;
 }
+
 
 async function authedFetch(path: string, init: RequestInit) {
   const { data: { session } } = await supabase.auth.getSession();
