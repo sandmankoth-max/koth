@@ -516,6 +516,27 @@ export type Database = {
           },
         ]
       }
+      user_blocks: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
       user_reports: {
         Row: {
           created_at: string
@@ -744,6 +765,7 @@ export type Database = {
         Returns: undefined
       }
       are_friends: { Args: { _a: string; _b: string }; Returns: boolean }
+      block_username: { Args: { _username: string }; Returns: string }
       can_view_submission: {
         Args: { _submission_id: string; _viewer: string }
         Returns: boolean
@@ -782,6 +804,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_blocked: { Args: { _a: string; _b: string }; Returns: boolean }
+      is_blocked_by: {
+        Args: { _owner: string; _viewer: string }
+        Returns: boolean
+      }
       is_fingerprint_banned: { Args: { _fp: string }; Returns: boolean }
       is_profane: { Args: { _text: string }; Returns: boolean }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
@@ -795,6 +822,7 @@ export type Database = {
         Args: { p_reason: string; p_reported_user_id: string }
         Returns: string
       }
+      unblock_user: { Args: { _target: string }; Returns: undefined }
       username_exists: { Args: { _username: string }; Returns: boolean }
     }
     Enums: {

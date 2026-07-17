@@ -7,10 +7,15 @@ import { Avatar } from "@/components/koth/avatar";
 import { Button } from "@/components/ui/button";
 import { TikTokPlayer, type PlayerItem } from "@/components/koth/tiktok-player";
 import { VideoThumb } from "@/components/koth/video-thumb";
-import { UserPlus, Lock, ArrowLeft, Users, Flag } from "lucide-react";
+import { UserPlus, Lock, ArrowLeft, Users, Flag, Ban } from "lucide-react";
 import { toast } from "sonner";
 import { FriendsDialog } from "./profile";
 import { PromptDialog } from "@/components/koth/prompt-dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 
 
 export const Route = createFileRoute("/_authenticated/u/$username")({
@@ -26,6 +31,9 @@ function UserProfile() {
   const [playerIndex, setPlayerIndex] = useState(0);
   const [friendsOpen, setFriendsOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [blockOpen, setBlockOpen] = useState(false);
+  const [blockBusy, setBlockBusy] = useState(false);
+
 
 
   const profileQ = useQuery({
@@ -52,6 +60,22 @@ function UserProfile() {
       return data;
     },
   });
+
+  const blockQ = useQuery({
+    queryKey: ["block", user?.id, profileId],
+    enabled: !!user && !!profileId && !isSelf,
+    queryFn: async () => {
+      const { data } = await (supabase.from as any)("user_blocks")
+        .select("id")
+        .eq("blocker_id", user!.id)
+        .eq("blocked_id", profileId!)
+        .maybeSingle();
+      return !!data;
+    },
+  });
+
+  const isBlocked = !!blockQ.data;
+
 
   const isFriend = friendQ.data?.status === "accepted";
   const canSeeAll = isSelf || isFriend;
@@ -120,14 +144,25 @@ function UserProfile() {
             {!canSeeAll && <Lock className="h-3 w-3 text-muted-foreground" />}
           </button>
           {!isSelf && (
-            <button
-              onClick={() => setReportOpen(true)}
-              className="tap-44 inline-flex items-center justify-center rounded-full border border-border bg-card p-1.5 text-muted-foreground hover:text-koth-red"
-              aria-label="Report user"
-            >
-              <Flag className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setBlockOpen(true)}
+                className="tap-44 inline-flex items-center justify-center rounded-full border border-border bg-card p-1.5 text-muted-foreground hover:text-koth-red"
+                aria-label={isBlocked ? "Unblock user" : "Block user"}
+                title={isBlocked ? "Unblock user" : "Block user"}
+              >
+                <Ban className={`h-4 w-4 ${isBlocked ? "text-koth-red" : ""}`} />
+              </button>
+              <button
+                onClick={() => setReportOpen(true)}
+                className="tap-44 inline-flex items-center justify-center rounded-full border border-border bg-card p-1.5 text-muted-foreground hover:text-koth-red"
+                aria-label="Report user"
+              >
+                <Flag className="h-4 w-4" />
+              </button>
+            </div>
           )}
+
         </div>
       </div>
 
@@ -140,7 +175,9 @@ function UserProfile() {
 
         {!isSelf && (
           <div className="mt-3 w-full max-w-xs space-y-2">
-            {friendQ.data?.status === "accepted" ? (
+            {isBlocked ? (
+              <span className="pill bg-koth-red/10 text-koth-red">Blocked</span>
+            ) : friendQ.data?.status === "accepted" ? (
               <span className="pill bg-koth-pr-bg text-koth-pr-text">Friends</span>
             ) : friendQ.data?.status === "pending" ? (
               <span className="pill bg-muted text-muted-foreground">Request pending</span>
@@ -153,6 +190,13 @@ function UserProfile() {
         )}
 
       </section>
+
+      {isBlocked && (
+        <div className="flex items-center gap-2 rounded-2xl border border-dashed border-border bg-card p-3 text-xs text-muted-foreground">
+          <Ban className="h-4 w-4 text-koth-red" /> You've blocked @{p.username}. They can't view your profile, videos, or interact with you.
+        </div>
+      )}
+
 
       {!canSeeAll && (
         <div className="flex items-center gap-2 rounded-2xl border border-dashed border-border bg-card p-3 text-xs text-muted-foreground">
@@ -224,6 +268,51 @@ function UserProfile() {
           else toast.success("Report submitted. Thank you.");
         }}
       />
+
+      <AlertDialog open={blockOpen} onOpenChange={(o) => !blockBusy && setBlockOpen(o)}>
+        <AlertDialogContent className="max-w-sm rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{isBlocked ? `Unblock @${p.username}?` : `Block @${p.username}?`}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {isBlocked
+                ? "They'll be able to view your profile, videos, and interact with you again."
+                : "They won't be able to view your profile, videos (including challenge submissions), comment or like your content, or send you a friend request. Any existing friendship will be removed."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={blockBusy} className="rounded-full">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={blockBusy}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!user || !profileId) return;
+                setBlockBusy(true);
+                try {
+                  if (isBlocked) {
+                    const { error } = await supabase.rpc("unblock_user" as any, { _target: profileId });
+                    if (error) throw error;
+                    toast.success("Unblocked");
+                  } else {
+                    const { error } = await supabase.rpc("block_username" as any, { _username: p.username });
+                    if (error) throw error;
+                    toast.success("Blocked");
+                  }
+                  await Promise.all([blockQ.refetch(), friendQ.refetch()]);
+                  setBlockOpen(false);
+                } catch (err) {
+                  toast.error(err instanceof Error ? err.message : "Action failed");
+                } finally {
+                  setBlockBusy(false);
+                }
+              }}
+              className="rounded-full bg-koth-red text-koth-white hover:bg-koth-red/90"
+            >
+              {blockBusy ? "Working…" : isBlocked ? "Unblock" : "Block"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
 
       {isSelf && (
