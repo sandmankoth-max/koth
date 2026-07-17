@@ -31,6 +31,9 @@ function UserProfile() {
   const [playerIndex, setPlayerIndex] = useState(0);
   const [friendsOpen, setFriendsOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [blockOpen, setBlockOpen] = useState(false);
+  const [blockBusy, setBlockBusy] = useState(false);
+
 
 
   const profileQ = useQuery({
