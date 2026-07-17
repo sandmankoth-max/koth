@@ -268,6 +268,51 @@ function UserProfile() {
         }}
       />
 
+      <AlertDialog open={blockOpen} onOpenChange={(o) => !blockBusy && setBlockOpen(o)}>
+        <AlertDialogContent className="max-w-sm rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{isBlocked ? `Unblock @${p.username}?` : `Block @${p.username}?`}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {isBlocked
+                ? "They'll be able to view your profile, videos, and interact with you again."
+                : "They won't be able to view your profile, videos (including challenge submissions), comment or like your content, or send you a friend request. Any existing friendship will be removed."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={blockBusy} className="rounded-full">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={blockBusy}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!user || !profileId) return;
+                setBlockBusy(true);
+                try {
+                  if (isBlocked) {
+                    const { error } = await supabase.rpc("unblock_user" as any, { _target: profileId });
+                    if (error) throw error;
+                    toast.success("Unblocked");
+                  } else {
+                    const { error } = await supabase.rpc("block_username" as any, { _username: p.username });
+                    if (error) throw error;
+                    toast.success("Blocked");
+                  }
+                  await Promise.all([blockQ.refetch(), friendQ.refetch()]);
+                  setBlockOpen(false);
+                } catch (err) {
+                  toast.error(err instanceof Error ? err.message : "Action failed");
+                } finally {
+                  setBlockBusy(false);
+                }
+              }}
+              className="rounded-full bg-koth-red text-koth-white hover:bg-koth-red/90"
+            >
+              {blockBusy ? "Working…" : isBlocked ? "Unblock" : "Block"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+
 
       {isSelf && (
         <Link to="/profile" className="tap-44 block rounded-2xl border border-border bg-card px-4 py-3 text-center text-sm font-semibold text-foreground">
