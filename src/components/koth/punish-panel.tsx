@@ -188,12 +188,7 @@ function SuspendedList() {
 
   const refresh = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id, username, display_name, avatar_url, suspended_until, suspension_reason")
-      .not("suspended_until", "is", null)
-      .gt("suspended_until", new Date().toISOString())
-      .order("suspended_until", { ascending: true });
+    const { data, error } = await supabase.rpc("admin_list_suspended" as any);
     setLoading(false);
     if (error) { toast.error(error.message); return; }
     setRows((data ?? []) as SuspendedRow[]);
