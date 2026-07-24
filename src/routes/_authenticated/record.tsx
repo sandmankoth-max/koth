@@ -45,13 +45,11 @@ function Record() {
   useEffect(() => {
     if (!user) return;
     supabase
-      .from("profiles")
-      .select("suspended_until, suspension_reason")
-      .eq("id", user.id)
-      .maybeSingle()
+      .rpc("get_my_profile")
       .then(({ data }) => {
-        if (data?.suspended_until && new Date(data.suspended_until).getTime() > Date.now()) {
-          setSuspension({ until: data.suspended_until, reason: data.suspension_reason ?? null });
+        const p = data as { suspended_until: string | null; suspension_reason: string | null } | null;
+        if (p?.suspended_until && new Date(p.suspended_until).getTime() > Date.now()) {
+          setSuspension({ until: p.suspended_until, reason: p.suspension_reason ?? null });
         } else {
           setSuspension(null);
         }
