@@ -99,11 +99,13 @@
   "overrides": {
     "undici": "^5.0.6",
     "brace-expansion": "^2.0.2",
-    "js-yaml": "^4.1.1"
+    "js-yaml": "^4.1.1",
+    "tar": "^7.5.19"
   },
   "resolutions": {
     "undici": "^5.0.6",
     "brace-expansion": "^2.0.2",
-    "js-yaml": "^4.1.1"
+    "js-yaml": "^4.1.1",
+    "tar": "^7.5.19"
   }
 }
