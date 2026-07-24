@@ -747,6 +747,17 @@ export type Database = {
           status: string
         }[]
       }
+      admin_list_suspended: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          display_name: string
+          id: string
+          suspended_until: string
+          suspension_reason: string
+          username: string
+        }[]
+      }
       admin_resolve_report: {
         Args: { p_note?: string; p_report_id: string }
         Returns: undefined
