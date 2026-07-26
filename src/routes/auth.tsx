@@ -11,6 +11,7 @@ import { toast } from "sonner";
 
 const searchSchema = z.object({
   mode: z.enum(["login", "signup"]).optional(),
+  next: z.string().optional(),
 });
 
 export const Route = createFileRoute("/auth")({
@@ -20,7 +21,7 @@ export const Route = createFileRoute("/auth")({
 });
 
 function AuthPage() {
-  const { mode = "login" } = Route.useSearch();
+  const { mode = "login", next } = Route.useSearch();
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
@@ -68,6 +69,11 @@ function AuthPage() {
         toast.success("Welcome to KOTH");
       } else {
         await signIn(u, p);
+      }
+      const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : null;
+      if (safeNext) {
+        window.location.href = safeNext;
+        return;
       }
       navigate({ to: "/home" });
     } catch (err) {
