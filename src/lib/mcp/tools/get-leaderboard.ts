@@ -23,7 +23,7 @@ export default defineTool({
       const { data: challenge, error: challengeError } = await supabase
         .from("challenges")
         .select("id")
-        .eq("status", "open")
+        .eq("status", "active")
         .order("starts_at", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -36,7 +36,7 @@ export default defineTool({
       .from("submissions")
       .select("id,user_id,self_reported_value,admin_verified_value,status,submitted_at")
       .eq("challenge_id", challengeId)
-      .eq("status", "approved")
+      .eq("status", "verified")
       .eq("is_active_entry", true)
       .order("admin_verified_value", { ascending: false, nullsFirst: false })
       .limit(limit ?? 10);

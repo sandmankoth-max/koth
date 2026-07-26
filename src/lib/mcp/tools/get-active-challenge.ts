@@ -16,7 +16,7 @@ export default defineTool({
       .select(
         "id,title,description,unit_label,unit_type,status,starts_at,ends_at,prize_first,prize_second,prize_third,max_video_seconds",
       )
-      .eq("status", "open")
+      .eq("status", "active")
       .order("starts_at", { ascending: false })
       .limit(1)
       .maybeSingle();
