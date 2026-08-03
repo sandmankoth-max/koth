@@ -163,19 +163,38 @@ function Record() {
       )}
 
       {stage === "preview" && captured && (
-        <div className="space-y-3">
-          <video
+        trimOpen ? (
+          <VideoTrimmer
             src={captured.previewUrl}
-            controls
-            playsInline
-            className="aspect-[9/16] w-full rounded-3xl bg-black object-cover"
+            duration={captured.durationMs / 1000}
+            value={trim}
+            onCancel={() => setTrimOpen(false)}
+            onSave={(r) => { setTrim(r); setTrimOpen(false); }}
           />
+        ) : (
+        <div className="space-y-3">
+          <TrimmedPreview src={captured.previewUrl} trim={trim} />
+          {trim && (
+            <p className="text-center text-xs text-muted-foreground">
+              Trimmed to {(trim.end - trim.start).toFixed(1)}s. The rest is kept
+              until you submit, so you can still adjust it.
+            </p>
+          )}
+          <Button
+            variant="outline"
+            onClick={() => setTrimOpen(true)}
+            className="tap-44 h-12 w-full rounded-full"
+          >
+            <Scissors className="mr-1.5 h-4 w-4" aria-hidden />
+            {trim ? "Edit crop" : "Crop video"}
+          </Button>
           <div className="grid grid-cols-2 gap-3">
             <Button
               variant="outline"
               onClick={() => {
                 URL.revokeObjectURL(captured.previewUrl);
                 setCaptured(null);
+                setTrim(null);
                 setStage("camera");
               }}
               className="tap-44 h-12 rounded-full"
@@ -192,7 +211,9 @@ function Record() {
             </Button>
           </div>
         </div>
+        )
       )}
+
 
       {stage === "report" && (
         <div className="space-y-4">
