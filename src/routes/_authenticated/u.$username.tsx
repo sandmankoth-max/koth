@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +27,7 @@ function UserProfile() {
   const { username } = Route.useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const router = useRouter();
   const [playerOpen, setPlayerOpen] = useState(false);
   const [playerIndex, setPlayerIndex] = useState(0);
   const [friendsOpen, setFriendsOpen] = useState(false);
