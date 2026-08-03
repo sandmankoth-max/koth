@@ -126,11 +126,20 @@ function UserProfile() {
   }));
 
   return (
-    <div className="space-y-3">
+    <div className="-mt-2 space-y-3">
       <div className="flex items-start justify-between">
-        <button onClick={() => navigate({ to: "/feed" })} className="tap-44 -ml-2 inline-flex items-center gap-1 text-sm text-muted-foreground">
-          <ArrowLeft className="h-4 w-4" /> Back
+        <button
+          onClick={() => {
+            // Return to wherever the user came from; fall back to the feed.
+            if (typeof window !== "undefined" && window.history.length > 1) router.history.back();
+            else navigate({ to: "/feed" });
+          }}
+          className="tap-44 ml-1 inline-flex items-center text-muted-foreground"
+          aria-label="Back"
+        >
+          <ArrowLeft className="h-5 w-5" />
         </button>
+
         <div className="flex flex-col items-end gap-1">
           <button
             onClick={() => { if (canSeeAll) setFriendsOpen(true); else toast.message("Add as friend to see their friends list"); }}
