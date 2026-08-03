@@ -196,7 +196,7 @@ function UserProfile() {
       </div>
 
       <section className="flex flex-col items-center text-center">
-        <Avatar name={p.display_name ?? p.username} avatarPath={p.avatar_url} size={104} />
+        <Avatar name={p.display_name ?? p.username} avatarPath={p.avatar_url} size={88} />
         <h1 className="mt-2 text-base font-bold text-foreground">{p.display_name}</h1>
         <p className="text-xs text-muted-foreground">@{p.username}</p>
 

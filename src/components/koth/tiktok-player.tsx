@@ -389,7 +389,7 @@ function PlayerSlide({
           to="/u/$username"
           params={{ username: item.user.username }}
           onClick={(e) => e.stopPropagation()}
-          className="tap-44 relative z-30 inline-flex items-center justify-center rounded-full ring-2 ring-white/90"
+          className="tap-44 relative z-30 inline-flex items-center justify-center rounded-full"
           aria-label={`Open ${displayName}'s profile`}
         >
           <Avatar
