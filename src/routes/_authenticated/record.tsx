@@ -22,7 +22,7 @@ const SEEN_VIS_KEY = "koth.seenVisibilityExplainer";
 
 function Record() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [stage, setStage] = useState<Stage>("intro");
   const [captured, setCaptured] = useState<CapturedVideo | null>(null);
   const [reportedValue, setReportedValue] = useState("");
