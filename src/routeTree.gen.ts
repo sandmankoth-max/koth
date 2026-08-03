@@ -17,6 +17,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as LegalTermsRouteImport } from './routes/legal.terms'
 import { Route as LegalRulesRouteImport } from './routes/legal.rules'
 import { Route as LegalPrivacyRouteImport } from './routes/legal.privacy'
+import { Route as AddUsernameRouteImport } from './routes/add.$username'
 import { Route as AuthenticatedRecordRouteImport } from './routes/_authenticated/record'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
@@ -72,6 +73,11 @@ const LegalPrivacyRoute = LegalPrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
   getParentRoute: () => LegalRoute,
+} as any)
+const AddUsernameRoute = AddUsernameRouteImport.update({
+  id: '/add/$username',
+  path: '/add/$username',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRecordRoute = AuthenticatedRecordRouteImport.update({
   id: '/record',
@@ -174,6 +180,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/record': typeof AuthenticatedRecordRoute
+  '/add/$username': typeof AddUsernameRoute
   '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/rules': typeof LegalRulesRoute
   '/legal/terms': typeof LegalTermsRoute
@@ -199,6 +206,7 @@ export interface FileRoutesByTo {
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/record': typeof AuthenticatedRecordRoute
+  '/add/$username': typeof AddUsernameRoute
   '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/rules': typeof LegalRulesRoute
   '/legal/terms': typeof LegalTermsRoute
@@ -226,6 +234,7 @@ export interface FileRoutesById {
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/record': typeof AuthenticatedRecordRoute
+  '/add/$username': typeof AddUsernameRoute
   '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/rules': typeof LegalRulesRoute
   '/legal/terms': typeof LegalTermsRoute
@@ -253,6 +262,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/profile'
     | '/record'
+    | '/add/$username'
     | '/legal/privacy'
     | '/legal/rules'
     | '/legal/terms'
@@ -278,6 +288,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/profile'
     | '/record'
+    | '/add/$username'
     | '/legal/privacy'
     | '/legal/rules'
     | '/legal/terms'
@@ -304,6 +315,7 @@ export interface FileRouteTypes {
     | '/_authenticated/notifications'
     | '/_authenticated/profile'
     | '/_authenticated/record'
+    | '/add/$username'
     | '/legal/privacy'
     | '/legal/rules'
     | '/legal/terms'
@@ -323,6 +335,7 @@ export interface RootRouteChildren {
   McpRoute: typeof McpRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  AddUsernameRoute: typeof AddUsernameRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicSendPushRoute: typeof ApiPublicSendPushRoute
@@ -387,6 +400,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/legal/privacy'
       preLoaderRoute: typeof LegalPrivacyRouteImport
       parentRoute: typeof LegalRoute
+    }
+    '/add/$username': {
+      id: '/add/$username'
+      path: '/add/$username'
+      fullPath: '/add/$username'
+      preLoaderRoute: typeof AddUsernameRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/record': {
       id: '/_authenticated/record'
@@ -554,6 +574,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  AddUsernameRoute: AddUsernameRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicSendPushRoute: ApiPublicSendPushRoute,
