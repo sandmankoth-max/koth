@@ -175,7 +175,7 @@ function UserProfile() {
       </div>
 
       <section className="flex flex-col items-center text-center">
-        <Avatar name={p.display_name ?? p.username} avatarPath={p.avatar_url} size={72} />
+        <Avatar name={p.display_name ?? p.username} avatarPath={p.avatar_url} size={104} />
         <h1 className="mt-2 text-base font-bold text-foreground">{p.display_name}</h1>
         <p className="text-xs text-muted-foreground">@{p.username}</p>
 
@@ -218,7 +218,7 @@ function UserProfile() {
           {items.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground">No videos to show.</p>
           ) : (
-            <div className="grid grid-cols-3 gap-[2px]">
+            <div className="grid grid-cols-3 gap-1.5">
               {(videosQ.data ?? []).map((s: any, i: number) => {
                 const it = items[i];
                 const title = s.challenges?.title as string | undefined;
@@ -226,7 +226,7 @@ function UserProfile() {
                   <div key={it.id} className="relative">
                     <VideoThumb
                       videoPath={it.video_path}
-                      className="rounded-none"
+                      className="overflow-hidden rounded-xl border border-border/60 shadow-sm"
                       onClick={() => { setPlayerIndex(i); setPlayerOpen(true); }}
                       badge={
                         s.status === "disqualified" ? (

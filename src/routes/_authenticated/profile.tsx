@@ -109,7 +109,7 @@ function Profile() {
           <Avatar
             name={profile?.display_name ?? profile?.username ?? "?"}
             avatarPath={profile?.avatar_url}
-            size={72}
+            size={104}
           />
           <span className="absolute -bottom-1 -right-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-koth-red text-koth-white ring-2 ring-background">
             <Camera className="h-3 w-3" aria-hidden />
@@ -287,7 +287,7 @@ function VideoGallery() {
           No videos yet. Your submissions will show up here.
         </div>
       ) : (
-        <div className="grid grid-cols-3 gap-[2px]">
+        <div className="grid grid-cols-3 gap-1.5">
           {items.map((it, i) => {
             const s: any = videosQ.data?.[i];
             const title = s?.challenges?.title as string | undefined;
@@ -295,7 +295,7 @@ function VideoGallery() {
               <div key={it.id} className="relative">
                 <VideoThumb
                   videoPath={it.video_path}
-                  className="rounded-none"
+                  className="overflow-hidden rounded-xl border border-border/60 shadow-sm"
                   onClick={() => { setPlayerIndex(i); setPlayerOpen(true); }}
                   badge={
                     s?.status === "disqualified" ? (
