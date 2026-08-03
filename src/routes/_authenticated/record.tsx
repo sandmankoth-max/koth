@@ -7,8 +7,11 @@ import { CameraRecorder, type CapturedVideo } from "@/components/koth/camera-rec
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Video, RotateCcw, Check } from "lucide-react";
+import { Video, RotateCcw, Check, Scissors } from "lucide-react";
 import { toast } from "sonner";
+import { VideoTrimmer, type TrimRange } from "@/components/koth/video-trimmer";
+import { applyTrim } from "@/lib/video-trim";
+
 
 export const Route = createFileRoute("/_authenticated/record")({
   head: () => ({ meta: [{ title: "Record — KOTH" }] }),
@@ -25,6 +28,10 @@ function Record() {
   const { user, isAdmin } = useAuth();
   const [stage, setStage] = useState<Stage>("intro");
   const [captured, setCaptured] = useState<CapturedVideo | null>(null);
+  // Non-destructive crop: kept as metadata until the final submit.
+  const [trim, setTrim] = useState<TrimRange | null>(null);
+  const [trimOpen, setTrimOpen] = useState(false);
+
   const [reportedValue, setReportedValue] = useState("");
   const [visibility, setVisibility] = useState<Visibility | null>(null);
   const [explainOpen, setExplainOpen] = useState<Visibility | null>(null);
