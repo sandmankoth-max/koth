@@ -127,11 +127,14 @@ function Profile() {
           onClick={() => setFriendsOpen(true)}
           className="tap-44 inline-flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-foreground"
         >
-
           <Users className="h-3.5 w-3.5 text-koth-red" />
           <span className="mono-stat font-bold">{friendCountQ.data ?? 0}</span>
           <span className="text-muted-foreground">friends</span>
         </button>
+        <ShareProfileButton username={profile?.username} />
+        </div>
+
+
 
         {/* Bio — narrower, smaller */}
         <div className="mt-2 w-full max-w-[240px]">
