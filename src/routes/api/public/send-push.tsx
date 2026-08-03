@@ -357,7 +357,7 @@ function formatPush(type: string, payload: Record<string, unknown>): { title: st
     case "new_challenge":
       return { title: "New challenge is live", body: (p.title as string) ?? "This week's challenge just dropped" };
     case "challenge_closed":
-      return { title: "Challenge closed", body: `${(p.title as string) ?? "This week's challenge"} — new one drops Monday at 10am` };
+      return { title: "Challenge closed", body: `${(p.title as string) ?? "This week's challenge"}. New one drops Monday at 10am` };
     case "deadline_reminder_24h":
       return { title: "1 day left", body: `Submit ${(p.title as string) ?? "today's challenge"} before time runs out` };
     case "deadline_reminder":
