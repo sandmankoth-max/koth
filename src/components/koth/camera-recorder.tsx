@@ -6,7 +6,7 @@
  * - Shutter = Snapchat-style clear circle. While recording, inner square fill.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { RefreshCcw, X, Zap, ZapOff } from "lucide-react";
+import { RefreshCcw, RotateCcw, X, Zap, ZapOff } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
 import { NativeCameraRecorder } from "./native-camera-recorder";
 

@@ -7,7 +7,7 @@
  * have to change.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { RefreshCcw, X, Zap, ZapOff } from "lucide-react";
+import { RefreshCcw, RotateCcw, X, Zap, ZapOff } from "lucide-react";
 import { Capacitor, registerPlugin } from "@capacitor/core";
 import { CameraPreview as CommunityCameraPreview } from "@capacitor-community/camera-preview";
 import { Filesystem } from "@capacitor/filesystem";
