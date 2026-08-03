@@ -78,7 +78,7 @@ export function LiveActivity({ challengeId, unitType, unitLabel }: Props) {
                 />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm text-foreground">
-                    <span className="font-semibold">@{p?.username ?? "user"}</span>
+                    <span className="font-semibold">{p?.display_name ?? p?.username ?? "user"}</span>
                     <span className="text-muted-foreground">
                       {verified ? " verified " : " submitted "}
                     </span>

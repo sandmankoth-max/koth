@@ -1,13 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { z } from "zod";
-import { Camera } from "lucide-react";
+import { Camera, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+
 
 const searchSchema = z.object({
   mode: z.enum(["login", "signup"]).optional(),
@@ -36,11 +37,13 @@ function AuthPage() {
   const [sd, setSd] = useState("");
   const [sdob, setSdob] = useState("");
   const [consent, setConsent] = useState(false);
+  const [legalAccepted, setLegalAccepted] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const isSignup = mode === "signup";
+
 
   function onPickAvatar(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
@@ -55,8 +58,13 @@ function AuthPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (isSignup && !legalAccepted) {
+      toast.error("Please accept the Terms of Service and Privacy Policy to continue.");
+      return;
+    }
     setBusy(true);
     try {
+
       if (isSignup) {
         await signUp({
           username: su,
@@ -157,14 +165,12 @@ function AuthPage() {
               />
             </Field>
             <Field label="Password" hint="8–16 chars, include 1 uppercase letter and 1 number">
-              <Input
-                type="password"
+              <PasswordInput
                 value={sp}
-                onChange={(e) => setSp(e.target.value)}
+                onChange={setSp}
                 required
                 minLength={8}
                 maxLength={16}
-                className="koth-input"
               />
             </Field>
             <Field label="Date of birth" hint="You must be 13 or older to use KOTH">
@@ -187,6 +193,25 @@ function AuthPage() {
                 this app, including submitting videos and being eligible for cash or gift card prizes.
               </span>
             </label>
+            <div className="flex items-start gap-3 rounded-2xl border border-koth-white/15 bg-koth-white/5 p-4 text-sm leading-snug text-koth-white/85">
+              <Checkbox
+                id="legal-accept"
+                checked={legalAccepted}
+                onCheckedChange={(c) => setLegalAccepted(c === true)}
+                className="mt-0.5"
+              />
+              <span>
+                <label htmlFor="legal-accept">I have read and accept the </label>
+                <Link to="/legal/terms" className="font-bold text-koth-white underline">
+                  TOS
+                </Link>
+                <label htmlFor="legal-accept"> and </label>
+                <Link to="/legal/privacy" className="font-bold text-koth-white underline">
+                  Privacy Policy
+                </Link>
+                <label htmlFor="legal-accept">.</label>
+              </span>
+            </div>
           </>
         ) : (
           <>
@@ -201,24 +226,19 @@ function AuthPage() {
               />
             </Field>
             <Field label="Password">
-              <Input
-                type="password"
-                value={p}
-                onChange={(e) => setP(e.target.value)}
-                required
-                className="koth-input"
-              />
+              <PasswordInput value={p} onChange={setP} required />
             </Field>
           </>
         )}
 
         <Button
           type="submit"
-          disabled={busy}
-          className="tap-44 mt-2 h-12 rounded-full bg-koth-red text-base font-bold text-koth-white hover:bg-koth-red/90"
+          disabled={busy || (isSignup && !legalAccepted)}
+          className="tap-44 mt-2 h-12 rounded-full bg-koth-red text-base font-bold text-koth-white hover:bg-koth-red/90 disabled:opacity-50"
         >
           {busy ? "…" : isSignup ? "Create account" : "Log in"}
         </Button>
+
 
         <p className="mt-2 text-center text-sm text-koth-white/60">
           {isSignup ? "Already have an account? " : "Don't have an account? "}
@@ -234,6 +254,46 @@ function AuthPage() {
     </div>
   );
 }
+
+function PasswordInput({
+  value,
+  onChange,
+  required,
+  minLength,
+  maxLength,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  required?: boolean;
+  minLength?: number;
+  maxLength?: number;
+}) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="relative">
+      <Input
+        type={show ? "text" : "password"}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required={required}
+        minLength={minLength}
+        maxLength={maxLength}
+        autoCapitalize="none"
+        autoCorrect="off"
+        className="koth-input pr-12"
+      />
+      <button
+        type="button"
+        onClick={() => setShow((s) => !s)}
+        aria-label={show ? "Hide password" : "Show password"}
+        className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-koth-white/60"
+      >
+        {show ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+      </button>
+    </div>
+  );
+}
+
 
 function Field({
   label,

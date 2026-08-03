@@ -88,7 +88,7 @@ function Notifications() {
       .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
-      .limit(100);
+      .limit(10);
     setItems(data ?? []);
   }
 
@@ -101,7 +101,7 @@ function Notifications() {
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
-        .limit(100);
+        .limit(10);
       const list = data ?? [];
 
       // Resolve friend_request notifications against current friendship state

@@ -785,6 +785,17 @@ export type Database = {
         Returns: boolean
       }
       close_challenge: { Args: { p_challenge_id: string }; Returns: undefined }
+      friend_count: { Args: { _user: string }; Returns: number }
+      friend_list: {
+        Args: { _user: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          friendship_id: string
+          id: string
+          username: string
+        }[]
+      }
       get_my_profile: {
         Args: never
         Returns: {

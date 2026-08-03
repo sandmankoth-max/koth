@@ -84,13 +84,11 @@ function UserProfile() {
     queryKey: ["friend-count", profileId],
     enabled: !!profileId,
     queryFn: async () => {
-      const { count } = await supabase.from("friendships")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "accepted")
-        .or(`requester_id.eq.${profileId},addressee_id.eq.${profileId}`);
-      return count ?? 0;
+      const { data } = await supabase.rpc("friend_count", { _user: profileId as string });
+      return (data as number | null) ?? 0;
     },
   });
+
 
   const videosQ = useQuery({
     queryKey: ["user-videos", profileId, canSeeAll],
