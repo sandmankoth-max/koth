@@ -33,7 +33,9 @@ export function BottomNav() {
   });
 
   const recordingDisabled =
-    !activeChallenge || new Date(activeChallenge.ends_at).getTime() <= Date.now();
+    !isAdmin &&
+    (!activeChallenge || new Date(activeChallenge.ends_at).getTime() <= Date.now());
+
 
   return (
     <nav
