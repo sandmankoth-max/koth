@@ -22,7 +22,7 @@ const SEEN_VIS_KEY = "koth.seenVisibilityExplainer";
 
 function Record() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [stage, setStage] = useState<Stage>("intro");
   const [captured, setCaptured] = useState<CapturedVideo | null>(null);
   const [reportedValue, setReportedValue] = useState("");
@@ -32,15 +32,13 @@ function Record() {
   const [suspension, setSuspension] = useState<{ until: string; reason: string | null } | null>(null);
 
   useEffect(() => {
-    supabase
-      .from("challenges")
-      .select("*")
-      .eq("status", "active")
-      .order("starts_at", { ascending: false })
+    let q = supabase.from("challenges").select("*");
+    if (!isAdmin) q = q.eq("status", "active");
+    q.order("starts_at", { ascending: false })
       .limit(1)
       .maybeSingle()
       .then(({ data }) => setChallenge(data));
-  }, []);
+  }, [isAdmin]);
 
   useEffect(() => {
     if (!user) return;
@@ -65,7 +63,7 @@ function Record() {
   const challengeEnded =
     !!challenge && new Date(challenge.ends_at).getTime() <= Date.now();
 
-  if (!challenge || challengeEnded) {
+  if (!challenge || (challengeEnded && !isAdmin)) {
     return (
       <div className="rounded-3xl border border-border bg-card p-8 text-center">
         <p className="label-broadcast text-muted-foreground">No active challenge</p>

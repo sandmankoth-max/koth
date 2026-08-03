@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Home, Trophy, Video, Users, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -15,6 +16,7 @@ const items = [
 
 export function BottomNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { isAdmin } = useAuth();
 
   const { data: activeChallenge } = useQuery({
     queryKey: ["nav-active-challenge"],
@@ -31,7 +33,9 @@ export function BottomNav() {
   });
 
   const recordingDisabled =
-    !activeChallenge || new Date(activeChallenge.ends_at).getTime() <= Date.now();
+    !isAdmin &&
+    (!activeChallenge || new Date(activeChallenge.ends_at).getTime() <= Date.now());
+
 
   return (
     <nav
