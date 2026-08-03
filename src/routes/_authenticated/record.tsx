@@ -105,12 +105,15 @@ function Record() {
     if (!user || !captured || !reportedValue) return;
     setStage("uploading");
     try {
-      const ext = captured.mimeType.includes("mp4") ? "mp4" : "webm";
+      // Only now is the crop baked in: the discarded parts never leave the device.
+      const final = await applyTrim(captured.blob, captured.mimeType, trim);
+      const ext = final.mimeType.includes("mp4") ? "mp4" : "webm";
       const path = `${user.id}/${challenge.id}/${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage
         .from("koth-videos")
-        .upload(path, captured.blob, { contentType: captured.mimeType, upsert: false });
+        .upload(path, final.blob, { contentType: final.mimeType, upsert: false });
       if (upErr) throw upErr;
+
 
       const { data: submission, error: insErr } = await supabase
         .from("submissions")
