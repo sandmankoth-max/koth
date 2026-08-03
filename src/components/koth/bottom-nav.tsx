@@ -15,6 +15,7 @@ const items = [
 
 export function BottomNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { isAdmin } = useAuth();
 
   const { data: activeChallenge } = useQuery({
     queryKey: ["nav-active-challenge"],
