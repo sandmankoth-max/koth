@@ -676,6 +676,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_invite: { Args: { _username: string }; Returns: string }
       admin_announce_winners:
         | {
             Args: {
