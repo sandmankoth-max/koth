@@ -186,7 +186,7 @@ function CreateChallenge() {
           <Input value={form.unit_label} onChange={(e) => setForm({ ...form, unit_label: e.target.value })} />
         </Field>
       </div>
-      <Field label="Safety note (optional)">
+      <Field label="Details / safety (optional)">
         <Textarea value={form.safety_note} rows={2} onChange={(e) => setForm({ ...form, safety_note: e.target.value })} />
       </Field>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -646,7 +646,7 @@ function EditChallenge() {
           <Field label="Description">
             <Textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
           </Field>
-          <Field label="Safety note">
+          <Field label="Details / safety">
             <Textarea rows={2} value={form.safety_note} onChange={(e) => setForm({ ...form, safety_note: e.target.value })} />
           </Field>
           <Field label="Unit label">

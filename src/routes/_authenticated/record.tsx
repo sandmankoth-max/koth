@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { cleanupPreviousSubmissionsApi } from "@/lib/submissions-api";
@@ -7,8 +7,11 @@ import { CameraRecorder, type CapturedVideo } from "@/components/koth/camera-rec
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Video, RotateCcw, Check } from "lucide-react";
+import { Video, RotateCcw, Check, Scissors } from "lucide-react";
 import { toast } from "sonner";
+import { VideoTrimmer, type TrimRange } from "@/components/koth/video-trimmer";
+import { applyTrim } from "@/lib/video-trim";
+
 
 export const Route = createFileRoute("/_authenticated/record")({
   head: () => ({ meta: [{ title: "Record — KOTH" }] }),
@@ -25,6 +28,10 @@ function Record() {
   const { user, isAdmin } = useAuth();
   const [stage, setStage] = useState<Stage>("intro");
   const [captured, setCaptured] = useState<CapturedVideo | null>(null);
+  // Non-destructive crop: kept as metadata until the final submit.
+  const [trim, setTrim] = useState<TrimRange | null>(null);
+  const [trimOpen, setTrimOpen] = useState(false);
+
   const [reportedValue, setReportedValue] = useState("");
   const [visibility, setVisibility] = useState<Visibility | null>(null);
   const [explainOpen, setExplainOpen] = useState<Visibility | null>(null);
@@ -68,11 +75,12 @@ function Record() {
       <div className="rounded-3xl border border-border bg-card p-8 text-center">
         <p className="label-broadcast text-muted-foreground">No active challenge</p>
         <p className="mt-2 text-sm text-muted-foreground">
-          New challenge drops Monday at 10am.
+          Recording is disabled until the next challenge.
         </p>
       </div>
     );
   }
+
 
   if (stage === "camera") {
     const cap = challenge.max_video_seconds ?? 300;
@@ -87,6 +95,7 @@ function Record() {
             return;
           }
           setCaptured(v);
+          setTrim(null);
           setStage("preview");
         }}
       />
@@ -97,12 +106,15 @@ function Record() {
     if (!user || !captured || !reportedValue) return;
     setStage("uploading");
     try {
-      const ext = captured.mimeType.includes("mp4") ? "mp4" : "webm";
+      // Only now is the crop baked in: the discarded parts never leave the device.
+      const final = await applyTrim(captured.blob, captured.mimeType, trim);
+      const ext = final.mimeType.includes("mp4") ? "mp4" : "webm";
       const path = `${user.id}/${challenge.id}/${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage
         .from("koth-videos")
-        .upload(path, captured.blob, { contentType: captured.mimeType, upsert: false });
+        .upload(path, final.blob, { contentType: final.mimeType, upsert: false });
       if (upErr) throw upErr;
+
 
       const { data: submission, error: insErr } = await supabase
         .from("submissions")
@@ -146,10 +158,11 @@ function Record() {
         <div className="space-y-3">
           {challenge.safety_note && (
             <div className="rounded-2xl bg-koth-pr-bg p-4 text-sm text-koth-pr-text">
-              <p className="label-broadcast mb-1">Safety</p>
-              {challenge.safety_note}
+              <p className="label-broadcast mb-1">Details</p>
+              <p className="whitespace-pre-line">{challenge.safety_note}</p>
             </div>
           )}
+
           <Button
             onClick={() => setStage("camera")}
             className="tap-44 h-14 w-full rounded-full bg-koth-red text-base font-bold text-koth-white hover:bg-koth-red/90"
@@ -161,19 +174,38 @@ function Record() {
       )}
 
       {stage === "preview" && captured && (
-        <div className="space-y-3">
-          <video
+        trimOpen ? (
+          <VideoTrimmer
             src={captured.previewUrl}
-            controls
-            playsInline
-            className="aspect-[9/16] w-full rounded-3xl bg-black object-cover"
+            duration={captured.durationMs / 1000}
+            value={trim}
+            onCancel={() => setTrimOpen(false)}
+            onSave={(r) => { setTrim(r); setTrimOpen(false); }}
           />
+        ) : (
+        <div className="space-y-3">
+          <TrimmedPreview src={captured.previewUrl} trim={trim} />
+          {trim && (
+            <p className="text-center text-xs text-muted-foreground">
+              Trimmed to {(trim.end - trim.start).toFixed(1)}s. The rest is kept
+              until you submit, so you can still adjust it.
+            </p>
+          )}
+          <Button
+            variant="outline"
+            onClick={() => setTrimOpen(true)}
+            className="tap-44 h-12 w-full rounded-full"
+          >
+            <Scissors className="mr-1.5 h-4 w-4" aria-hidden />
+            {trim ? "Edit crop" : "Crop video"}
+          </Button>
           <div className="grid grid-cols-2 gap-3">
             <Button
               variant="outline"
               onClick={() => {
                 URL.revokeObjectURL(captured.previewUrl);
                 setCaptured(null);
+                setTrim(null);
                 setStage("camera");
               }}
               className="tap-44 h-12 rounded-full"
@@ -190,7 +222,9 @@ function Record() {
             </Button>
           </div>
         </div>
+        )
       )}
+
 
       {stage === "report" && (
         <div className="space-y-4">
@@ -428,5 +462,39 @@ function VisibilityExplainer({
         </p>
       </div>
     </div>
+  );
+}
+
+/** Plays only the selected crop range so the preview reflects the saved trim. */
+function TrimmedPreview({ src, trim }: { src: string; trim: TrimRange | null }) {
+  const ref = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const v = ref.current;
+    if (!v) return;
+    const clamp = () => {
+      if (!trim) return;
+      if (v.currentTime < trim.start - 0.05 || v.currentTime >= trim.end - 0.03) {
+        try { v.currentTime = trim.start; } catch { /* seek race */ }
+      }
+    };
+    const onLoaded = () => { if (trim) { try { v.currentTime = trim.start; } catch { /* seek race */ } } };
+    v.addEventListener("timeupdate", clamp);
+    v.addEventListener("loadedmetadata", onLoaded);
+    onLoaded();
+    return () => {
+      v.removeEventListener("timeupdate", clamp);
+      v.removeEventListener("loadedmetadata", onLoaded);
+    };
+  }, [trim]);
+
+  return (
+    <video
+      ref={ref}
+      src={src}
+      controls
+      playsInline
+      className="aspect-[9/16] w-full rounded-3xl bg-black object-cover"
+    />
   );
 }

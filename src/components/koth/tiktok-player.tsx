@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -17,12 +17,13 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Avatar } from "@/components/koth/avatar";
-import { getVideoSignedUrl, formatValue } from "@/lib/koth-utils";
+import { getCachedVideoUrl, getVideoSignedUrl, prefetchVideoSignedUrls, formatValue } from "@/lib/koth-utils";
 import { AdminColorBadge } from "@/components/koth/admin-submissions";
 import { cn } from "@/lib/utils";
 import { CommentDrawer } from "@/components/koth/comment-drawer";
 import { VideoScrubber } from "@/components/koth/video-scrubber";
 import { deleteOwnSubmissionApi } from "@/lib/submissions-api";
+import { pushImmersive } from "@/lib/immersive-chrome";
 
 export type PlayerItem = {
   id: string;
@@ -67,6 +68,7 @@ export function TikTokPlayer({
   topLeftAction,
 }: Props) {
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(startIndex);
 
   useEffect(() => {
     if (!open) return;
@@ -77,9 +79,23 @@ export function TikTokPlayer({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, onOpenChange]);
 
+  // Transparent app chrome while the immersive scroller is on screen.
+  useEffect(() => {
+    if (!open) return;
+    return pushImmersive();
+  }, [open]);
+
+  // Sign every video URL up-front in one batched request so scrolling never
+  // waits on a network round-trip before the next clip can start.
+  useEffect(() => {
+    if (!open || !items.length) return;
+    void prefetchVideoSignedUrls(items.map((i) => i.video_path));
+  }, [open, items]);
+
   // Jump to startIndex when the player opens.
   useEffect(() => {
     if (!open) return;
+    setActiveIndex(startIndex);
     const scroller = scrollerRef.current;
     if (!scroller) return;
     const el = scroller.children?.[startIndex] as HTMLElement | undefined;
@@ -96,7 +112,7 @@ export function TikTokPlayer({
     <div
       className="fixed inset-x-0 z-40 bg-black"
       style={{
-        top: "calc(3.5rem + env(safe-area-inset-top))",
+        top: 0,
         bottom: "calc(4rem + env(safe-area-inset-bottom))",
       }}
       role="dialog"
@@ -107,12 +123,17 @@ export function TikTokPlayer({
         <button
           onClick={() => onOpenChange(false)}
           aria-label="Back"
-          className="tap-44 absolute left-3 top-4 z-50 text-white"
+          className="tap-44 absolute left-4 z-50 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)]"
+          style={{ top: "calc(env(safe-area-inset-top) + 0.6rem)" }}
         >
           <ArrowLeft className="h-6 w-6" />
         </button>
       )}
-      {topLeftAction && <div className="absolute left-3 top-5 z-50">{topLeftAction}</div>}
+      {topLeftAction && (
+        <div className="absolute left-4 z-50" style={{ top: "calc(env(safe-area-inset-top) + 0.5rem)" }}>
+          {topLeftAction}
+        </div>
+      )}
 
       <div
         ref={scrollerRef}
@@ -123,8 +144,18 @@ export function TikTokPlayer({
           scrollbarWidth: "none",
         }}
       >
-        {items.map((it) => (
-          <PlayerSlide key={it.id} item={it} scrollRoot={scrollerRef} onClose={() => onOpenChange(false)} />
+        {items.map((it, i) => (
+          <PlayerSlide
+            key={it.id}
+            item={it}
+            index={i}
+            // Keep the current clip plus its immediate neighbours mounted and
+            // buffered so a scroll lands on an already-decoded frame.
+            preload={Math.abs(i - activeIndex) <= 1}
+            onActive={setActiveIndex}
+            scrollRoot={scrollerRef}
+            onClose={() => onOpenChange(false)}
+          />
         ))}
       </div>
     </div>
@@ -133,45 +164,61 @@ export function TikTokPlayer({
 
 function PlayerSlide({
   item,
+  index,
+  preload,
+  onActive,
   scrollRoot,
   onClose,
 }: {
   item: PlayerItem;
+  index: number;
+  preload: boolean;
+  onActive: (i: number) => void;
   scrollRoot: React.RefObject<HTMLDivElement | null>;
   onClose: () => void;
 }) {
   const { user, isStaff } = useAuth();
   const qc = useQueryClient();
-  
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [url, setUrl] = useState<string | null>(null);
+  const [url, setUrl] = useState<string | null>(() => getCachedVideoUrl(item.video_path));
   const [visible, setVisible] = useState(false);
   const [paused, setPaused] = useState(false);
-  const [burst, setBurst] = useState(false);
+  const [bursts, setBursts] = useState<{ id: number; x: number; y: number }[]>([]);
+  const [pop, setPop] = useState<"like" | "unlike" | null>(null);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const lastTap = useRef(0);
+  const tapTimer = useRef<number | null>(null);
   const isOwner = !!user && user.id === item.user.id;
+  const displayName = item.user.display_name || item.user.username;
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
     const io = new IntersectionObserver(
-      (entries) => entries.forEach((e) => setVisible(e.intersectionRatio > 0.6)),
+      (entries) =>
+        entries.forEach((e) => {
+          const on = e.intersectionRatio > 0.6;
+          setVisible(on);
+          if (on) onActive(index);
+        }),
       { root: scrollRoot.current, threshold: [0, 0.6, 1] },
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [scrollRoot]);
+  }, [scrollRoot, index, onActive]);
 
   useEffect(() => {
-    if (!visible || url) return;
+    if (url || !(visible || preload)) return;
     let active = true;
     getVideoSignedUrl(item.video_path).then((u) => active && setUrl(u));
-    return () => { active = false; };
-  }, [visible, url, item.video_path]);
+    return () => {
+      active = false;
+    };
+  }, [visible, preload, url, item.video_path]);
 
   useEffect(() => {
     const v = videoRef.current;
@@ -203,9 +250,11 @@ function PlayerSlide({
     },
   });
 
-  async function toggleLike() {
+  const toggleLike = useCallback(async () => {
     if (!user) { toast.error("Sign in to like"); return; }
     const liked = likeQ.data?.liked;
+    setPop(liked ? "unlike" : "like");
+    window.setTimeout(() => setPop(null), 380);
     qc.setQueryData(["video-likes", item.id], (old: any) => ({
       count: (old?.count ?? 0) + (liked ? -1 : 1),
       liked: !liked,
@@ -216,19 +265,28 @@ function PlayerSlide({
       await supabase.from("video_likes").insert({ submission_id: item.id, user_id: user.id });
     }
     qc.invalidateQueries({ queryKey: ["video-likes", item.id] });
-  }
+  }, [user, likeQ.data?.liked, qc, item.id]);
 
-  function handleTap() {
+  function handleTap(e: React.MouseEvent<HTMLButtonElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
     const now = Date.now();
     if (now - lastTap.current < 300) {
+      if (tapTimer.current) { window.clearTimeout(tapTimer.current); tapTimer.current = null; }
       if (!likeQ.data?.liked) toggleLike();
-      setBurst(true);
-      window.setTimeout(() => setBurst(false), 700);
+      const id = now;
+      setBursts((b) => [...b, { id, x, y }]);
+      window.setTimeout(() => setBursts((b) => b.filter((x2) => x2.id !== id)), 800);
       lastTap.current = 0;
       return;
     }
     lastTap.current = now;
-    setPaused((p) => !p);
+    // Defer the play/pause toggle so a double-tap doesn't also pause.
+    tapTimer.current = window.setTimeout(() => {
+      setPaused((p) => !p);
+      tapTimer.current = null;
+    }, 260);
   }
 
   async function handleDelete() {
@@ -265,9 +323,17 @@ function PlayerSlide({
         aria-label="Tap to pause or play"
       >
         {url ? (
-          <video ref={videoRef} src={url} loop playsInline className="h-full w-full object-cover" />
+          <video
+            ref={videoRef}
+            src={url}
+            loop
+            playsInline
+            muted={false}
+            preload="auto"
+            className="h-full w-full object-cover"
+          />
         ) : (
-          <div className="h-full w-full animate-pulse bg-neutral-900" />
+          <div className="h-full w-full bg-neutral-950" />
         )}
         {paused && (
           <span className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
@@ -276,9 +342,14 @@ function PlayerSlide({
             </span>
           </span>
         )}
-        {burst && (
-          <Heart className="pointer-events-none absolute z-20 h-32 w-32 animate-ping text-koth-red" fill="currentColor" />
-        )}
+        {bursts.map((b) => (
+          <Heart
+            key={b.id}
+            className="pointer-events-none absolute z-20 h-24 w-24 text-koth-red animate-heart-burst"
+            fill="currentColor"
+            style={{ left: b.x, top: b.y, transform: "translate(-50%, -50%)" }}
+          />
+        ))}
       </button>
 
       {/* Scrubber pinned to bottom */}
@@ -287,14 +358,14 @@ function PlayerSlide({
       </div>
 
       {/* Bottom-left info */}
-      <div className="absolute bottom-7 left-4 right-20 z-20 text-white">
+      <div className="absolute bottom-7 left-4 right-16 z-20 text-white">
         <Link
           to="/u/$username"
           params={{ username: item.user.username }}
           onClick={(e) => e.stopPropagation()}
-          className="block max-w-full truncate text-base font-bold"
+          className="block max-w-full truncate text-[15px] font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)]"
         >
-          @{item.user.username}
+          {displayName}
         </Link>
         {item.challenge_title && (
           <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -312,19 +383,19 @@ function PlayerSlide({
         {item.caption && <p className="mt-2 line-clamp-2 text-sm text-white/90">{item.caption}</p>}
       </div>
 
-      {/* Right rail — Instagram-style: slim 1.5 stroke, larger icons, subtle drop shadow */}
-      <div className="absolute right-2.5 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center gap-6 text-white">
+      {/* Right rail — Instagram-scale icons: compact, slim stroke, springy taps */}
+      <div className="absolute right-2 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center gap-5 text-white">
         <Link
           to="/u/$username"
           params={{ username: item.user.username }}
           onClick={(e) => e.stopPropagation()}
           className="tap-44 relative z-30 inline-flex items-center justify-center rounded-full ring-2 ring-white/90"
-          aria-label={`Open @${item.user.username}'s profile`}
+          aria-label={`Open ${displayName}'s profile`}
         >
           <Avatar
-            name={item.user.display_name ?? item.user.username}
+            name={displayName}
             avatarPath={item.user.avatar_url ?? null}
-            size={44}
+            size={36}
           />
         </Link>
 
@@ -332,10 +403,12 @@ function PlayerSlide({
           onClick={toggleLike}
           icon={
             <Heart
-              strokeWidth={1.5}
+              strokeWidth={1.6}
               className={cn(
-                "h-9 w-9 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)] transition-transform",
-                likeQ.data?.liked && "scale-110 fill-koth-red text-koth-red",
+                "h-7 w-7 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]",
+                likeQ.data?.liked && "fill-koth-red text-koth-red",
+                pop === "like" && "animate-like-pop",
+                pop === "unlike" && "animate-unlike-pop",
               )}
             />
           }
@@ -346,8 +419,8 @@ function PlayerSlide({
           onClick={() => setCommentsOpen(true)}
           icon={
             <MessageCircle
-              strokeWidth={1.5}
-              className="h-9 w-9 -scale-x-100 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]"
+              strokeWidth={1.6}
+              className="h-7 w-7 -scale-x-100 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]"
             />
           }
           count={commentCountQ.data ?? 0}
@@ -357,8 +430,8 @@ function PlayerSlide({
           onClick={() => toast.message("Sharing coming soon")}
           icon={
             <Send
-              strokeWidth={1.5}
-              className="h-9 w-9 -rotate-12 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]"
+              strokeWidth={1.6}
+              className="h-7 w-7 -rotate-12 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]"
             />
           }
           count={0}
@@ -367,7 +440,7 @@ function PlayerSlide({
         {isOwner && (
           <RailButton
             onClick={() => setDeleteOpen(true)}
-            icon={<Trash2 strokeWidth={1.5} className="h-8 w-8 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" />}
+            icon={<Trash2 strokeWidth={1.6} className="h-6 w-6 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]" />}
             count={0}
             label="delete"
           />
@@ -414,7 +487,7 @@ function RailButton({
   return (
     <button
       onClick={(e) => { e.stopPropagation(); onClick(); }}
-      className="tap-44 flex flex-col items-center gap-0.5 transition-transform duration-150 ease-out active:scale-90 will-change-transform"
+      className="tap-44 flex flex-col items-center gap-0.5 transition-transform duration-100 ease-out active:scale-[0.88] will-change-transform"
       aria-label={label}
     >
       {icon}
@@ -426,8 +499,6 @@ function RailButton({
     </button>
   );
 }
-
-
 
 function formatCount(n: number) {
   if (n < 1000) return String(n);

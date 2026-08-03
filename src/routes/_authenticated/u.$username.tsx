@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +27,7 @@ function UserProfile() {
   const { username } = Route.useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const router = useRouter();
   const [playerOpen, setPlayerOpen] = useState(false);
   const [playerIndex, setPlayerIndex] = useState(0);
   const [friendsOpen, setFriendsOpen] = useState(false);
@@ -126,11 +127,20 @@ function UserProfile() {
   }));
 
   return (
-    <div className="space-y-3">
+    <div className="-mt-2 space-y-3">
       <div className="flex items-start justify-between">
-        <button onClick={() => navigate({ to: "/feed" })} className="tap-44 -ml-2 inline-flex items-center gap-1 text-sm text-muted-foreground">
-          <ArrowLeft className="h-4 w-4" /> Back
+        <button
+          onClick={() => {
+            // Return to wherever the user came from; fall back to the feed.
+            if (typeof window !== "undefined" && window.history.length > 1) router.history.back();
+            else navigate({ to: "/feed" });
+          }}
+          className="tap-44 ml-1 inline-flex items-center text-muted-foreground"
+          aria-label="Back"
+        >
+          <ArrowLeft className="h-5 w-5" />
         </button>
+
         <div className="flex flex-col items-end gap-1">
           <button
             onClick={() => { if (canSeeAll) setFriendsOpen(true); else toast.message("Add as friend to see their friends list"); }}
@@ -165,7 +175,7 @@ function UserProfile() {
       </div>
 
       <section className="flex flex-col items-center text-center">
-        <Avatar name={p.display_name ?? p.username} avatarPath={p.avatar_url} size={72} />
+        <Avatar name={p.display_name ?? p.username} avatarPath={p.avatar_url} size={104} />
         <h1 className="mt-2 text-base font-bold text-foreground">{p.display_name}</h1>
         <p className="text-xs text-muted-foreground">@{p.username}</p>
 
@@ -208,7 +218,7 @@ function UserProfile() {
           {items.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground">No videos to show.</p>
           ) : (
-            <div className="grid grid-cols-3 gap-[2px]">
+            <div className="grid grid-cols-3 gap-1.5">
               {(videosQ.data ?? []).map((s: any, i: number) => {
                 const it = items[i];
                 const title = s.challenges?.title as string | undefined;
@@ -216,7 +226,7 @@ function UserProfile() {
                   <div key={it.id} className="relative">
                     <VideoThumb
                       videoPath={it.video_path}
-                      className="rounded-none"
+                      className="overflow-hidden rounded-xl border border-border/60 shadow-sm"
                       onClick={() => { setPlayerIndex(i); setPlayerOpen(true); }}
                       badge={
                         s.status === "disqualified" ? (

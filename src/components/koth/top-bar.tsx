@@ -5,12 +5,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 import { LogoMark } from "@/components/koth/logo-mark";
+import { useImmersiveChrome } from "@/lib/immersive-chrome";
+
 
 export function TopBar() {
   const { user, isStaff } = useAuth();
   const [unread, setUnread] = useState(0);
   const [showHelp, setShowHelp] = useState(false);
+  const immersive = useImmersiveChrome();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+
 
   useEffect(() => {
     if (!user) return;
@@ -46,15 +50,28 @@ export function TopBar() {
   return (
     <>
       <header
-        className="z-20 shrink-0 border-b border-border bg-koth-black/95 backdrop-blur"
+        className={cn(
+          "z-50 shrink-0",
+          immersive
+            ? "pointer-events-none absolute inset-x-0 top-0 border-b-0 bg-gradient-to-b from-black/55 via-black/20 to-transparent"
+            : "border-b border-border bg-koth-black/95 backdrop-blur",
+        )}
         style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
-        <div className="mx-auto flex max-w-md items-center justify-between px-4 py-3">
-          <Link to="/home" className="flex items-center gap-2" aria-label="KOTH home">
-            <LogoMark size={32} className="shrink-0" />
-            <span className="label-broadcast text-koth-white tracking-[0.12em]">KOTH</span>
-          </Link>
-          <div className="flex items-center gap-1.5">
+        <div
+          className={cn(
+            "mx-auto flex max-w-md items-center px-4 py-3",
+            immersive ? "justify-end" : "justify-between",
+          )}
+        >
+          {!immersive && (
+            <Link to="/home" className="flex items-center gap-2" aria-label="KOTH home">
+              <LogoMark size={32} className="shrink-0" />
+              <span className="label-broadcast text-koth-white tracking-[0.12em]">KOTH</span>
+            </Link>
+          )}
+          <div className={cn("flex items-center gap-1.5", immersive && "pointer-events-auto")}>
+
             {isStaff && (
               <Link
                 to="/admin"

@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Avatar } from "@/components/koth/avatar";
 import { formatDistanceToNowStrict } from "date-fns";
-import { Heart, MessageCircle, Send, Trash2 } from "lucide-react";
+import { ChevronDown, Heart, MessageCircle, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -55,12 +55,37 @@ function targetColumn(kind: Kind) {
   return kind === "video" ? "submission_id" : "challenge_id";
 }
 
+function nameOf(c: CommentRow | null | undefined) {
+  return c?.profiles?.display_name || c?.profiles?.username || "user";
+}
+
 function rel(d: string) {
   return formatDistanceToNowStrict(new Date(d), { addSuffix: true })
     .replace(" seconds", "s").replace(" second", "s")
     .replace(" minutes", "m").replace(" minute", "m")
     .replace(" hours", "h").replace(" hour", "h")
     .replace(" days", "d").replace(" day", "d");
+}
+
+/** Tracks the on-screen keyboard height so only the composer lifts. */
+function useKeyboardOffset() {
+  const [offset, setOffset] = useState(0);
+  useEffect(() => {
+    const vv = typeof window !== "undefined" ? window.visualViewport : null;
+    if (!vv) return;
+    const onResize = () => {
+      const hidden = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      setOffset(hidden > 80 ? hidden : 0);
+    };
+    vv.addEventListener("resize", onResize);
+    vv.addEventListener("scroll", onResize);
+    onResize();
+    return () => {
+      vv.removeEventListener("resize", onResize);
+      vv.removeEventListener("scroll", onResize);
+    };
+  }, []);
+  return offset;
 }
 
 export function CommentDrawer({ kind, targetId, ownerId, open, onOpenChange }: Props) {
@@ -96,6 +121,7 @@ export function CommentDrawer({ kind, targetId, ownerId, open, onOpenChange }: P
 
   const rows = commentsQ.data ?? [];
   const tops = rows.filter((r) => r.parent_id === null);
+  const byId = useMemo(() => new Map(rows.map((r) => [r.id, r])), [rows]);
   const repliesByParent = useMemo(() => {
     const m = new Map<string, CommentRow[]>();
     for (const r of rows) {
@@ -125,8 +151,8 @@ export function CommentDrawer({ kind, targetId, ownerId, open, onOpenChange }: P
   }, [open, kind, targetId, col, table, qc]);
 
   const [replyTo, setReplyTo] = useState<CommentRow | null>(null);
-
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+  const kb = useKeyboardOffset();
 
   async function confirmDelete() {
     const id = pendingDelete;
@@ -143,14 +169,15 @@ export function CommentDrawer({ kind, targetId, ownerId, open, onOpenChange }: P
   return (
     <>
     <Drawer open={open} onOpenChange={onOpenChange} repositionInputs={false}>
-      <DrawerContent className="flex h-[60dvh] max-h-[60dvh] flex-col">
+      {/* The panel keeps a fixed height; only the composer rides the keyboard. */}
+      <DrawerContent className="flex h-[60dvh] max-h-[60dvh] flex-col overflow-hidden">
         <DrawerHeader className="px-4 pb-2 pt-3">
           <DrawerTitle className="text-sm font-bold">
             {tops.length} {tops.length === 1 ? "comment" : "comments"}
           </DrawerTitle>
         </DrawerHeader>
 
-        <div className="flex-1 overflow-y-auto px-4 pb-2">
+        <div className="flex-1 overflow-y-auto px-4 pb-24">
           {commentsQ.isLoading ? (
             <p className="py-6 text-center text-sm text-muted-foreground">Loading…</p>
           ) : tops.length === 0 ? (
@@ -168,9 +195,10 @@ export function CommentDrawer({ kind, targetId, ownerId, open, onOpenChange }: P
                   kind={kind}
                   c={c}
                   replies={repliesByParent.get(c.id) ?? []}
+                  byId={byId}
                   ownerId={ownerId}
                   viewerId={user?.id}
-                  onReply={() => setReplyTo(c)}
+                  onReply={setReplyTo}
                   onDelete={setPendingDelete}
                 />
               ))}
@@ -182,6 +210,7 @@ export function CommentDrawer({ kind, targetId, ownerId, open, onOpenChange }: P
           kind={kind}
           targetId={targetId}
           replyTo={replyTo}
+          keyboardOffset={kb}
           onCancelReply={() => setReplyTo(null)}
           onPosted={() => {
             setReplyTo(null);
@@ -222,6 +251,7 @@ function CommentItem({
   kind,
   c,
   replies,
+  byId,
   ownerId,
   viewerId,
   onReply,
@@ -230,36 +260,63 @@ function CommentItem({
   kind: Kind;
   c: CommentRow;
   replies: CommentRow[];
+  byId: Map<string, CommentRow>;
   ownerId?: string | null;
   viewerId?: string;
-  onReply: () => void;
+  onReply: (c: CommentRow) => void;
   onDelete: (id: string) => void;
 }) {
+  const [showReplies, setShowReplies] = useState(false);
   const canDelete =
     !!viewerId && (c.author_id === viewerId || (kind === "video" && ownerId === viewerId));
   return (
     <li>
-      <CommentRowView c={c} viewerId={viewerId} canDelete={canDelete} kind={kind} onReply={onReply} onDelete={onDelete} />
+      <CommentRowView
+        c={c}
+        viewerId={viewerId}
+        canDelete={canDelete}
+        kind={kind}
+        onReply={() => onReply(c)}
+        onDelete={onDelete}
+      />
       {replies.length > 0 && (
-        <ul className="ml-10 mt-2 space-y-2 border-l border-border pl-3">
-          {replies.map((r) => {
-            const canDelR =
-              !!viewerId && (r.author_id === viewerId || (kind === "video" && ownerId === viewerId));
-            return (
-              <li key={r.id}>
-                <CommentRowView
-                  c={r}
-                  viewerId={viewerId}
-                  canDelete={canDelR}
-                  kind={kind}
-                  isReply
-                  onReply={onReply}
-                  onDelete={onDelete}
-                />
-              </li>
-            );
-          })}
-        </ul>
+        <div className="ml-11 mt-1.5">
+          <button
+            onClick={() => setShowReplies((v) => !v)}
+            className="flex items-center gap-1.5 text-[12px] font-semibold text-muted-foreground"
+          >
+            <span className="h-px w-6 bg-border" />
+            {showReplies
+              ? "Hide replies"
+              : `View ${replies.length} ${replies.length === 1 ? "reply" : "replies"}`}
+            <ChevronDown
+              className={cn("h-3.5 w-3.5 transition-transform duration-200", showReplies && "rotate-180")}
+            />
+          </button>
+          {showReplies && (
+            <ul className="animate-reply-open mt-2 space-y-2">
+              {replies.map((r) => {
+                const canDelR =
+                  !!viewerId && (r.author_id === viewerId || (kind === "video" && ownerId === viewerId));
+                const parent = r.parent_id ? byId.get(r.parent_id) : undefined;
+                return (
+                  <li key={r.id}>
+                    <CommentRowView
+                      c={r}
+                      replyingToName={parent ? nameOf(parent) : undefined}
+                      viewerId={viewerId}
+                      canDelete={canDelR}
+                      kind={kind}
+                      isReply
+                      onReply={() => onReply(r)}
+                      onDelete={onDelete}
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
       )}
     </li>
   );
@@ -271,6 +328,7 @@ function CommentRowView({
   viewerId,
   canDelete,
   isReply,
+  replyingToName,
   onReply,
   onDelete,
 }: {
@@ -279,11 +337,13 @@ function CommentRowView({
   viewerId?: string;
   canDelete: boolean;
   isReply?: boolean;
+  replyingToName?: string;
   onReply: () => void;
   onDelete: (id: string) => void;
 }) {
   const qc = useQueryClient();
   const username = c.profiles?.username ?? "user";
+  const name = nameOf(c);
 
   const likeQ = useQuery({
     queryKey: ["comment-like", kind, c.id, viewerId],
@@ -301,6 +361,7 @@ function CommentRowView({
   });
   const liked = likeQ.data;
   const [optimisticCount, setOptimisticCount] = useState<number | null>(null);
+  const [pop, setPop] = useState(false);
   const count = optimisticCount ?? c.like_count;
 
   async function toggleLike() {
@@ -309,6 +370,8 @@ function CommentRowView({
       return;
     }
     const next = !liked;
+    setPop(true);
+    window.setTimeout(() => setPop(false), 380);
     setOptimisticCount(count + (next ? 1 : -1));
     qc.setQueryData(["comment-like", kind, c.id, viewerId], next);
     if (next) {
@@ -333,12 +396,12 @@ function CommentRowView({
         to="/u/$username"
         params={{ username }}
         className="tap-44 shrink-0 self-start"
-        aria-label={`@${username}`}
+        aria-label={name}
       >
         <Avatar
-          name={c.profiles?.display_name ?? username}
+          name={name}
           avatarPath={c.profiles?.avatar_url}
-          size={isReply ? 28 : 34}
+          size={isReply ? 26 : 34}
         />
       </Link>
       <div className="min-w-0 flex-1">
@@ -348,8 +411,13 @@ function CommentRowView({
             params={{ username }}
             className="font-semibold text-foreground"
           >
-            @{username}
-          </Link>{" "}
+            {name}
+          </Link>
+          {isReply && replyingToName && (
+            <span className="text-muted-foreground">
+              {" "}▸ <span className="font-semibold text-foreground/80">{replyingToName}</span>
+            </span>
+          )}{" "}
           <span className="text-foreground">{renderBodyWithMentions(c.body)}</span>
         </p>
         <div className="mt-1 flex items-center gap-3 text-[11px] text-muted-foreground">
@@ -369,11 +437,15 @@ function CommentRowView({
       </div>
       <button
         onClick={toggleLike}
-        className="tap-44 flex shrink-0 flex-col items-center self-start"
+        className="tap-44 flex shrink-0 flex-col items-center self-start active:scale-90 transition-transform duration-100"
         aria-label="Like comment"
       >
         <Heart
-          className={cn("h-4 w-4", liked ? "fill-koth-red text-koth-red" : "text-muted-foreground")}
+          className={cn(
+            "h-4 w-4",
+            liked ? "fill-koth-red text-koth-red" : "text-muted-foreground",
+            pop && (liked ? "animate-like-pop" : "animate-unlike-pop"),
+          )}
         />
         {count > 0 && (
           <span className="mono-stat text-[10px] font-bold text-muted-foreground">{count}</span>
@@ -402,12 +474,14 @@ function Composer({
   kind,
   targetId,
   replyTo,
+  keyboardOffset,
   onCancelReply,
   onPosted,
 }: {
   kind: Kind;
   targetId: string;
   replyTo: CommentRow | null;
+  keyboardOffset: number;
   onCancelReply: () => void;
   onPosted: () => void;
 }) {
@@ -419,14 +493,9 @@ function Composer({
   const [taggedIds, setTaggedIds] = useState<Map<string, string>>(new Map()); // username → uuid
 
   useEffect(() => {
-    if (replyTo) {
-      const uname = replyTo.profiles?.username;
-      if (uname && !body.startsWith(`@${uname}`)) {
-        setBody(`@${uname} `);
-        setTaggedIds((m) => new Map(m).set(uname, replyTo.author_id));
-      }
-      inputRef.current?.focus();
-    }
+    // Replying focuses the composer. No @mention is pre-filled: the reply
+    // notification is driven by parent_id, not by the text.
+    if (replyTo) inputRef.current?.focus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [replyTo?.id]);
 
@@ -500,8 +569,11 @@ function Composer({
 
   return (
     <div
-      className="relative border-t border-border bg-background p-2"
-      style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+      className="absolute inset-x-0 bottom-0 z-20 border-t border-border bg-background p-2 transition-transform duration-150 ease-out"
+      style={{
+        paddingBottom: keyboardOffset > 0 ? "0.5rem" : "calc(0.75rem + env(safe-area-inset-bottom))",
+        transform: `translateY(-${keyboardOffset}px)`,
+      }}
     >
       {mentionQ && suggestionsQ.data && suggestionsQ.data.length > 0 && (
         <div className="absolute bottom-full left-0 right-0 mx-3 mb-1 max-h-56 overflow-y-auto rounded-2xl border border-border bg-card shadow-lg">
@@ -514,10 +586,8 @@ function Composer({
             >
               <Avatar name={p.display_name ?? p.username} avatarPath={p.avatar_url} size={28} />
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-foreground">@{p.username}</p>
-                {p.display_name && (
-                  <p className="truncate text-xs text-muted-foreground">{p.display_name}</p>
-                )}
+                <p className="truncate text-sm font-semibold text-foreground">{p.display_name ?? p.username}</p>
+                <p className="truncate text-xs text-muted-foreground">@{p.username}</p>
               </div>
             </button>
           ))}
@@ -526,7 +596,7 @@ function Composer({
       {replyTo && (
         <div className="mb-2 flex items-center gap-2 rounded-full bg-muted/60 px-3 py-1 text-xs">
           <span className="text-muted-foreground">
-            Replying to <span className="font-semibold text-foreground">@{replyTo.profiles?.username}</span>
+            Replying to <span className="font-semibold text-foreground">{nameOf(replyTo)}</span>
           </span>
           <button onClick={onCancelReply} className="ml-auto font-semibold text-koth-red">
             Cancel

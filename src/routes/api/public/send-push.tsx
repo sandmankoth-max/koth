@@ -55,7 +55,23 @@ export const Route = createFileRoute("/api/public/send-push")({
           const iosTokens = tokens.filter((t) => t.platform === "ios");
           const androidTokens = tokens.filter((t) => t.platform === "android");
 
-          const { title, body: bodyText } = formatPush(notif.type as string, notif.payload as Record<string, unknown>);
+          // Push copy uses display names, not @usernames.
+          const rawPayload = (notif.payload ?? {}) as Record<string, unknown>;
+          const actorId = rawPayload.from_user_id as string | undefined;
+          let fromName: string | undefined;
+          if (actorId) {
+            const { data: prof } = await supabaseAdmin
+              .from("profiles")
+              .select("display_name, username")
+              .eq("id", actorId)
+              .maybeSingle();
+            fromName = (prof?.display_name || prof?.username) ?? undefined;
+          }
+          const { title, body: bodyText } = formatPush(notif.type as string, {
+            ...rawPayload,
+            ...(fromName ? { from_display_name: fromName } : {}),
+          });
+
           const dataPayload = {
             notification_id: body.notification_id!,
             type: notif.type as string,
@@ -334,7 +350,7 @@ async function sendFcm(
 
 function formatPush(type: string, payload: Record<string, unknown>): { title: string; body: string } {
   const p = payload || {};
-  const u = p.from_username ? `@${p.from_username}` : "Someone";
+  const u = (p.from_display_name as string) || (p.from_username ? `@${p.from_username}` : "Someone");
   const preview = (s: unknown) =>
     typeof s === "string" && s.length > 0 ? `: "${s.length > 60 ? s.slice(0, 60) + "…" : s}"` : "";
   switch (type) {

@@ -230,9 +230,10 @@ function AdminGradingFeed({
           <button
             onClick={onClose}
             aria-label="Back"
-            className="tap-44 pointer-events-auto inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-xs font-bold text-black shadow-lg"
+            className="tap-44 pointer-events-auto ml-1 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-black shadow-lg"
           >
-            <ArrowLeft className="h-5 w-5" strokeWidth={2} /> Back
+            <ArrowLeft className="h-5 w-5" strokeWidth={2} />
+
           </button>
           <button
             onClick={onClose}
@@ -254,7 +255,7 @@ function AdminGradingFeed({
               <p className="label-broadcast text-koth-red">All caught up</p>
               <p className="text-sm text-white/70">No more submissions in this queue.</p>
               <button onClick={onClose} className="tap-44 mt-2 inline-flex items-center gap-2 rounded-full bg-koth-red px-5 py-2.5 text-sm font-bold text-white">
-                <ArrowLeft className="h-4 w-4" /> Back to gallery
+                <ArrowLeft className="h-4 w-4" /> Gallery
               </button>
             </div>
           ) : subs.map((s) => (

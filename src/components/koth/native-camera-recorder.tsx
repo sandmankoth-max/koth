@@ -7,7 +7,7 @@
  * have to change.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { RefreshCcw, X, Zap, ZapOff } from "lucide-react";
+import { RefreshCcw, RotateCcw, X, Zap, ZapOff } from "lucide-react";
 import { Capacitor, registerPlugin } from "@capacitor/core";
 import { CameraPreview as CommunityCameraPreview } from "@capacitor-community/camera-preview";
 import { Filesystem } from "@capacitor/filesystem";
@@ -222,7 +222,22 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
     }
   }, [onCapture]);
 
+  /** Discard the in-progress take and stay on the camera, ready to re-record. */
+  const retake = useCallback(async () => {
+    if (!recordingRef.current) return;
+    try {
+      await CameraPreview.stopRecordVideo();
+    } catch {
+      // ignore: the take is being thrown away anyway
+    }
+    recordingRef.current = false;
+    setRecording(false);
+    setElapsed(0);
+    startTsRef.current = 0;
+  }, []);
+
   const switchCamera = useCallback(async () => {
+
     const nextFacing = facing === "front" ? "rear" : "front";
     try {
       if (flashOn && facing === "rear") {
@@ -290,15 +305,27 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
       )}
 
       <div
-        className="camera-top-controls absolute inset-x-0 top-0 z-20 grid grid-cols-[44px_minmax(0,1fr)_44px] items-start gap-3 px-4 pb-3 pt-3"
+        className="camera-top-controls absolute inset-x-0 top-0 z-20 grid grid-cols-[auto_minmax(0,1fr)_44px] items-start gap-3 px-4 pb-3 pt-3"
       >
-        <button
-          onClick={async () => { await stopPreview(); onCancel(); }}
-          className="tap-44 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur"
-          aria-label="Close camera"
-        >
-          <X className="h-6 w-6" aria-hidden />
-        </button>
+        {recording ? (
+          <button
+            onClick={retake}
+            className="tap-44 inline-flex items-center gap-1.5 rounded-full border border-koth-white/20 bg-koth-black/30 px-3 py-2 text-xs font-bold text-koth-white backdrop-blur-md shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
+            aria-label="Retake"
+          >
+            <RotateCcw className="h-4 w-4" aria-hidden />
+            Retake
+          </button>
+        ) : (
+          <button
+            onClick={async () => { await stopPreview(); onCancel(); }}
+            className="tap-44 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur"
+            aria-label="Close camera"
+          >
+            <X className="h-6 w-6" aria-hidden />
+          </button>
+        )}
+
         <div className="pointer-events-none flex min-w-0 justify-center pt-1">
           {recording ? (
             <span className="pill mono-stat bg-koth-red text-koth-white">
