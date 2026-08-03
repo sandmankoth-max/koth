@@ -222,7 +222,22 @@ export function NativeCameraRecorder({ onCancel, onCapture, maxSeconds }: Props)
     }
   }, [onCapture]);
 
+  /** Discard the in-progress take and stay on the camera, ready to re-record. */
+  const retake = useCallback(async () => {
+    if (!recordingRef.current) return;
+    try {
+      await CameraPreview.stopRecordVideo();
+    } catch {
+      // ignore: the take is being thrown away anyway
+    }
+    recordingRef.current = false;
+    setRecording(false);
+    setElapsed(0);
+    startTsRef.current = 0;
+  }, []);
+
   const switchCamera = useCallback(async () => {
+
     const nextFacing = facing === "front" ? "rear" : "front";
     try {
       if (flashOn && facing === "rear") {
