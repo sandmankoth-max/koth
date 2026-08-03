@@ -37,20 +37,16 @@ export function Avatar({ name, avatarPath, size = 40, className }: Props) {
         alt={`${name} avatar`}
         width={size}
         height={size}
-        className={cn("rounded-full object-cover", className)}
+        loading="eager"
+        decoding="async"
+        // @ts-expect-error - non-standard but supported hint
+        fetchpriority="high"
+        className={cn("rounded-full bg-koth-red object-cover", className)}
         style={{ width: size, height: size }}
       />
     );
   }
-  if (avatarPath) {
-    return (
-      <span
-        aria-label={`${name} avatar loading`}
-        className={cn("inline-flex animate-pulse rounded-full bg-muted", className)}
-        style={{ width: size, height: size }}
-      />
-    );
-  }
+
 
   return (
     <span

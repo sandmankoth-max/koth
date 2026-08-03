@@ -68,11 +68,12 @@ function Record() {
       <div className="rounded-3xl border border-border bg-card p-8 text-center">
         <p className="label-broadcast text-muted-foreground">No active challenge</p>
         <p className="mt-2 text-sm text-muted-foreground">
-          New challenge drops Monday at 10am.
+          Recording is disabled until the next challenge.
         </p>
       </div>
     );
   }
+
 
   if (stage === "camera") {
     const cap = challenge.max_video_seconds ?? 300;
@@ -146,10 +147,11 @@ function Record() {
         <div className="space-y-3">
           {challenge.safety_note && (
             <div className="rounded-2xl bg-koth-pr-bg p-4 text-sm text-koth-pr-text">
-              <p className="label-broadcast mb-1">Safety</p>
-              {challenge.safety_note}
+              <p className="label-broadcast mb-1">Details</p>
+              <p className="whitespace-pre-line">{challenge.safety_note}</p>
             </div>
           )}
+
           <Button
             onClick={() => setStage("camera")}
             className="tap-44 h-14 w-full rounded-full bg-koth-red text-base font-bold text-koth-white hover:bg-koth-red/90"

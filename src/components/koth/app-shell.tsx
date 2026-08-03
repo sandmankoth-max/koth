@@ -5,7 +5,7 @@ import { TopBar } from "./top-bar";
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div
-      className="app-shell flex flex-col bg-background"
+      className="app-shell relative flex flex-col bg-background"
       style={{ height: "100dvh", minHeight: "100dvh" }}
     >
       <TopBar />

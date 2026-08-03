@@ -28,8 +28,9 @@ const iconFor = (t: string) =>
 
 const preview = (s?: string) => (s ? `: "${s.length > 60 ? s.slice(0, 60) + "…" : s}"` : "");
 
-const labelFor = (n: any) => {
-  const u = n.payload?.from_username ? `@${n.payload.from_username}` : "Someone";
+/** Prefer a real display name; fall back to the username, then "Someone". */
+const labelFor = (n: any, nameOf: (username?: string | null, id?: string | null) => string) => {
+  const u = nameOf(n.payload?.from_username, n.payload?.from_user_id);
   switch (n.type) {
     case "new_challenge":
       return `New challenge is live: ${n.payload?.title ?? "this week's challenge"}`;
@@ -40,7 +41,7 @@ const labelFor = (n: any) => {
     case "deadline_reminder":
       return `1 hour left to submit ${n.payload?.title ?? "today's challenge closes soon"}`;
     case "podium_lost":
-      return `You were kicked off the podium${n.payload?.overtaken_by_username ? ` by @${n.payload.overtaken_by_username}` : ""}`;
+      return `You were kicked off the podium${n.payload?.overtaken_by_username ? ` by ${nameOf(n.payload.overtaken_by_username)}` : ""}`;
     case "podium_gained":
       return `You're on the podium at #${n.payload?.new_rank}`;
     case "time_verified":
@@ -70,16 +71,49 @@ const labelFor = (n: any) => {
     case "admin_message":
       return n.payload?.message ?? "Message from admin";
     case "winners_announcement":
-      return `Winners announced. 1st @${n.payload?.first_username} ($${Number(n.payload?.first_amount ?? 0)}), 2nd @${n.payload?.second_username} ($${Number(n.payload?.second_amount ?? 0)}), 3rd @${n.payload?.third_username} ($${Number(n.payload?.third_amount ?? 0)})`;
+      return `Winners announced. 1st ${nameOf(n.payload?.first_username)} ($${Number(n.payload?.first_amount ?? 0)}), 2nd ${nameOf(n.payload?.second_username)} ($${Number(n.payload?.second_amount ?? 0)}), 3rd ${nameOf(n.payload?.third_username)} ($${Number(n.payload?.third_amount ?? 0)})`;
     default:
       return "Notification";
   }
 };
 
+
 function Notifications() {
   const { user } = useAuth();
   const [items, setItems] = useState<any[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
+  // username|id -> display name, so copy reads "Alex liked your video".
+  const [names, setNames] = useState<Record<string, string>>({});
+
+  const nameOf = (username?: string | null, id?: string | null) =>
+    (id && names[id]) || (username && (names[username] ?? `@${username}`)) || "Someone";
+
+  async function resolveNames(list: any[]) {
+    const ids = new Set<string>();
+    const usernames = new Set<string>();
+    for (const n of list) {
+      const p = n.payload ?? {};
+      if (p.from_user_id) ids.add(p.from_user_id);
+      for (const k of ["from_username", "overtaken_by_username", "first_username", "second_username", "third_username"]) {
+        if (p[k]) usernames.add(p[k]);
+      }
+    }
+    const map: Record<string, string> = {};
+    if (ids.size) {
+      const { data } = await supabase.from("profiles").select("id, username, display_name").in("id", [...ids]);
+      for (const p of data ?? []) {
+        const nm = p.display_name || p.username;
+        if (nm) { map[p.id] = nm; if (p.username) map[p.username] = nm; }
+      }
+    }
+    const remaining = [...usernames].filter((u) => !map[u]);
+    if (remaining.length) {
+      const { data } = await supabase.from("profiles").select("username, display_name").in("username", remaining);
+      for (const p of data ?? []) map[p.username] = p.display_name || p.username;
+    }
+    setNames((cur) => ({ ...cur, ...map }));
+  }
+
 
   async function load() {
     if (!user) return;
@@ -125,7 +159,7 @@ function Notifications() {
         return n;
       });
 
-      if (active) setItems(resolved);
+      if (active) { setItems(resolved); void resolveNames(resolved); }
       await supabase
         .from("notifications")
         .update({ read: true })
@@ -144,7 +178,7 @@ function Notifications() {
     setBusy(null);
     if (error) toast.error(error.message);
     else {
-      toast.success(`You and @${n.payload?.from_username} are now friends`);
+      toast.success(`You and ${nameOf(n.payload?.from_username, n.payload?.from_user_id)} are now friends`);
       setItems((cur) => cur.map((x) => x.id === n.id ? { ...x, _resolved: "accepted" } : x));
     }
   }
@@ -181,7 +215,7 @@ function Notifications() {
                   {iconFor(n.type)}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm text-foreground">{labelFor(n)}</p>
+                  <p className="text-sm text-foreground">{labelFor(n, nameOf)}</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
                     {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
                   </p>

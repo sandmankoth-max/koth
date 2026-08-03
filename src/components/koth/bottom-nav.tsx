@@ -83,8 +83,9 @@ export function BottomNav() {
                   type="button"
                   onClick={() =>
                     toast("No active challenge", {
-                      description: "Recording is disabled until the next challenge drops Monday at 10am.",
+                      description: "Recording is disabled until the next challenge.",
                     })
+
                   }
                   aria-disabled
                   className={className}
