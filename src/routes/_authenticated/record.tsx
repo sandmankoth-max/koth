@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { cleanupPreviousSubmissionsApi } from "@/lib/submissions-api";
@@ -458,5 +458,39 @@ function VisibilityExplainer({
         </p>
       </div>
     </div>
+  );
+}
+
+/** Plays only the selected crop range so the preview reflects the saved trim. */
+function TrimmedPreview({ src, trim }: { src: string; trim: TrimRange | null }) {
+  const ref = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const v = ref.current;
+    if (!v) return;
+    const clamp = () => {
+      if (!trim) return;
+      if (v.currentTime < trim.start - 0.05 || v.currentTime >= trim.end - 0.03) {
+        try { v.currentTime = trim.start; } catch { /* seek race */ }
+      }
+    };
+    const onLoaded = () => { if (trim) { try { v.currentTime = trim.start; } catch { /* seek race */ } } };
+    v.addEventListener("timeupdate", clamp);
+    v.addEventListener("loadedmetadata", onLoaded);
+    onLoaded();
+    return () => {
+      v.removeEventListener("timeupdate", clamp);
+      v.removeEventListener("loadedmetadata", onLoaded);
+    };
+  }, [trim]);
+
+  return (
+    <video
+      ref={ref}
+      src={src}
+      controls
+      playsInline
+      className="aspect-[9/16] w-full rounded-3xl bg-black object-cover"
+    />
   );
 }
