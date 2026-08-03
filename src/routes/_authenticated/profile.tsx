@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Settings, LogOut, Camera, FileText, ShieldCheck, Pencil, Check,
-  Bell, Users, Trash2,
+  Bell, Users, Trash2, Share2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { TikTokPlayer, type PlayerItem } from "@/components/koth/tiktok-player";
@@ -401,5 +401,42 @@ export function FriendsDialog({
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+/**
+ * Shares a link that auto-sends a friend request when the recipient opens it.
+ * Uses the native share sheet on iOS, falls back to clipboard on the web.
+ */
+function ShareProfileButton({ username }: { username?: string | null }) {
+  async function share() {
+    if (!username) return;
+    const url = `${window.location.origin}/u/${username}?add=1`;
+    const text = `Add me on KOTH: @${username}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: "KOTH", text, url });
+        return;
+      }
+    } catch {
+      return; // user dismissed the share sheet
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Invite link copied");
+    } catch {
+      toast.error("Could not copy the link");
+    }
+  }
+
+  return (
+    <button
+      onClick={share}
+      className="tap-44 inline-flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-foreground"
+      aria-label="Share your profile"
+    >
+      <Share2 className="h-3.5 w-3.5 text-koth-red" />
+      Share
+    </button>
   );
 }
