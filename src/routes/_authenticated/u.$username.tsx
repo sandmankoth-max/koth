@@ -113,7 +113,7 @@ function UserProfile() {
     else { toast.success("Friend request sent"); friendQ.refetch(); }
   }
 
-  // Invite links (/u/name?add=1) fire the friend request automatically, once.
+  // Invite links (/u/name?add=1) instantly make you friends, once.
   const autoAddRef = useRef(false);
   useEffect(() => {
     if (autoAddRef.current) return;
@@ -122,9 +122,14 @@ function UserProfile() {
     if (!user || !profileId || isSelf || friendQ.isLoading) return;
     autoAddRef.current = true;
     window.history.replaceState({}, "", window.location.pathname);
-    if (!friendQ.data) void sendRequest();
-    else if (friendQ.data.status === "accepted") toast.info("You're already friends");
-    else toast.info("Friend request already pending");
+    void (async () => {
+      const { data, error } = await supabase.rpc("accept_invite", { _username: username });
+      if (error) { toast.error(error.message); return; }
+      if (data === "already") toast.info("You're already friends");
+      else if (data !== "self") toast.success("Friend added");
+      friendQ.refetch();
+      countsQ.refetch();
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, profileId, isSelf, friendQ.isLoading]);
 
@@ -191,7 +196,7 @@ function UserProfile() {
       </div>
 
       <section className="flex flex-col items-center text-center">
-        <Avatar name={p.display_name ?? p.username} avatarPath={p.avatar_url} size={104} />
+        <Avatar name={p.display_name ?? p.username} avatarPath={p.avatar_url} size={88} />
         <h1 className="mt-2 text-base font-bold text-foreground">{p.display_name}</h1>
         <p className="text-xs text-muted-foreground">@{p.username}</p>
 

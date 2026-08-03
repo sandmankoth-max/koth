@@ -109,7 +109,7 @@ function Profile() {
           <Avatar
             name={profile?.display_name ?? profile?.username ?? "?"}
             avatarPath={profile?.avatar_url}
-            size={104}
+            size={88}
           />
           <span className="absolute -bottom-1 -right-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-koth-red text-koth-white ring-2 ring-background">
             <Camera className="h-3 w-3" aria-hidden />
