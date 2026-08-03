@@ -95,6 +95,7 @@ function Record() {
             return;
           }
           setCaptured(v);
+          setTrim(null);
           setStage("preview");
         }}
       />
