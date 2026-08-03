@@ -65,7 +65,7 @@ function Record() {
   const challengeEnded =
     !!challenge && new Date(challenge.ends_at).getTime() <= Date.now();
 
-  if (!challenge || challengeEnded) {
+  if (!challenge || (challengeEnded && !isAdmin)) {
     return (
       <div className="rounded-3xl border border-border bg-card p-8 text-center">
         <p className="label-broadcast text-muted-foreground">No active challenge</p>
