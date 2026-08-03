@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Avatar } from "@/components/koth/avatar";
@@ -112,6 +112,22 @@ function UserProfile() {
     if (error) toast.error(error.message);
     else { toast.success("Friend request sent"); friendQ.refetch(); }
   }
+
+  // Invite links (/u/name?add=1) fire the friend request automatically, once.
+  const autoAddRef = useRef(false);
+  useEffect(() => {
+    if (autoAddRef.current) return;
+    if (typeof window === "undefined") return;
+    if (new URLSearchParams(window.location.search).get("add") !== "1") return;
+    if (!user || !profileId || isSelf || friendQ.isLoading) return;
+    autoAddRef.current = true;
+    window.history.replaceState({}, "", window.location.pathname);
+    if (!friendQ.data) void sendRequest();
+    else if (friendQ.data.status === "accepted") toast.info("You're already friends");
+    else toast.info("Friend request already pending");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, profileId, isSelf, friendQ.isLoading]);
+
 
   if (profileQ.isLoading) return <p className="p-6 text-sm text-muted-foreground">Loading…</p>;
   if (!profileQ.data) return <p className="p-6 text-sm text-muted-foreground">User not found.</p>;
