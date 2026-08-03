@@ -77,6 +77,11 @@ function Admin({ isAdmin }: { isAdmin: boolean }) {
   );
 }
 
+function toLocalInput(d: Date) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 function CreateChallenge() {
   const { user } = useAuth();
   const [busy, setBusy] = useState(false);
@@ -89,8 +94,8 @@ function CreateChallenge() {
     unit_type: "time_seconds" as "time_seconds" | "count_reps" | "custom",
     unit_label: "seconds",
     safety_note: "",
-    starts_at: nextMonday.toISOString().slice(0, 16),
-    ends_at: nextSunday.toISOString().slice(0, 16),
+    starts_at: toLocalInput(nextMonday),
+    ends_at: toLocalInput(nextSunday),
     prize_first: 100,
     prize_second: 20,
     prize_third: 10,
@@ -212,7 +217,6 @@ function CreateChallenge() {
         <Input
           type="number"
           min="5"
-          max="300"
           value={form.max_video_seconds}
           onChange={(e) => setForm({ ...form, max_video_seconds: Number(e.target.value) })}
         />
@@ -589,8 +593,8 @@ function EditChallenge() {
       description: c.description ?? "",
       safety_note: c.safety_note ?? "",
       unit_label: c.unit_label ?? "",
-      starts_at: new Date(c.starts_at).toISOString().slice(0, 16),
-      ends_at: new Date(c.ends_at).toISOString().slice(0, 16),
+      starts_at: toLocalInput(new Date(c.starts_at)),
+      ends_at: toLocalInput(new Date(c.ends_at)),
       prize_first: c.prize_first ?? 0,
       prize_second: c.prize_second ?? 0,
       prize_third: c.prize_third ?? 0,
@@ -671,8 +675,7 @@ function EditChallenge() {
             <Input
               type="number"
               min="5"
-              max="300"
-              placeholder="e.g. 60"
+                  placeholder="e.g. 60"
               value={form.max_video_seconds}
               onChange={(e) => setForm({ ...form, max_video_seconds: e.target.value })}
             />

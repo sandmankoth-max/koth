@@ -148,13 +148,14 @@ function Home() {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="label-broadcast text-koth-white/60">This week's challenge</p>
-            <h1 className="mt-0.5 truncate text-xl font-bold leading-tight">{c.title}</h1>
+            <h1 className="mt-0.5 text-xl font-bold leading-tight">{c.title}</h1>
           </div>
           <Countdown target={c.ends_at} />
         </div>
         {c.description && (
-          <p className="mt-2 line-clamp-2 text-xs text-koth-white/80">{c.description}</p>
+          <p className="mt-2 whitespace-pre-line break-words text-xs text-koth-white/80">{c.description}</p>
         )}
+
         {c.safety_note && (
           <div className="mt-2 flex items-start gap-2 rounded-lg bg-koth-pr-bg px-2.5 py-1.5 text-koth-pr-text">
             <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" aria-hidden />

@@ -333,16 +333,17 @@ export function FriendsDialog({
     queryKey: ["friends-list", userId],
     enabled: open && !!userId && canView,
     queryFn: async () => {
-      const { data } = await supabase.from("friendships")
-        .select("id, requester_id, addressee_id, req:profiles!friendships_requester_id_fkey(id, username, display_name, avatar_url), addr:profiles!friendships_addressee_id_fkey(id, username, display_name, avatar_url)")
-        .eq("status", "accepted")
-        .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
+      const { data } = await supabase.rpc("friend_list", { _user: userId as string });
       return (data ?? []).map((r: any) => ({
-        friendshipId: r.id,
-        ...(r.requester_id === userId ? r.addr : r.req),
+        friendshipId: r.friendship_id,
+        id: r.id,
+        username: r.username,
+        display_name: r.display_name,
+        avatar_url: r.avatar_url,
       }));
     },
   });
+
 
   async function removeFriend(friendshipId: string) {
     const { error } = await supabase.from("friendships").delete().eq("id", friendshipId);
