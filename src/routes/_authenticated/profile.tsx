@@ -87,7 +87,7 @@ function Profile() {
   });
 
   return (
-    <div className="space-y-3">
+    <div className="-mt-2 space-y-3">
       {/* Settings gear (icon only, no border) */}
       <div className="flex justify-end">
         <button
