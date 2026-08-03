@@ -136,6 +136,21 @@ function WebCameraRecorder({ onCancel, onCapture, maxSeconds }: Props) {
     setRecording(false);
   }, []);
 
+  /** Throw away the current take and stay on the camera screen. */
+  const retake = useCallback(() => {
+    const r = recorderRef.current;
+    if (r && r.state !== "inactive") {
+      r.onstop = null;
+      r.stop();
+    }
+    chunksRef.current = [];
+    recorderRef.current = null;
+    setRecording(false);
+    setElapsed(0);
+    startTsRef.current = 0;
+  }, []);
+
+
   useEffect(() => {
     if (!recording || !maxSeconds) return;
     if (elapsed >= maxSeconds * 1000) finish();
